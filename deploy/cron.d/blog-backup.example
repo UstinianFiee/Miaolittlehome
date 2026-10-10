@@ -1,0 +1,10 @@
+# 每月 1 号凌晨 4 点执行备份（保留 12 份）
+# 安装：
+#   sudo cp deploy/cron.d/blog-backup.example /etc/cron.d/blog-backup
+#   sudo chmod 644 /etc/cron.d/blog-backup
+# 注意：把 /opt/blog 换成你的实际部署路径。
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+0 4 1 * * root DATA_DIR=/data /opt/blog/scripts/backup.sh >> /var/log/blog-backup.log 2>&1

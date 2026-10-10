@@ -1,0 +1,1045 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Optima, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Microsoft Jhenghei", sans-serif;
+  /* 展示字体：站酷快乐体，用于站点名 / 大标题 / 区块标题（参照站的卡通标题观感） */
+  --font-display:
+    "ZCOOL KuaiLe", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------------------------------------------------------------
+   浅色主题：Kratos 的浅色形态
+   浅灰底 + 半透明白卡片 + 深灰文字 + 蓝色强调
+   --------------------------------------------------------------- */
+:root {
+  --radius: 0.375rem;
+
+  --background: #eef0f3;
+  --foreground: #3f3f3f;
+  --card: rgb(253 253 253 / 0.86);
+  --card-foreground: #333333;
+  --popover: #ffffff;
+  --popover-foreground: #333333;
+
+  --primary: #2f8fd0;
+  --primary-foreground: #ffffff;
+  --secondary: rgb(240 241 243 / 0.9);
+  --secondary-foreground: #444444;
+  --muted: rgb(236 238 241 / 0.9);
+  /* 原来的 #8a9098 在 #eef0f3 上只有约 3.2:1，正文级别的次要文字会发糊 */
+  --muted-foreground: #666d78;
+  --accent: rgb(47 143 208 / 0.1);
+  --accent-foreground: #1f6f9e;
+
+  /* 悬浮导航胶囊专用底色：bg-card/40 实际只有约 29% 不透明，压在背景图上会发灰 */
+  --nav-bg: rgb(252 252 253 / 0.82);
+
+  --destructive: #d9534f;
+  --destructive-foreground: #ffffff;
+
+  --border: #e1e3e7;
+  --input: #dcdfe3;
+  --ring: #2f8fd0;
+
+  --chart-1: #2f8fd0;
+  --chart-2: #45a2c9;
+  --chart-3: #6b7f8f;
+  --chart-4: #d9a441;
+  --chart-5: #c4736b;
+
+  --sidebar: #f7f8fa;
+  --sidebar-foreground: #3d3d3d;
+  --sidebar-primary: #2f8fd0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(47 143 208 / 0.1);
+  --sidebar-accent-foreground: #1f6f9e;
+  --sidebar-border: #e1e3e7;
+  --sidebar-ring: #2f8fd0;
+}
+
+/* ---------------------------------------------------------------
+   深色主题：Kratos 的招牌形态
+   #090909 底 + rgba(40,44,52,.72) 半透明卡片 + #ddd/#aaa 灰阶文字
+   --------------------------------------------------------------- */
+.dark {
+  --background: #090909;
+  --foreground: #bdbdbd;
+  --card: rgb(40 44 52 / 0.72);
+  --card-foreground: #dcdcdc;
+  --popover: #1b1e24;
+  --popover-foreground: #dcdcdc;
+
+  --primary: #5eb3e4;
+  --primary-foreground: #08131b;
+  --secondary: rgb(51 51 51 / 0.55);
+  --secondary-foreground: #dcdcdc;
+  --muted: rgb(28 30 34 / 0.7);
+  /* 原来的 #8b8b8b 在半透明卡片上（背景图透出来）对比度会掉到 3:1 以下 */
+  --muted-foreground: #a3a9b2;
+  --accent: rgb(83 93 102 / 0.45);
+  --accent-foreground: #ffffff;
+
+  /* 悬浮导航胶囊专用底色 */
+  --nav-bg: rgb(26 29 35 / 0.78);
+
+  --destructive: #e06c75;
+  --destructive-foreground: #ffffff;
+
+  --border: #333333;
+  --input: #3a3d42;
+  --ring: #5eb3e4;
+
+  --chart-1: #5eb3e4;
+  --chart-2: #6fc3a8;
+  --chart-3: #9aa7b4;
+  --chart-4: #e0b061;
+  --chart-5: #d98a80;
+
+  --sidebar: #101216;
+  --sidebar-foreground: #cfcfcf;
+  --sidebar-primary: #5eb3e4;
+  --sidebar-primary-foreground: #08131b;
+  --sidebar-accent: rgb(83 93 102 / 0.35);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a2d33;
+  --sidebar-ring: #5eb3e4;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /*
+     * 全局字号上调一档（16 → 17px）。
+     * 全站尺寸基本都写成 rem，所以改这里等于整体等比放大；
+     * 布局里的占位高度（导航 pt-*）也是 rem，会一起跟随，不会错位。
+     */
+    font-size: 17px;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    line-height: 1.8;
+    /* 顶部一层极淡的蓝色光晕，给纯色底一点层次。
+       注意不要用 background-attachment: fixed —— 滚动时会让浏览器反复重绘整页背景。 */
+    background-image: radial-gradient(
+      1100px 520px at 50% -12%,
+      color-mix(in oklab, var(--primary) 9%, transparent),
+      transparent 72%
+    );
+    background-repeat: no-repeat;
+  }
+
+  /* 标题统一用高对比色：深色下 #dcdcdc，浅色下 #333 */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--card-foreground);
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 32%, transparent);
+    color: var(--foreground);
+  }
+
+  /* 滚动条：细、圆、悬浮感（thumb 内缩 + 主题色），悬停加深 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--primary) 50%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+    background-color: color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--primary) 75%, transparent);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+}
+
+/* ---------------------------------------------------------------
+   通用视觉构件
+   --------------------------------------------------------------- */
+
+/* 半透明卡片：文章条目、侧栏小工具、表单区块统一用它 */
+.surface {
+  @apply rounded-lg border border-border bg-card;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.08);
+  /* 刻意不加 backdrop-filter：卡片数量多，毛玻璃会让滚动时持续重绘、明显掉帧。
+     卡片底色本身已是半透明，叠在纯色页面背景上观感一致。 */
+}
+
+/*
+ * 有内容区背景图时把卡片底色加实一档。
+ * 背景图（照片）比纯色底复杂得多，卡片太透会明显压低正文对比度；
+ * 加实后背景仍能从卡片间隙透出来，观感与参照站一致。
+ */
+.has-page-bg .surface {
+  background-color: rgb(253 253 253 / 0.94);
+}
+
+.dark .has-page-bg .surface {
+  background-color: rgb(40 44 52 / 0.9);
+}
+
+/*
+ * 玻璃卡片：低不透明度 + backdrop-blur。
+ * 用在文章正文这种「大块、数量少」的地方——模糊把底层背景图抹平，
+ * 所以不透明度可以压得比 .surface 更低，背景能透出来而文字仍然清楚。
+ * （不要用在列表里几十张卡片上：毛玻璃会让滚动持续重绘、明显掉帧。）
+ */
+.surface-glass {
+  @apply rounded-lg border border-border;
+  background-color: rgb(255 255 255 / 0.62);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.06);
+}
+
+.dark .surface-glass {
+  background-color: rgb(22 25 31 / 0.58);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
+}
+
+/* 触屏 / 低性能设备上关闭毛玻璃，避免滚动掉帧 */
+@media (prefers-reduced-motion: reduce) {
+  .surface-glass {
+    backdrop-filter: none;
+    background-color: rgb(255 255 255 / 0.92);
+  }
+
+  .dark .surface-glass {
+    background-color: rgb(24 27 33 / 0.94);
+  }
+}
+
+.dark .surface {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+
+/* 区块标题：左侧竖条 + 展示字体，参照站的小工具标题风格 */
+.section-title {
+  @apply flex items-center gap-2 text-base font-medium;
+  font-family: var(--font-display);
+  color: var(--card-foreground);
+}
+
+.section-title::before {
+  content: "";
+  @apply inline-block h-4 w-1 rounded-full bg-primary;
+}
+
+/* 标签胶囊 */
+.tag-pill {
+  @apply inline-flex items-center rounded-md border border-border px-3 py-1 text-xs transition-colors;
+  color: var(--card-foreground);
+}
+
+.tag-pill:hover {
+  @apply border-primary text-primary;
+}
+
+/* ---------------------------------------------------------------
+   Shiki 代码高亮（双主题）
+   渲染时只输出 CSS 变量（--shiki-light* / --shiki-dark*），
+   这里按 .dark 切换，无需重新高亮。
+   --------------------------------------------------------------- */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+
+.shiki {
+  background-color: var(--shiki-light-bg);
+}
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+}
+
+.dark .shiki {
+  background-color: var(--shiki-dark-bg);
+}
+
+/* ---------------------------------------------------------------
+   文章正文排版
+   --------------------------------------------------------------- */
+.markdown-body {
+  @apply text-[0.95rem] text-foreground;
+}
+
+.markdown-body > * + * {
+  @apply mt-4;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  @apply scroll-mt-24 font-semibold tracking-tight;
+  color: var(--card-foreground);
+}
+
+.markdown-body h1 {
+  @apply mt-8 text-2xl;
+}
+
+.markdown-body h2 {
+  @apply mt-8 border-b border-border/60 pb-2 text-xl;
+}
+
+.markdown-body h3 {
+  @apply mt-6 text-lg;
+}
+
+.markdown-body h4 {
+  @apply mt-6 text-base;
+}
+
+.markdown-body p,
+.markdown-body li {
+  @apply leading-7;
+}
+
+.markdown-body a {
+  @apply text-primary underline underline-offset-4;
+}
+
+.markdown-body a:hover {
+  @apply opacity-80;
+}
+
+.markdown-body strong {
+  @apply font-semibold;
+  color: var(--card-foreground);
+}
+
+.markdown-body ul {
+  @apply list-disc pl-6;
+}
+
+.markdown-body ol {
+  @apply list-decimal pl-6;
+}
+
+.markdown-body li + li {
+  @apply mt-1;
+}
+
+.markdown-body blockquote {
+  @apply border-l-2 border-border pl-4 text-muted-foreground;
+}
+
+.markdown-body hr {
+  @apply my-8 border-border/60;
+}
+
+.markdown-body img {
+  @apply my-6 max-w-full rounded-md border border-border/60;
+}
+
+.markdown-body table {
+  @apply my-6 w-full border-collapse text-sm;
+}
+
+.markdown-body th,
+.markdown-body td {
+  @apply border border-border px-3 py-2 text-left;
+}
+
+.markdown-body th {
+  @apply bg-muted/40 font-medium;
+  color: var(--card-foreground);
+}
+
+.markdown-body :not(pre) > code {
+  @apply rounded bg-muted px-1.5 py-0.5 text-[0.85em];
+}
+
+.markdown-body pre {
+  @apply my-4 overflow-x-auto rounded-lg border border-border/60 p-4 text-[0.85rem] leading-6;
+}
+
+.markdown-body pre code {
+  @apply bg-transparent p-0;
+}
+
+/*
+ * 封面底部波浪（3 层，与页脚同一种视觉语言）。
+ * 用 CSS mask 而不是画 SVG：遮罩里可以填「与内容区完全一致的背景」，
+ * 波浪与下方内容区之间就不会出现色带（见 hero-wave.tsx）。
+ *
+ * 动起来的方式：遮罩横向平铺 + 动画 mask-position。
+ * - mask-size 用 50%：一个波周期铺满半个视口宽，横向 repeat 后周期约 720px；
+ * - 用百分比位移（-200%）而不是长度：mask-size=50% 时百分比能正确解析成
+ *   「一个元素宽度」的位移，不受滚动条宽度影响，也不会出现接缝；
+ * - 只动 mask 不动内容，是为了保住填充层的 `background-attachment: fixed`
+ *   —— 一旦给元素加 transform，fixed 背景就会失效、和布局背景错位。
+ *
+ * 三条路径都是「一个完整正弦周期」（起止点与切线方向一致），平铺时才不会有台阶；
+ * 波高依次变浅，配合透明度叠出层次。
+ */
+:root {
+  /* 波峰提亮：只在最上沿加一点亮，底部完全透明——不会和内容区产生接缝。
+     深色主题下波浪填的是「内容区背景」，和封面图一样暗、几乎看不出来，
+     靠这层提亮才能把波浪曲线读出来。 */
+  --hero-wave-tint: rgb(255 255 255 / 0.06);
+  --hero-wave-mask-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cpath d='M0,62C240,2 480,2 720,62C960,122 1200,122 1440,62L1440,120L0,120Z' fill='%23fff'/%3E%3C/svg%3E");
+  --hero-wave-mask-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cpath d='M0,68C240,18 480,18 720,68C960,118 1200,118 1440,68L1440,120L0,120Z' fill='%23fff'/%3E%3C/svg%3E");
+  --hero-wave-mask-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cpath d='M0,76C240,36 480,36 720,76C960,116 1200,116 1440,76L1440,120L0,120Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+.dark {
+  --hero-wave-tint: rgb(255 255 255 / 0.18);
+}
+
+.hero-wave {
+  -webkit-mask-size: 50% 100%;
+  mask-size: 50% 100%;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  animation-name: hero-wave-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.hero-wave-1 {
+  -webkit-mask-image: var(--hero-wave-mask-1);
+  mask-image: var(--hero-wave-mask-1);
+}
+
+.hero-wave-2 {
+  -webkit-mask-image: var(--hero-wave-mask-2);
+  mask-image: var(--hero-wave-mask-2);
+}
+
+.hero-wave-3 {
+  -webkit-mask-image: var(--hero-wave-mask-3);
+  mask-image: var(--hero-wave-mask-3);
+}
+
+@keyframes hero-wave-drift {
+  from {
+    -webkit-mask-position: 0% 0;
+    mask-position: 0% 0;
+  }
+  to {
+    -webkit-mask-position: -200% 0;
+    mask-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-wave {
+    animation: none;
+  }
+}
+
+/*
+ * 页脚顶部 3 层波浪（见 footer-waves.tsx）。
+ * 渐变用变量控制，日夜各一套：夜间刻意比页面底色（#090909）亮，
+ * 否则深色主题下波浪会糊成一片看不见。
+ */
+:root {
+  --footer-wave-top: #ffffff;
+  --footer-wave-bottom: #e9ecf1;
+  /* 页脚底色必须等于波浪渐变的下端色，接缝才看不出来 */
+  --footer-bg: #e9ecf1;
+}
+
+.dark {
+  --footer-wave-top: #2c333e;
+  --footer-wave-bottom: #171d28;
+  --footer-bg: #171d28;
+}
+
+.footer-wave-track {
+  animation-name: footer-wave-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* 轨道宽 200%（两个周期），平移一半即一个完整周期，首尾无缝 */
+@keyframes footer-wave-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-wave-track {
+    animation: none;
+  }
+}
+
+/*
+ * 代码块复制按钮。
+ * 由 src/components/site/code-copy.tsx 在挂载后动态插入，
+ * 容器 .code-block 只负责提供定位参照。
+ */
+.code-block {
+  position: relative;
+}
+
+.code-copy {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background-color: var(--background);
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  line-height: 1.6;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.code-block:hover .code-copy,
+.code-copy:focus-visible {
+  opacity: 1;
+}
+
+.code-copy:hover,
+.code-copy.is-copied {
+  color: var(--primary);
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+  opacity: 1;
+}
+
+/* 触屏没有 hover，按钮常显，否则点不到 */
+@media (hover: none) {
+  .code-copy {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------
+   首页封面
+   文字颜色与遮罩都随主题变化，切换日夜时首屏有明显反馈。
+   --------------------------------------------------------------- */
+/* 封面标题：日夜主题统一白字（封面是图片，白字最通用，深字在图上显脏） */
+.hero-title {
+  position: relative;
+  display: inline-block;
+  color: #ffffff;
+  /*
+   * 字体写进类里而不是靠 className 传 font-display：
+   * 之前重构组件时漏掉工具类，标题悄悄退回了系统字体。
+   */
+  font-family: var(--font-display);
+  font-weight: 400;
+  /*
+   * 立体感 = 顶部柔光 + 向下逐层加模糊的「挤出」+ 两层大范围投影。
+   * 每一层都带模糊（0 模糊的硬边挤出在卡通体上会显得生硬），
+   * 透明度整体压低，让厚度是「软」的而不是「刻」出来的。
+   * 用变量抽出来，便于呼吸动画在原基础上叠加光晕（text-shadow 会被动画整体覆盖）。
+   */
+  --hero-depth:
+    0 -1px 1px rgb(255 255 255 / 0.5), 0 1px 2px rgb(0 0 0 / 0.2),
+    0 2px 3px rgb(0 0 0 / 0.16), 0 4px 6px rgb(0 0 0 / 0.13),
+    0 8px 16px rgb(0 0 0 / 0.3), 0 2px 30px rgb(0 0 0 / 0.38);
+  text-shadow: var(--hero-depth);
+}
+
+.hero-subtitle {
+  color: rgb(255 255 255 / 0.9);
+  text-shadow:
+    0 1px 0 rgb(0 0 0 / 0.28),
+    0 1px 18px rgb(0 0 0 / 0.55);
+}
+
+/* 封面遮罩：日夜都用深色蒙版托住白字；浅色主题略浅，让图片更透亮 */
+.hero-veil {
+  background-image: linear-gradient(
+    to bottom,
+    rgb(16 20 28 / 0.42),
+    rgb(16 20 28 / 0.26),
+    rgb(16 20 28 / 0.52)
+  );
+}
+
+.dark .hero-veil {
+  background-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.55),
+    rgb(0 0 0 / 0.35),
+    rgb(0 0 0 / 0.65)
+  );
+}
+
+/* 逐字轻柔起伏 */
+.hero-char {
+  display: inline-block;
+  animation: hero-bounce 3.4s ease-in-out infinite;
+  transition: color 0.25s ease;
+}
+
+.hero-char:hover {
+  color: var(--primary);
+}
+
+@keyframes hero-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* 柔和呼吸光晕：在立体阴影之上再叠一层缓慢明暗的光，整行一起呼吸 */
+.hero-title {
+  animation: hero-breathe 5.5s ease-in-out infinite;
+}
+
+@keyframes hero-breathe {
+  0%,
+  100% {
+    text-shadow: var(--hero-depth);
+  }
+  50% {
+    text-shadow:
+      var(--hero-depth),
+      0 0 46px rgb(255 255 255 / 0.5);
+  }
+}
+
+.dark .hero-title {
+  animation-name: hero-breathe-dark;
+}
+
+@keyframes hero-breathe-dark {
+  0%,
+  100% {
+    text-shadow: var(--hero-depth);
+  }
+  50% {
+    text-shadow:
+      var(--hero-depth),
+      0 0 52px rgb(94 179 228 / 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title,
+  .hero-char {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   交互动效层
+   全部轻量（只用 transform / opacity / box-shadow），并统一在
+   文件末尾的 prefers-reduced-motion 块里关闭。
+   --------------------------------------------------------------- */
+
+/* 页面切换：淡入上移 */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter {
+  animation: page-enter 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 按压反馈：可点击元素按下时轻微缩小 */
+.press {
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.press:active {
+  transform: scale(0.955);
+}
+
+/*
+ * 隐藏滚动条但保留滚动能力。
+ * 顶部导航在英文等较长文案下会超出胶囊宽度，用它做「可收缩 + 横向滚动」的兜底。
+ */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* 所有按钮默认带按压反馈（.press 可覆盖为更明显的幅度） */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  transition:
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+}
+
+/* 链接下划线：从中间向两侧展开 */
+.link-underline {
+  position: relative;
+}
+
+.link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  height: 1px;
+  width: 0;
+  background-color: currentColor;
+  transform: translateX(-50%);
+  transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* 卡片抬升：上浮 + 阴影加深 + 边框微亮 */
+.lift {
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms ease,
+    border-color 320ms ease;
+}
+
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.12);
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+}
+
+.dark .lift:hover {
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.45);
+}
+
+/* 图片：容器内轻微缩放 + 遮罩淡入 */
+.media-zoom {
+  position: relative;
+  overflow: hidden;
+}
+
+.media-zoom img {
+  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.media-zoom:hover img {
+  transform: scale(1.06);
+}
+
+.media-zoom::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.4), transparent 62%);
+  opacity: 0;
+  transition: opacity 320ms ease;
+  pointer-events: none;
+}
+
+.media-zoom:hover::after {
+  opacity: 1;
+}
+
+/* 按钮渐变位移 */
+.btn-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--primary) 0%,
+    color-mix(in oklab, var(--primary) 55%, #ffffff) 50%,
+    var(--primary) 100%
+  );
+  background-size: 220% 100%;
+  background-position: 0% 0;
+  transition: background-position 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-gradient:hover {
+  background-position: 100% 0;
+}
+
+/* 水波纹（配合 RippleLayer 注入的 .ripple-wave） */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes ripple-expand {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.42;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+.ripple-wave {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: currentColor;
+  pointer-events: none;
+  animation: ripple-expand 620ms ease-out forwards;
+}
+
+/* 骨架屏流光 */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -180% 0;
+  }
+  100% {
+    background-position: 180% 0;
+  }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--foreground) 7%, transparent) 25%,
+    color-mix(in oklab, var(--foreground) 15%, transparent) 37%,
+    color-mix(in oklab, var(--foreground) 7%, transparent) 63%
+  );
+  background-size: 180% 100%;
+  animation: skeleton-shimmer 1.7s ease-in-out infinite;
+}
+
+/* 按钮内加载状态：三点跳动 */
+@keyframes dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.loading-dots > span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: currentColor;
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+
+.loading-dots > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loading-dots > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* 图标点击：弹跳 + 变色 */
+@keyframes icon-pop {
+  0% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.3);
+  }
+  70% {
+    transform: scale(0.93);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.icon-pop {
+  animation: icon-pop 440ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .skeleton,
+  .loading-dots > span,
+  .icon-pop,
+  .ripple-wave {
+    animation: none;
+  }
+
+  .press,
+  .link-underline::after,
+  .lift,
+  .media-zoom img,
+  .media-zoom::after,
+  .btn-gradient {
+    transition: none;
+  }
+
+  .lift:hover {
+    transform: none;
+  }
+
+  .media-zoom:hover img {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   自定义鼠标光标
+   仅指针设备（鼠标）启用，触屏保持系统默认。
+   data-URI 内联 SVG，每个都带 fallback 关键字；白填充 + 深描边，
+   保证在浅色与深色背景上都看得清。
+   --------------------------------------------------------------- */
+@media (pointer: fine) {
+  :root {
+    /*
+     * 默认光标 = 媒体库里的小猫图（scripts/make-cursor.mjs 生成，
+     * 左上角带一个小尖尖，热点就在尖端 2 2）。
+     */
+    --cursor-default: url("/cursor-cat.png") 2 2, auto;
+    --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M10 3.6a1.5 1.5 0 0 1 3 0v6h1.2v-3a1.5 1.5 0 0 1 3 0v3h1.2v-2a1.5 1.5 0 0 1 3 0v6.9c0 3.6-2.7 6-6.3 6-2.7 0-4.6-1.3-5.8-3.6l-3-5.7a1.6 1.6 0 0 1 2.7-1.7l1 1.5z' fill='%23ffffff' stroke='%23141414' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E")
+        9 3, pointer;
+    --cursor-text: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='26' viewBox='0 0 16 26'%3E%3Cpath d='M4 3.5h8M8 3.5v19M4 22.5h8' fill='none' stroke='%23141414' stroke-width='3.4' stroke-linecap='round'/%3E%3Cpath d='M4 3.5h8M8 3.5v19M4 22.5h8' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")
+        8 13, text;
+    --cursor-wait: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='8.5' fill='none' stroke='%23141414' stroke-width='3.6'/%3E%3Ccircle cx='13' cy='13' r='8.5' fill='none' stroke='%23ffffff' stroke-width='1.8'/%3E%3Cpath d='M13 7v6.2l3.8 2.4' fill='none' stroke='%23141414' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M13 7v6.2l3.8 2.4' fill='none' stroke='%23ffffff' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+        13 13, wait;
+    --cursor-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M13 3l2.6 2.6h-1.8v5.2h5.2V9L21.6 11.6l-2.6 2.6v-1.8h-5.2v5.2h1.8L13 20.2l-2.6-2.6h1.8v-5.2H7v1.8L4.4 11.6 7 9v1.8h5.2V5.6H10.4z' fill='%23ffffff' stroke='%23141414' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E")
+        13 12, grab;
+  }
+
+  body {
+    cursor: var(--cursor-default);
+  }
+
+  a,
+  button,
+  [role="button"],
+  summary,
+  label[for],
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="file"] {
+    cursor: var(--cursor-pointer);
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="search"],
+  input[type="url"],
+  input[type="number"],
+  input[type="tel"],
+  textarea,
+  [contenteditable="true"] {
+    cursor: var(--cursor-text);
+  }
+
+  [draggable="true"] {
+    cursor: var(--cursor-grab);
+  }
+
+  /* 忙碌状态：任何带 aria-busy="true" 的元素（及其子元素）显示等待光标 */
+  [aria-busy="true"],
+  [aria-busy="true"] * {
+    cursor: var(--cursor-wait) !important;
+  }
+}

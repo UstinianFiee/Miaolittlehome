@@ -1,0 +1,77 @@
+# Local credentials: review before committing
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+
+# Local AI preferences
+CLAUDE.local.md
+.claude/settings.local.json
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Local database (dev only; prisma/migrations MUST stay tracked)
+dev.db
+dev.db-journal
+*.db
+*.db-journal
+
+# 例外：ip2region 离线数据必须随仓库自带（docs/SPEC.md 技术约束 11）
+!data/*.db
+
+# 生产环境变量与 SSL 证书（绝不入库）
+.env.production
+deploy/nginx/certs/
+
+# Local dev uploads (production media lives in /data volume)
+uploads/*
+# 但保留种子用的示例资源，保证种子数据可复现
+!uploads/demo/
+public/media/
+
+# Local dev software packages (production lives in /data volume)
+software/*
+# 例外：示例安装包随仓库自带
+!software/demo/
+
+# Vditor 运行时资源（由 scripts/sync-vditor.mjs 从 node_modules 生成）
+public/vditor/
+
+# TypeScript / Next generated
+next-env.d.ts
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Test
+coverage/
+
+# 本地验证产物（截图与一次性校验脚本，依赖外部 playwright-core）
+.verify/
+
+# 本地页面快照（排查样式时抓的 HTML，不属于源码）
+.v-home.html
+
+# 编辑器 / AI 工具的本地工作数据（含本机路径与工作记录，不入库）
+.workbuddy-ai/

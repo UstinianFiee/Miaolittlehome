@@ -1,0 +1,274 @@
+// Blog · 数据模型
+// 需求来源：docs/SPEC.md「数据与外部系统」。字段与关系不得擅自增删，变更须先确认。
+//
+// SQLite 相关约定：
+// - 文件体积（媒体 / 安装包）可能达到 2GB，超出 32 位 Int 上限，因此用 BigInt 存储字节数。
+//   注意：BigInt 不能直接 JSON 序列化，对外输出前需转成 string 或 number。
+// - 枚举在 SQLite 上由 Prisma 以文本 + 约束实现，可直接使用 enum。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- 认证 ----------
+
+model User {
+  id           Int    @id @default(autoincrement())
+  username     String @unique
+  passwordHash String
+}
+
+// ---------- 文章 ----------
+
+model Post {
+  id         Int       @id @default(autoincrement())
+  title      String
+  titleEn    String?
+  slug       String    @unique
+  summary    String
+  summaryEn  String?
+  content    String
+  contentEn  String?
+  cover      String?
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  published  Boolean   @default(false)
+  pinned     Boolean   @default(false)
+  views      Int       @default(0)
+  tags       PostTag[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([published, pinned, createdAt])
+  @@index([categoryId])
+}
+
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique
+  slug  String    @unique
+  posts PostTag[]
+}
+
+// 显式多对多：便于按标签反查文章
+model PostTag {
+  postId Int
+  tagId  Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model Category {
+  id     Int          @id @default(autoincrement())
+  name   String       @unique
+  nameEn String?
+  type   CategoryType @default(post)
+  sort   Int          @default(0)
+  posts  Post[]
+
+  @@index([type, sort])
+}
+
+// ---------- 互动 ----------
+
+model Comment {
+  id        Int         @id @default(autoincrement())
+  type      CommentType
+  // type = post 时为 Post.id；type = wall 时为空
+  refId     Int?
+  author    String
+  email     String?
+  content   String
+  ua        String
+  browser   String
+  os        String
+  ipRegion  String
+  // 仅用于服务端限频，不对外暴露
+  ipHash    String?
+  parentId  Int?
+  parent    Comment?    @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]   @relation("CommentReplies")
+  isAdmin   Boolean     @default(false)
+  approved  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@index([type, refId, approved, createdAt])
+  @@index([parentId])
+}
+
+// ---------- 媒体与相册 ----------
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  type      MediaType
+  path      String
+  thumb     String?
+  albumId   Int?
+  album     Album?   @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  title     String?
+  size      BigInt
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([albumId])
+}
+
+model Album {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  nameEn      String?
+  // 为空时前台取相册内首图
+  cover       String?
+  description String?
+  sort        Int      @default(0)
+  media       Media[]
+  createdAt   DateTime @default(now())
+
+  @@index([sort])
+}
+
+// ---------- 公告 ----------
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  content   String
+  pinned    Boolean  @default(false)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, pinned, createdAt])
+}
+
+// ---------- 视频 ----------
+
+model Video {
+  id          Int             @id @default(autoincrement())
+  title       String
+  titleEn     String?
+  cover       String?
+  sourceType  VideoSourceType
+  // sourceType = local 时为媒体路径；= iframe 时为外链地址
+  srcUrl      String
+  description String?
+  published   Boolean         @default(false)
+  pinned      Boolean         @default(false)
+  sort        Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([published, pinned, sort])
+}
+
+// ---------- 软件 ----------
+
+model Software {
+  id          Int            @id @default(autoincrement())
+  name        String
+  nameEn      String?
+  icon        String?
+  description String
+  published   Boolean        @default(false)
+  sort        Int            @default(0)
+  files       SoftwareFile[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([published, sort])
+}
+
+model SoftwareFile {
+  id         Int              @id @default(autoincrement())
+  softwareId Int
+  software   Software         @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  version    String
+  platform   SoftwarePlatform
+  fileName   String
+  filePath   String
+  fileSize   BigInt
+  downloads  Int              @default(0)
+  createdAt  DateTime         @default(now())
+
+  @@index([softwareId])
+}
+
+// ---------- 友链与设置 ----------
+
+model Friend {
+  id          Int    @id @default(autoincrement())
+  name        String
+  url         String
+  avatar      String?
+  description String?
+  sort        Int    @default(0)
+
+  @@index([sort])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+// ---------- 日志（保留 7 天，惰性清理） ----------
+
+model OperationLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  target    String?
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model VisitLog {
+  id        Int      @id @default(autoincrement())
+  path      String
+  ipRegion  String?
+  ua        String?
+  referer   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ---------- 枚举 ----------
+
+enum CategoryType {
+  post
+  video
+  software
+}
+
+enum CommentType {
+  post
+  wall
+}
+
+enum MediaType {
+  image
+  audio
+  video
+}
+
+enum VideoSourceType {
+  local
+  iframe
+}
+
+enum SoftwarePlatform {
+  windows
+  macos
+  linux
+  android
+  ios
+}

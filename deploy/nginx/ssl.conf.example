@@ -1,0 +1,100 @@
+# HTTPS / SSL 占位配置（docs/SPEC.md：SSL 占位）
+#
+# 使用步骤：
+#   1. 把证书放进 deploy/nginx/certs/，例如 fullchain.pem 与 privkey.pem
+#   2. 把本文件内容合并进 deploy/nginx/nginx.conf 的 server 块之后
+#      （或直接把它挂载为另一个 conf.d 文件）
+#   3. 把 80 端口那个 server 改为仅做跳转（见文件末尾示例）
+#   4. docker compose restart nginx
+#
+# 证书获取方式由部署时决定（Let's Encrypt / 云厂商签发 / 自签），
+# 因此这里只提供配置骨架，不绑定具体方案。
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name example.com;   # ← 改成你的域名
+
+    # 证书占位：把文件放到 deploy/nginx/certs/ 下并改成实际文件名
+    ssl_certificate     /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+
+    # 现代兼容性配置（TLS 1.2+）
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    client_max_body_size 2100m;
+    client_body_timeout 300s;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_http_version 1.1;
+
+    location /media/ {
+        alias /data/media/;
+        add_header Accept-Ranges bytes always;
+        add_header Cache-Control "public, max-age=2592000" always;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location /software-files/ {
+        alias /data/software/;
+        add_header Accept-Ranges bytes always;
+        add_header Cache-Control "public, max-age=86400" always;
+        try_files $uri =404;
+    }
+
+    location /api/admin/software/files/upload/ {
+        proxy_pass http://blog_app;
+        proxy_request_buffering off;
+        client_max_body_size 2100m;
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+
+    location /api/admin/media/upload/ {
+        proxy_pass http://blog_app;
+        proxy_request_buffering off;
+        client_max_body_size 200m;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    location /_next/static/ {
+        proxy_pass http://blog_app;
+        proxy_cache_valid 200 60m;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        access_log off;
+    }
+
+    location / {
+        proxy_pass http://blog_app;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
+
+# 启用 HTTPS 后，把 80 端口的 server 改为仅跳转：
+#
+# server {
+#     listen 80;
+#     listen [::]:80;
+#     server_name example.com;
+#     # 保留 ACME 校验路径（用 Let's Encrypt 时需要）
+#     location /.well-known/acme-challenge/ { root /var/www/certbot; }
+#     location / { return 301 https://$host$request_uri; }
+# }
