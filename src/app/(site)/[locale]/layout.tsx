@@ -88,8 +88,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                   />
                   {/*
                     半透明遮罩：压在背景图之上、内容之下。
-                    参照站的背景图是「看得出来」的，所以透明度压到 75% 而不是 88%——
-                    再高就只剩纯色底了。卡片本身也是半透明的，文字对比度靠卡片承担。
+                    透明度压到 75% 而不是 88%——再高就只剩纯色底了，背景图等于白设。
+                    卡片本身也是半透明的，文字对比度靠卡片承担。
                   */}
                   <div aria-hidden className="fixed inset-0 -z-10 bg-background/75" />
                 </>

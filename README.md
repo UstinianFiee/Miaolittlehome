@@ -9,11 +9,11 @@
 - 数据：Prisma + SQLite（开发 `./dev.db`，生产 `file:/data/db/blog.db`）
 - 部署：Linux + Docker 双容器（Next.js `standalone` + Nginx），数据与媒体挂 `/data`
 - 当前阶段：**全部 16 个阶段已完成**（含 Docker 部署配置）
-- UI 风格：参照 [kanokano.cn](https://kanokano.cn/)（Kratos 主题）——深色底 + 半透明卡片 + 毛玻璃悬浮导航 + 蓝色强调
+- UI 风格：深色底 + 半透明卡片 + 毛玻璃悬浮导航 + 蓝色强调，日夜双主题
 
-## UI 风格（参照 Kratos 主题）
+## UI 风格
 
-视觉基调取自参照站，落在 `src/app/globals.css` 的主题变量里：
+主题色板集中在 `src/app/globals.css` 的 CSS 变量里：
 
 | 元素 | 深色 | 浅色 |
 |---|---|---|
@@ -101,7 +101,7 @@
 
 - 站点名称 / 作者 / 描述还会驱动 `generateMetadata`（页签标题、`<meta>`）与关于页的作者信息；
 - **页签图标未单独设置时自动回退到 Logo**——换 Logo 时导航栏与页签一起变；
-- 背景图之上压一层 `bg-background/75` 半透明遮罩（参照站的背景图是「看得出来」的，再高就只剩纯色底了）；
+- 背景图之上压一层 `bg-background/75` 半透明遮罩（再高就只剩纯色底了，背景图等于白设）；
   同时给外层加 `has-page-bg`，把 `.surface` 卡片底色加实一档（浅色 `0.94` / 深色 `0.9`）保证正文对比度；
 - `src/app/favicon.ico` 是内置兜底（浏览器默认会请求 `/favicon.ico`），设置页签图标后会额外注入 `shortcut icon` 覆盖它。
 

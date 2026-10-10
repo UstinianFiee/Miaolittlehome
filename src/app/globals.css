@@ -43,7 +43,7 @@
   --font-sans:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Optima, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Microsoft Jhenghei", sans-serif;
-  /* 展示字体：站酷快乐体，用于站点名 / 大标题 / 区块标题（参照站的卡通标题观感） */
+  /* 展示字体：站酷快乐体，用于站点名 / 大标题 / 区块标题 */
   --font-display:
     "ZCOOL KuaiLe", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Microsoft YaHei", sans-serif;
@@ -52,7 +52,7 @@
 }
 
 /* ---------------------------------------------------------------
-   浅色主题：Kratos 的浅色形态
+   浅色主题
    浅灰底 + 半透明白卡片 + 深灰文字 + 蓝色强调
    --------------------------------------------------------------- */
 :root {
@@ -102,7 +102,7 @@
 }
 
 /* ---------------------------------------------------------------
-   深色主题：Kratos 的招牌形态
+   深色主题
    #090909 底 + rgba(40,44,52,.72) 半透明卡片 + #ddd/#aaa 灰阶文字
    --------------------------------------------------------------- */
 .dark {
@@ -239,7 +239,7 @@
 /*
  * 有内容区背景图时把卡片底色加实一档。
  * 背景图（照片）比纯色底复杂得多，卡片太透会明显压低正文对比度；
- * 加实后背景仍能从卡片间隙透出来，观感与参照站一致。
+ * 加实后背景仍能从卡片间隙透出来，页面又不失层次。
  */
 .has-page-bg .surface {
   background-color: rgb(253 253 253 / 0.94);
@@ -283,7 +283,7 @@
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
 
-/* 区块标题：左侧竖条 + 展示字体，参照站的小工具标题风格 */
+/* 区块标题：左侧竖条 + 展示字体，用于侧栏小工具与列表页分区 */
 .section-title {
   @apply flex items-center gap-2 text-base font-medium;
   font-family: var(--font-display);
