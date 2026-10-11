@@ -5,26 +5,46 @@
 #   Prisma CLI 单独装在一个隔离目录，避免污染 standalone 的依赖树
 # - SQLite / 媒体 / 软件包 / 备份全部落在 /data 卷（compose 里挂载）
 # - 媒体与安装包在生产由 Nginx alias 直出，不经过应用
+# - **系统依赖只在 base 阶段装一次**，其余阶段全部继承（见下方说明）
+
+# ---------- 公共基础：系统依赖只装一次 ----------
+#
+# 之前 deps / builder / prisma-cli / runner 四个阶段各自跑了一遍
+# `apt-get update && apt-get install openssl ca-certificates`。
+# Debian 官方源在国内经常单次要 5–15 分钟，四次叠加就是半小时以上。
+# 现在统一从这个 stage 继承，apt 只跑一次；四层镜像共享同一批 layer，不会重复下载。
+#
+# 另外两个提速手段：
+#   1) 换国内镜像源（默认阿里云）。官方源更快时用
+#      `--build-arg APT_MIRROR=deb.debian.org` 覆盖；腾讯云内网机器可用
+#      `mirrors.tencentyun.com`（走内网，最快）。
+#   2) apt 的 lists / 缓存挂成 BuildKit cache mount：不写进镜像层（体积不变），
+#      重建时直接命中缓存，不再联网。
+FROM node:20-slim AS base
+
+ARG APT_MIRROR=mirrors.aliyun.com
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -eux; \
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; do \
+      [ -f "$f" ] || continue; \
+      sed -i "s|deb.debian.org|${APT_MIRROR}|g; s|security.debian.org|${APT_MIRROR}|g" "$f"; \
+    done; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends openssl ca-certificates
 
 # ---------- 依赖 ----------
-FROM node:20-slim AS deps
+FROM base AS deps
 WORKDIR /app
-
-# Prisma 需要 openssl；构建期装一次即可
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# npm 缓存同样挂成 cache mount：重建时不必重新下载依赖包
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # ---------- 构建 ----------
-FROM node:20-slim AS builder
+FROM base AS builder
 WORKDIR /app
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -50,29 +70,23 @@ RUN npx prisma migrate deploy --schema prisma/schema.prisma
 RUN npx prisma generate && npm run build
 
 # ---------- Prisma CLI（独立目录，供 entrypoint 执行迁移） ----------
-FROM node:20-slim AS prisma-cli
+FROM base AS prisma-cli
 WORKDIR /cli
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
 
 # 版本与 package.json 中的 prisma 保持一致
 COPY package.json ./
-RUN npm install --no-save --omit=dev prisma@6.19.3
+RUN --mount=type=cache,target=/root/.npm npm install --no-save --omit=dev prisma@6.19.3
 
 # ---------- 运行 ----------
-FROM node:20-slim AS runner
+FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
-  && rm -rf /var/lib/apt/lists/* \
-  && groupadd --system --gid 1001 nodejs \
+# 系统依赖已由 base 提供，这里只建运行用户
+RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs nextjs
 
 # standalone 产物（含 server.js、最小 node_modules、messages）

@@ -20,6 +20,10 @@ services:
         # 所以必须在构建期传入。值取自 compose 的插值环境文件，
         # 因此启动命令要带 --env-file .env.production（见 docs 里的部署手册）。
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        # 构建期的 Debian 软件源。默认阿里云（国内快）；
+        # 腾讯云内网机器可改成 mirrors.tencentyun.com（走内网，最快），
+        # 海外机器可改成 deb.debian.org。写在 .env.production 里即可生效。
+        APT_MIRROR: ${APT_MIRROR:-mirrors.aliyun.com}
     image: blog-app:latest
     restart: unless-stopped
     env_file:
