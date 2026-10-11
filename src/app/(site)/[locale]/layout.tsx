@@ -29,6 +29,18 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+/**
+ * 前台页面统一走 ISR（60 秒后台重新验证）。
+ *
+ * 为什么必须有这个：Docker 构建时容器里没有生产数据库，页面只能按「空库」生成一次。
+ * 没有 revalidate 的话，首次部署后列表页会一直是空的，要等后台改内容触发
+ * revalidatePath 才会刷新。有了它，容器启动并写入种子数据后，最多 60 秒
+ * 页面就会自动重新生成，无需人工干预。
+ *
+ * 布局里的 route segment config 会作用到其下所有页面（含动态路由）。
+ */
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: Omit<LocaleLayoutProps, "children">): Promise<Metadata> {

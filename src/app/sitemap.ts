@@ -9,6 +9,15 @@ import {
   listTagsWithCount,
 } from "@/lib/query";
 
+/**
+ * 60 秒后台重新验证。
+ *
+ * Docker 构建时容器里没有生产数据库，这里会按「空库」生成一次，
+ * 只包含固定的静态路径。加了这个之后，容器启动写入真实数据后，
+ * 最多 60 秒 sitemap 就会带上全部内容页链接。
+ */
+export const revalidate = 60;
+
 /** 站点地图：前台所有语言版本的静态页与内容页。 */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url.replace(/\/$/, "");

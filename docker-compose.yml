@@ -3,7 +3,10 @@
 # 使用方式（在项目根目录）：
 #   cp deploy/.env.production.example .env.production   # 填好密钥
 #   sudo mkdir -p /data && sudo chown -R 1001:1001 /data
-#   docker compose up -d --build
+#   docker compose --env-file .env.production up -d --build
+#
+# 注意 --env-file：构建阶段要把 NEXT_PUBLIC_SITE_URL 内联进产物（见下方 build.args），
+# 而这个值来自 compose 的插值环境文件，默认只读项目根目录的 .env。
 #
 # 数据库、媒体、软件包、备份全部落在宿主机 /data 卷。
 
@@ -12,6 +15,11 @@ services:
     build:
       context: .
       target: runner
+      args:
+        # NEXT_PUBLIC_* 会在构建期内联进产物（sitemap.xml / robots.txt 依赖它），
+        # 所以必须在构建期传入。值取自 compose 的插值环境文件，
+        # 因此启动命令要带 --env-file .env.production（见 docs 里的部署手册）。
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
     image: blog-app:latest
     restart: unless-stopped
     env_file:

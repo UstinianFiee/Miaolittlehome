@@ -64,8 +64,19 @@ RUN_SEED=true                # 仅首次部署时打开
 ### 3. 构建并启动
 
 ```bash
-docker compose up -d --build
+docker compose --env-file .env.production up -d --build
 ```
+
+> **为什么必须带 `--env-file`**：构建阶段要把 `NEXT_PUBLIC_SITE_URL` 内联进产物
+> （`sitemap.xml` 与 `robots.txt` 用的是它），而这个值由 compose 的插值环境文件提供，
+> 默认只读项目根目录的 `.env`。不加这个参数，sitemap 里会写成 `http://localhost:3000`。
+>
+> **构建期还会用一个临时空库**：前台页面在构建期预渲染，需要 `DATABASE_URL` 才能跑通
+> （见 `Dockerfile` 里 builder 阶段的 `prisma migrate deploy`）。空库渲染出的页面
+> 由站点布局的 `revalidate = 60` 在容器启动写入真实数据后自动重新生成，无需人工干预。
+>
+> 部署完可以这样确认域名是否内联正确：
+> `curl -s http://你的域名/sitemap.xml | head -5`
 
 容器启动流程（`deploy/entrypoint.sh`）：
 
@@ -83,12 +94,18 @@ docker compose logs -f app
 ### 4. 导入示例媒体（可选）
 
 种子数据引用了仓库自带的示例素材，而生产媒体目录在 `/data/media`，
-因此需要拷贝一次（否则示例封面/音频会 404）：
+因此需要拷贝一次（否则示例封面/音频会 404）。
+
+**从宿主机拷贝**（容器里没有 `uploads/` 目录，不要在容器内 cp）：
 
 ```bash
-docker compose exec app sh -c 'cp -rn /app/uploads/demo /data/media/demo'
-docker compose exec app sh -c 'cp -rn /app/software/demo /data/software/demo'
+sudo cp -rn uploads/demo /data/media/demo
+sudo cp -rn software/demo /data/software/demo
+sudo chown -R 1001:1001 /data/media /data/software
 ```
+
+> 页面上看到示例内容需要最多 60 秒——前台页面走 ISR（`revalidate = 60`），
+> 容器启动写入数据后会自动重新生成。
 
 ### 5. 关闭种子开关
 
@@ -158,7 +175,7 @@ docker compose up -d
 
 ```bash
 git pull
-docker compose up -d --build
+docker compose --env-file .env.production up -d --build
 ```
 
 迁移会在容器启动时自动执行。**升级前先备份**。
@@ -182,7 +199,7 @@ docker compose exec app node -v       # 进入容器执行命令
 - [ ] `sudo chown -R 1001:1001 /data` 已执行
 - [ ] `.env.production` 中 `JWT_SECRET` / `IP_HASH_SECRET` 已改为随机值
 - [ ] `NEXT_PUBLIC_SITE_URL` 是真实域名（影响 sitemap 与 canonical）
-- [ ] `docker compose up -d --build` 构建成功（若 Prisma CLI 安装失败，见下方排查）
+- [ ] `docker compose --env-file .env.production up -d --build` 构建成功（若 Prisma CLI 安装失败，见下方排查）
 - [ ] `docker compose logs app` 中能看到「执行数据库迁移」且无报错
 - [ ] 访问 `/` 能正常打开并跳转到 `/zh`
 - [ ] 访问 `/admin` 能用设置的管理员账号登录

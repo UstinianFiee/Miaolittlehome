@@ -29,6 +29,23 @@ RUN apt-get update \
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# 构建期需要两样东西，缺一 next build 就会失败或产出错误内容：
+#
+# 1) DATABASE_URL —— 前台页面在构建期预渲染，会调用 Prisma 取数据，
+#    没有这个变量会直接报 "Environment variable not found: DATABASE_URL"。
+#    容器里没有生产数据库（它由 entrypoint 在首次启动时才创建），
+#    所以这里用一次性的 SQLite 文件跑一遍迁移，只求表结构存在。
+#    空库渲染出来的页面由站点布局里的 `revalidate = 60` 在容器启动后自动重新生成。
+#    注意：DATABASE_URL 不会被打包进产物（实测确认），运行时仍读容器的环境变量。
+# 2) NEXT_PUBLIC_SITE_URL —— NEXT_PUBLIC_* 会被内联进产物，
+#    sitemap.xml / robots.txt 依赖它，所以必须在构建期就传进来。
+#    值由 docker-compose.yml 的 build.args 提供。
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV DATABASE_URL=file:/tmp/build.db
+
+RUN npx prisma migrate deploy --schema prisma/schema.prisma
+
 # 生成 Prisma Client；npm run build 的 prebuild 会顺带同步 Vditor 资源
 RUN npx prisma generate && npm run build
 
