@@ -5,24 +5,36 @@
 #   Prisma CLI 单独装在一个隔离目录，避免污染 standalone 的依赖树
 # - SQLite / 媒体 / 软件包 / 备份全部落在 /data 卷（compose 里挂载）
 # - 媒体与安装包在生产由 Nginx alias 直出，不经过应用
-# - **系统依赖只在 base 阶段装一次**，其余阶段全部继承（见下方说明）
+# - 系统依赖只装一次，npm 与 Prisma 引擎都走国内镜像（见 base 阶段说明）
 
-# ---------- 公共基础：系统依赖只装一次 ----------
+# ---------- 公共基础：系统依赖只装一次 + 国内镜像源 ----------
 #
-# 之前 deps / builder / prisma-cli / runner 四个阶段各自跑了一遍
-# `apt-get update && apt-get install openssl ca-certificates`。
-# Debian 官方源在国内经常单次要 5–15 分钟，四次叠加就是半小时以上。
-# 现在统一从这个 stage 继承，apt 只跑一次；四层镜像共享同一批 layer，不会重复下载。
+# 这一层解决三个「在国内构建特别慢」的问题：
 #
-# 另外两个提速手段：
-#   1) 换国内镜像源（默认阿里云）。官方源更快时用
-#      `--build-arg APT_MIRROR=deb.debian.org` 覆盖；腾讯云内网机器可用
-#      `mirrors.tencentyun.com`（走内网，最快）。
-#   2) apt 的 lists / 缓存挂成 BuildKit cache mount：不写进镜像层（体积不变），
-#      重建时直接命中缓存，不再联网。
+# 1) apt 只跑一次
+#    之前 deps / builder / prisma-cli / runner 四个阶段各自跑了一遍
+#    `apt-get update && apt-get install openssl ca-certificates`，
+#    Debian 官方源单次要 5–15 分钟，四次叠加超过半小时。
+#    现在统一从这个 stage 继承，四层共享同一批 layer。
+#
+# 2) 换国内源
+#    apt 默认阿里云；npm 默认 registry.npmmirror.com；
+#    Prisma 引擎二进制默认也走 npmmirror（官方 binaries.prisma.sh 在国内很慢）。
+#    三者都可用 build arg 覆盖，见 docker-compose.yml。
+#
+# 3) 缓存挂载
+#    apt 包索引、npm 包缓存、Prisma 引擎缓存全部挂成 BuildKit cache mount：
+#    不写进镜像层（体积不变），重建时直接命中、不再联网。
 FROM node:20-slim AS base
 
 ARG APT_MIRROR=mirrors.aliyun.com
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+ARG PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+
+ENV NPM_CONFIG_REGISTRY=$NPM_REGISTRY
+ENV PRISMA_ENGINES_MIRROR=$PRISMA_ENGINES_MIRROR
+# 镜像站不保证提供 .sha256（npmmirror 有，别的镜像不一定），缺了就跳过校验
+ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -34,13 +46,25 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update; \
     apt-get install -y --no-install-recommends openssl ca-certificates
 
-# ---------- 依赖 ----------
+# ---------- 依赖 + Prisma CLI ----------
+#
+# 两件事放在同一个 stage：npm ci 装应用依赖，再往 /cli 装一份隔离的 Prisma CLI。
+# 放一起是为了共用 npm 包缓存与 Prisma 引擎缓存——引擎二进制约 40MB，
+# 从官方的 binaries.prisma.sh 下载在国内经常要十几分钟，这里只下这一次。
 FROM base AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-# npm 缓存同样挂成 cache mount：重建时不必重新下载依赖包
-RUN --mount=type=cache,target=/root/.npm npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,target=/root/.cache \
+    npm ci
+
+WORKDIR /cli
+# 版本与 package.json 中的 prisma 保持一致
+COPY package.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,target=/root/.cache \
+    npm install --no-save --omit=dev prisma@6.19.3
 
 # ---------- 构建 ----------
 FROM base AS builder
@@ -69,14 +93,6 @@ RUN npx prisma migrate deploy --schema prisma/schema.prisma
 # 生成 Prisma Client；npm run build 的 prebuild 会顺带同步 Vditor 资源
 RUN npx prisma generate && npm run build
 
-# ---------- Prisma CLI（独立目录，供 entrypoint 执行迁移） ----------
-FROM base AS prisma-cli
-WORKDIR /cli
-
-# 版本与 package.json 中的 prisma 保持一致
-COPY package.json ./
-RUN --mount=type=cache,target=/root/.npm npm install --no-save --omit=dev prisma@6.19.3
-
 # ---------- 运行 ----------
 FROM base AS runner
 WORKDIR /app
@@ -99,8 +115,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # ip2region 离线库（随仓库自带）
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 
-# Prisma CLI
-COPY --from=prisma-cli --chown=nextjs:nodejs /cli/node_modules ./prisma-cli/node_modules
+# Prisma CLI（来自 deps 阶段 /cli 的隔离安装）
+COPY --from=deps --chown=nextjs:nodejs /cli/node_modules ./prisma-cli/node_modules
 
 COPY --chown=nextjs:nodejs deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
