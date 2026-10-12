@@ -22,10 +22,65 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   // 已挂载的图层数量：从第 1 张开始，随轮播推进逐步增加
   const [mounted, setMounted] = React.useState(1);
   const [reduceMotion, setReduceMotion] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  /**
+   * 视频「铺满」所需的显式尺寸。
+   *
+   * 为什么不只用 `object-fit: cover`：部分手机浏览器（安卓 X5 / 旧 WebView）
+   * 根本不认 `<video>` 上的 object-fit，会按视频原始比例居中显示、上下留黑边
+   * —— 表现为「电脑正常，手机是一条视频带」。
+   * 这里按视频与容器的实际尺寸算出 cover 比例，写成内联宽高，
+   * 再靠外层 `overflow: hidden` 裁掉溢出部分，任何浏览器都成立。
+   */
+  const [coverSize, setCoverSize] = React.useState<{ w: number; h: number } | null>(null);
 
   React.useEffect(() => {
     setReduceMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
+
+  // 量出视频铺满封面所需的尺寸；尺寸变化（转屏 / 窗口缩放）时重算
+  React.useEffect(() => {
+    if (!video) {
+      return;
+    }
+
+    const el = videoRef.current;
+    const box = el?.parentElement;
+    if (!el || !box) {
+      return;
+    }
+
+    const update = () => {
+      const vw = el.videoWidth;
+      const vh = el.videoHeight;
+      const bw = box.clientWidth;
+      const bh = box.clientHeight;
+      if (!vw || !vh || !bw || !bh) {
+        return;
+      }
+      const scale = Math.max(bw / vw, bh / vh);
+      setCoverSize({ w: Math.ceil(vw * scale), h: Math.ceil(vh * scale) });
+    };
+
+    el.addEventListener("loadedmetadata", update);
+    el.addEventListener("loadeddata", update);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    update();
+
+    // 有些浏览器会拦自动播放，显式再试一次（失败也不影响 poster 兜底）
+    const played = el.play();
+    if (played && typeof played.catch === "function") {
+      played.catch(() => undefined);
+    }
+
+    return () => {
+      el.removeEventListener("loadedmetadata", update);
+      el.removeEventListener("loadeddata", update);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, [video]);
 
   // 提前把下一张读进缓存，切换时就不会闪空白
   React.useEffect(() => {
@@ -55,17 +110,20 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   if (video) {
     return (
       <>
-        <video
-          aria-hidden
-          className="absolute inset-0 -z-20 h-full w-full object-cover"
-          src={video}
-          poster={images[0] || undefined}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-        />
+        <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden">
+          <video
+            ref={videoRef}
+            className="hero-video"
+            style={coverSize ? { width: `${coverSize.w}px`, height: `${coverSize.h}px` } : undefined}
+            src={video}
+            poster={images[0] || undefined}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        </div>
         <div aria-hidden className="hero-veil absolute inset-0 -z-10" />
       </>
     );

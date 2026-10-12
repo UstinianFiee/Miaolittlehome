@@ -618,6 +618,31 @@
   }
 }
 
+/*
+ * 封面视频：铺满整个封面。
+ *
+ * 现代浏览器靠 `object-fit: cover` 就够了；但部分手机浏览器
+ * （安卓 X5 / 旧 WebView）**不认 <video> 上的 object-fit**，
+ * 会按视频原始比例居中显示、上下留黑边 —— 表现为「电脑正常，手机是一条视频带」。
+ * 所以组件里用 JS 量出 cover 所需尺寸并写成内联宽高（见 hero-background.tsx），
+ * 这里负责把它居中，并靠外层容器的 `overflow: hidden` 裁掉溢出部分。
+ */
+.hero-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  /*
+   * 必须解除 max-width：Tailwind Preflight 给 img/video 统一加了 `max-width: 100%`，
+   * 会把上面量出来的 cover 宽度夹回容器宽度，兜底就失效了（实测内联 1444px 被夹成 375px）。
+   */
+  max-width: none;
+  max-height: none;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+}
+
 /* 封面标题：日夜主题统一白字（封面是图片，白字最通用，深字在图上显脏） */
 .hero-title {
   position: relative;

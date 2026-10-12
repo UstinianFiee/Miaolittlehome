@@ -55,9 +55,19 @@ export async function generateMetadata({
     },
     description: info.description || t("site.description"),
     alternates: buildAlternates(locale),
-    ...(info.favicon
-      ? { icons: { icon: info.favicon, shortcut: info.favicon, apple: info.favicon } }
-      : {}),
+    /*
+     * 页签图标。
+     *
+     * 这里**必须**显式声明 icons，不能只靠 `src/app/favicon.ico` 那个约定：
+     * 约定生成的是 `<link rel="icon" href="/favicon.ico" sizes="16x16">`，
+     * 浏览器挑页签图标时优先「精确尺寸匹配」，会一直选中这个内置的 16×16，
+     * 站点设置里配的 favicon（没有 sizes，按 any 处理）就永远不显示。
+     * 所以内置图标挪到了 `public/favicon.ico`（仍能响应 /favicon.ico 请求，
+     * 但不再自动注入 link），由这里统一决定用哪个。
+     */
+    icons: info.favicon
+      ? { icon: info.favicon, shortcut: info.favicon, apple: info.favicon }
+      : { icon: "/favicon.ico", shortcut: "/favicon.ico" },
   };
 }
 
