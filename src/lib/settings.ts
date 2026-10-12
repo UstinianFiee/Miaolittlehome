@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { siteConfig } from "@/config/site";
 import { prisma } from "@/lib/prisma";
 
@@ -218,8 +220,29 @@ export async function getSiteInfo(): Promise<SiteInfo> {
   };
 }
 
-export function siteToSettings(input: Partial<SiteInfo>): Record<string, string> {
-  const entries: Record<string, string> = {};
+/**
+ * 站点配置版本号：把所有 `site.*` 设置按 key 排序后取哈希。
+ *
+ * 为什么需要它：后台改了站点设置（比如内容区背景图）后，服务端的 `revalidatePath`
+ * 能把 ISR 缓存刷掉，但**刷不掉浏览器里的客户端路由缓存**——用户点导航切过去，
+ * 拿到的还是改动前那份预取数据（表现为「首页背景变了，点下一页还是旧的」）。
+ * 这是 Next.js 的已知限制，官方给的解法就是在客户端调用 `router.refresh()`。
+ *
+ * 前端布局把这个版本号渲染进 HTML，`ConfigSync` 再向 `/api/site-version` 问一次当前值，
+ * 对不上就 `router.refresh()` 拉一份新的。配置没变时**只有一次极小的请求**，
+ * 不会造成多余的重渲染。
+ */
+export async function getSiteVersion(): Promise<string> {
+  const rows = await prisma.setting.findMany({
+    where: { key: { startsWith: "site." } },
+    orderBy: { key: "asc" },
+    select: { key: true, value: true },
+  });
+
+  return createHash("sha1").update(JSON.stringify(rows)).digest("hex").slice(0, 12);
+}
+
+export function siteToSettings(input: Partial<SiteInfo>): Record<string, string> {  const entries: Record<string, string> = {};
 
   if (typeof input.name === "string") {
     entries[SITE_NAME_KEY] = input.name.trim();

@@ -5,13 +5,14 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { ConfigSync } from "@/components/site/config-sync";
 import { MusicPlayerLazy } from "@/components/site/music-player-lazy";
 import { RippleLayer } from "@/components/site/ripple-layer";
 import { RouteProgress } from "@/components/site/route-progress";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
-import { getSiteInfo } from "@/lib/settings";
+import { getSiteInfo, getSiteVersion } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { routing } from "@/i18n/routing";
 import { buildAlternates } from "@/lib/metadata";
@@ -82,7 +83,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   setRequestLocale(locale);
 
   // 播放列表与站点设置都在服务端读取；播放器挂在布局里，路由切换时不重新挂载
-  const [tracks, site] = await Promise.all([getPlaylist(), getSiteInfo()]);
+  const [tracks, site, siteVersion] = await Promise.all([
+    getPlaylist(),
+    getSiteInfo(),
+    getSiteVersion(),
+  ]);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -116,6 +121,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                   <div aria-hidden className="fixed inset-0 -z-10 bg-background/75" />
                 </>
               ) : null}
+              {/* 站点设置改动后，把还停在旧版本上的客户端路由缓存刷掉 */}
+              <ConfigSync version={siteVersion} />
               <RouteProgress />
               <RippleLayer />
               <SiteHeader />
