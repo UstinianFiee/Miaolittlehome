@@ -5,7 +5,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { MusicPlayer } from "@/components/site/music-player";
+import { MusicPlayerLazy } from "@/components/site/music-player-lazy";
 import { RippleLayer } from "@/components/site/ripple-layer";
 import { RouteProgress } from "@/components/site/route-progress";
 import { SiteFooter } from "@/components/site-footer";
@@ -112,7 +112,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               {/* 顶部导航为 fixed 悬浮胶囊，这里补出占位高度（胶囊 4rem/4.25rem + 上边距） */}
               <main className="flex-1 pt-[5.25rem] sm:pt-[5.75rem]">{children}</main>
               <SiteFooter />
-              <MusicPlayer tracks={tracks} />
+              {/* 播放器延迟加载：它的代码不属于首屏关键路径（见 music-player-lazy.tsx） */}
+              <MusicPlayerLazy tracks={tracks} />
             </div>
           </ThemeProvider>
         </NextIntlClientProvider>

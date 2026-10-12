@@ -100,3 +100,20 @@ export function clientIpFromHeaders(headers: Headers): string {
 
   return headers.get("x-real-ip")?.trim() || "";
 }
+
+/**
+ * 预热离线库。
+ *
+ * ip2region 用的是 `readFileSync`，两个库合计约 11MB。如果在请求里第一次用到才加载，
+ * 就会把这 11MB 的同步读盘算进那一次访问的响应时间（表现是「第一次打开特别慢」）。
+ * 这里在进程启动后（延迟一拍、不阻塞启动）主动加载一次，把代价挪出请求路径。
+ */
+export function warmupIpRegion(): void {
+  setTimeout(() => {
+    const started = Date.now();
+    const region = getInstance();
+    if (region) {
+      console.log(`[ip-region] 离线库预热完成（${Date.now() - started}ms）`);
+    }
+  }, 0);
+}

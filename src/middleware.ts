@@ -83,12 +83,15 @@ export default async function middleware(request: NextRequest) {
 
   if (shouldLogVisit(request, pathname)) {
     const ip = clientIpFromHeaders(request.headers);
-    await logVisit({
+    // 刻意不 await：访问日志只是统计，没必要占用页面响应的时间。
+    // 之前 await 会把「SQLite 写入」算进每个页面请求的耗时里。
+    // 中间件跑在 Node.js 运行时（同进程），浮动的 Promise 会正常执行完。
+    void logVisit({
       path: pathname,
       ua: request.headers.get("user-agent"),
       referer: request.headers.get("referer"),
       ipRegion: ip ? resolveIpRegion(ip) : null,
-    });
+    }).catch(() => {});
   }
 
   return intlMiddleware(request);
