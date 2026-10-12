@@ -648,7 +648,7 @@
     "description": "Site description",
     "save": "Save",
     "saving": "Saving…",
-    "saved": "Saved",
+    "saved": "Saved. Front-end cache refreshed — press Ctrl+F5 if the browser still shows the old content.",
     "failed": "Save failed: {message}",
     "subtitle": "Site subtitle",
     "subtitleHint": "Shown under the site name on the home cover, typed out letter by letter.",

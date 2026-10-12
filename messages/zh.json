@@ -648,7 +648,7 @@
     "description": "站点描述",
     "save": "保存",
     "saving": "保存中…",
-    "saved": "已保存",
+    "saved": "已保存，前台缓存已刷新。若浏览器里仍是旧内容，按 Ctrl+F5 强制刷新一次即可。",
     "failed": "保存失败：{message}",
     "subtitle": "站点副标题",
     "subtitleHint": "显示在首页封面的站点名下方，带打字机动效。",
