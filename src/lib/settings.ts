@@ -27,6 +27,9 @@ export const SITE_FAVICON_KEY = "site.favicon";
 export const SITE_ICP_KEY = "site.icp";
 /** 备案号链接（工信部查询页） */
 export const SITE_ICP_LINK_KEY = "site.icpLink";
+/** 公安网备（与 ICP 分开配置：两者可以只有一个，也可以都有） */
+export const SITE_POLICE_KEY = "site.police";
+export const SITE_POLICE_LINK_KEY = "site.policeLink";
 
 export const PROFILE_NAME_KEY = "profile.name";
 export const PROFILE_AVATAR_KEY = "profile.avatar";
@@ -160,6 +163,8 @@ export type SiteInfo = {
   icp: string;
   /** 备案号链接。 */
   icpLink: string;
+  police: string;
+  policeLink: string;
 };
 
 /** 解析背景图列表；兼容旧的单图字段。 */
@@ -208,6 +213,8 @@ export async function getSiteInfo(): Promise<SiteInfo> {
     favicon: favicon || logo,
     icp: settings[SITE_ICP_KEY]?.trim() || "",
     icpLink: settings[SITE_ICP_LINK_KEY]?.trim() || "",
+    police: settings[SITE_POLICE_KEY]?.trim() || "",
+    policeLink: settings[SITE_POLICE_LINK_KEY]?.trim() || "",
   };
 }
 
@@ -260,6 +267,12 @@ export function siteToSettings(input: Partial<SiteInfo>): Record<string, string>
   }
   if (typeof input.icpLink === "string") {
     entries[SITE_ICP_LINK_KEY] = input.icpLink.trim();
+  }
+  if (typeof input.police === "string") {
+    entries[SITE_POLICE_KEY] = input.police.trim();
+  }
+  if (typeof input.policeLink === "string") {
+    entries[SITE_POLICE_LINK_KEY] = input.policeLink.trim();
   }
 
   return entries;

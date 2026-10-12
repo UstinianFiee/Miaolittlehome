@@ -241,6 +241,25 @@ model VisitLog {
   @@index([createdAt])
 }
 
+// ---------- 说说 ----------
+
+/// 说说：短内容。以气泡卡片的形式夹杂在首页文章流里，另有 /shuoshuo 独立页。
+model Shuoshuo {
+  id        Int      @id @default(autoincrement())
+  content   String
+  contentEn String?
+  /// 配图路径数组，存 JSON 字符串（最多 9 张，与九宫格一致）
+  images    String   @default("[]")
+  /// 可选的地点，例如「广东 · 深圳」
+  location  String?
+  published Boolean  @default(true)
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, createdAt])
+}
+
 // ---------- 枚举 ----------
 
 enum CategoryType {

@@ -10,10 +10,21 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminDashboardPage() {
-  const [posts, publishedPosts, comments, pendingComments, media, friends, operations] =
-    await Promise.all([
+  const [
+    posts,
+    publishedPosts,
+    shuoshuo,
+    publishedShuoshuo,
+    comments,
+    pendingComments,
+    media,
+    friends,
+    operations,
+  ] = await Promise.all([
       prisma.post.count(),
       prisma.post.count({ where: { published: true } }),
+      prisma.shuoshuo.count(),
+      prisma.shuoshuo.count({ where: { published: true } }),
       prisma.comment.count(),
       prisma.comment.count({ where: { approved: false } }),
       prisma.media.count(),
@@ -34,6 +45,7 @@ export default async function AdminDashboardPage() {
           hintKey: "admin.dashboard.totalComments",
           hintValue: comments,
         },
+        { labelKey: "admin.dashboard.shuoshuo", value: shuoshuo, hintKey: "admin.dashboard.published", hintValue: publishedShuoshuo },
         { labelKey: "admin.dashboard.media", value: media },
         { labelKey: "admin.dashboard.friends", value: friends },
       ]}

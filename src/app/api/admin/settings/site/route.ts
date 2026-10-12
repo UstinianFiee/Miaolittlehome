@@ -37,6 +37,8 @@ export async function PUT(request: Request) {
       favicon: typeof body.favicon === "string" ? body.favicon.slice(0, 500) : undefined,
       icp: typeof body.icp === "string" ? body.icp.slice(0, 100) : undefined,
       icpLink: typeof body.icpLink === "string" ? body.icpLink.slice(0, 500) : undefined,
+      police: typeof body.police === "string" ? body.police.slice(0, 100) : undefined,
+      policeLink: typeof body.policeLink === "string" ? body.policeLink.slice(0, 500) : undefined,
     });
 
     await setSettings(entries);

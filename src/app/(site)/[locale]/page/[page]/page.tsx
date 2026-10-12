@@ -5,7 +5,7 @@ import { setRequestLocale } from "next-intl/server";
 import { HOME_PAGE_SIZE, HomeView } from "@/components/site/home-view";
 import { routing } from "@/i18n/routing";
 import { buildAlternates } from "@/lib/metadata";
-import { listPublishedPosts } from "@/lib/query";
+import { listPublishedFeed } from "@/lib/query";
 
 type PagedHomeProps = {
   params: Promise<{ locale: string; page: string }>;
@@ -21,7 +21,8 @@ function parsePage(raw: string): number {
 }
 
 export async function generateStaticParams() {
-  const { total, pageSize } = await listPublishedPosts({ page: 1, pageSize: HOME_PAGE_SIZE });
+  // 首页信息流是「文章 + 说说」混排，页数必须按合并后的总数算
+  const { total, pageSize } = await listPublishedFeed({ page: 1, pageSize: HOME_PAGE_SIZE });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const last = Math.min(totalPages, PRERENDER_LIMIT);
 
@@ -51,7 +52,7 @@ export default async function PagedHomePage({ params }: PagedHomeProps) {
     redirect(`/${locale}`);
   }
 
-  const { total, pageSize } = await listPublishedPosts({ page: 1, pageSize: HOME_PAGE_SIZE });
+  const { total, pageSize } = await listPublishedFeed({ page: 1, pageSize: HOME_PAGE_SIZE });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   if (page > totalPages) {

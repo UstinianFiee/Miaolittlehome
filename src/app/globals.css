@@ -99,6 +99,14 @@
   --sidebar-accent-foreground: #1f6f9e;
   --sidebar-border: #e1e3e7;
   --sidebar-ring: #2f8fd0;
+
+  /*
+   * 说说气泡：比普通卡片多一点主题色，一眼就能和文章卡片区分开。
+   * 刻意用**不透明**色 —— 气泡尾巴是用 SVG 三角叠在气泡上的，
+   * 半透明底色会在重叠处叠出更深的色块，露出接缝。
+   */
+  --bubble-bg: #e9f2fb;
+  --bubble-border: #c6dff2;
 }
 
 /* ---------------------------------------------------------------
@@ -125,6 +133,10 @@
 
   /* 悬浮导航胶囊专用底色 */
   --nav-bg: rgb(26 29 35 / 0.78);
+
+  /* 说说气泡（见浅色主题里的说明，必须不透明） */
+  --bubble-bg: #16222e;
+  --bubble-border: #26435c;
 
   --destructive: #e06c75;
   --destructive-foreground: #ffffff;
@@ -284,6 +296,17 @@
 
 .dark .surface {
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * 说说气泡：底色带一点主题色，和文章卡片明显区分。
+ * 底色必须是**不透明**的 —— 尾巴是一小块 SVG 三角叠在上面，
+ * 半透明底色会在重叠处叠出更深的色块、露出接缝（见 shuoshuo-card.tsx）。
+ */
+.bubble {
+  background-color: var(--bubble-bg);
+  border: 1px solid var(--bubble-border);
+  border-radius: 0.75rem;
 }
 
 /* 区块标题：左侧竖条 + 展示字体，用于侧栏小工具与列表页分区 */
@@ -1008,8 +1031,7 @@ button:not(:disabled):active,
    都只改 transform / clip-path / opacity，不触发重排。
    --------------------------------------------------------------- */
 
-/* 电梯式浮动标签：聚焦或有内容时上浮并缩小，但**从不消失** */
-.elevator-field {
+/* 电梯式浮动标签：聚焦或有内容时上浮并缩小，但**从不消失** */.elevator-field {
   position: relative;
 }
 

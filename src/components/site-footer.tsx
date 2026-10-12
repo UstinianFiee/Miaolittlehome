@@ -7,13 +7,14 @@ import { getSiteInfo } from "@/lib/settings";
  * 全站页脚。
  *
  * 结构：顶部 3 层波浪（`FooterWaves`）→ 站点名 + 一句描述 → 版权与技术栈 → 备案区。
- * 备案号与链接来自后台设置（`site.icp` / `site.icpLink`），**没配置就整块不渲染**。
+ * 备案号与链接来自后台设置（`site.icp` / `site.icpLink`、`site.police` / `site.policeLink`），
+ * **各自独立，没配置的那一项不渲染**。
  * 底色用 `--footer-bg`，与波浪渐变的下端色一致，接缝看不出来。
  */
 export async function SiteFooter() {
   const t = await getTranslations();
   const year = new Date().getFullYear();
-  const { name, author, description, icp, icpLink } = await getSiteInfo();
+  const { name, author, description, icp, icpLink, police, policeLink } = await getSiteInfo();
 
   return (
     <footer
@@ -35,21 +36,38 @@ export async function SiteFooter() {
           © {year} {author} · {t("footer.rights")} · {t("footer.poweredBy")}
         </p>
 
-        {/* 备案区：未配置备案号时整块不出现 */}
-        {icp ? (
-          <p className="text-xs text-muted-foreground">
-            {icpLink ? (
-              <a
-                href={icpLink}
-                target="_blank"
-                rel="nofollow noopener noreferrer"
-                className="link-underline transition-colors hover:text-primary"
-              >
-                {icp}
-              </a>
-            ) : (
-              icp
-            )}
+        {/* 备案区：ICP 与公安网备各自独立，没配的那项不出现 */}
+        {icp || police ? (
+          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {icp ? (
+              icpLink ? (
+                <a
+                  href={icpLink}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="link-underline transition-colors hover:text-primary"
+                >
+                  {icp}
+                </a>
+              ) : (
+                <span>{icp}</span>
+              )
+            ) : null}
+
+            {police ? (
+              policeLink ? (
+                <a
+                  href={policeLink}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="link-underline transition-colors hover:text-primary"
+                >
+                  {police}
+                </a>
+              ) : (
+                <span>{police}</span>
+              )
+            ) : null}
           </p>
         ) : null}
       </div>

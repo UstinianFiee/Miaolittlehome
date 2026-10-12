@@ -26,6 +26,8 @@ export type SiteInfoRow = {
   favicon: string;
   icp: string;
   icpLink: string;
+  police: string;
+  policeLink: string;
 };
 
 export type { MediaOption };
@@ -58,6 +60,8 @@ export function SiteSettingsManager({
   const [postBackground, setPostBackground] = React.useState(initial.postBackground);
   const [icp, setIcp] = React.useState(initial.icp);
   const [icpLink, setIcpLink] = React.useState(initial.icpLink);
+  const [police, setPolice] = React.useState(initial.police);
+  const [policeLink, setPoliceLink] = React.useState(initial.policeLink);
 
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -110,6 +114,8 @@ export function SiteSettingsManager({
           postBackground,
           icp,
           icpLink,
+          police,
+          policeLink,
         }),
       });
 
@@ -362,6 +368,33 @@ export function SiteSettingsManager({
             placeholder="https://beian.miit.gov.cn/"
           />
           <p className="text-xs text-muted-foreground">{t("adminSite.icpLinkHint")}</p>
+        </div>
+      </div>
+
+      {/* 页脚公安网备：和 ICP 各自独立，配了哪个显示哪个 */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="site-police">{t("adminSite.police")}</Label>
+          <Input
+            id="site-police"
+            value={police}
+            onChange={(event) => setPolice(event.target.value)}
+            maxLength={100}
+            placeholder="粤公网安备 44030002000000号"
+          />
+          <p className="text-xs text-muted-foreground">{t("adminSite.policeHint")}</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="site-police-link">{t("adminSite.policeLink")}</Label>
+          <Input
+            id="site-police-link"
+            value={policeLink}
+            onChange={(event) => setPoliceLink(event.target.value)}
+            maxLength={500}
+            placeholder="https://beian.mps.gov.cn/"
+          />
+          <p className="text-xs text-muted-foreground">{t("adminSite.policeLinkHint")}</p>
         </div>
       </div>
 

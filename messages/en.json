@@ -42,6 +42,7 @@
     "primary": "Primary navigation",
     "home": "Home",
     "posts": "Posts",
+    "shuoshuo": "Notes",
     "archive": "Archive",
     "categories": "Categories",
     "tags": "Tags",
@@ -196,7 +197,8 @@
       "comments": "Comments",
       "friends": "Friends",
       "settings": "Settings",
-      "logs": "Logs"
+      "logs": "Logs",
+      "shuoshuo": "Notes"
     },
     "dashboard": {
       "posts": "Posts",
@@ -206,7 +208,8 @@
       "media": "Media",
       "friends": "Friends",
       "recentOperations": "Recent activity",
-      "noOperations": "No activity yet"
+      "noOperations": "No activity yet",
+      "shuoshuo": "Notes"
     },
     "action": {
       "auth_login": "Signed in",
@@ -245,7 +248,10 @@
       "friend_delete": "Deleted friend",
       "profile_update": "Updated profile",
       "logs_cleanup": "Cleaned up logs",
-      "site_settings_update": "Updated site info"
+      "site_settings_update": "Updated site info",
+      "shuoshuo_create": "Create note",
+      "shuoshuo_update": "Update note",
+      "shuoshuo_delete": "Delete note"
     }
   },
   "locale": {
@@ -291,7 +297,8 @@
     "browse": "Browse posts",
     "scroll": "Scroll down",
     "latest": "Latest posts",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "feedCount": "{count} entries"
   },
   "media": {
     "title": "Media",
@@ -688,7 +695,11 @@
     "icp": "ICP filing number",
     "icpHint": "Shown at the bottom of the footer. Leave empty to hide it.",
     "icpLink": "Filing link",
-    "icpLinkHint": "Usually the MIIT lookup page, e.g. https://beian.miit.gov.cn/."
+    "icpLinkHint": "Usually the MIIT lookup page, e.g. https://beian.miit.gov.cn/.",
+    "police": "Public security filing",
+    "policeHint": "Leave empty to hide it in the footer. Independent from the ICP filing above.",
+    "policeLink": "Public security filing link",
+    "policeLinkHint": "Usually https://beian.mps.gov.cn/"
   },
   "notFound": {
     "title": "Page not found",
@@ -716,5 +727,37 @@
   "code": {
     "copy": "Copy",
     "copied": "Copied"
+  },
+  "shuoshuo": {
+    "title": "Notes",
+    "subtitle": "Short thoughts, kept outside the long-form posts.",
+    "count": "{count} notes",
+    "empty": "No notes yet"
+  },
+  "adminShuoshuo": {
+    "title": "Notes",
+    "new": "New note",
+    "edit": "Edit note",
+    "empty": "No notes yet",
+    "colContent": "Content",
+    "colStatus": "Status",
+    "colTime": "Time",
+    "colActions": "Actions",
+    "fieldContent": "Say something",
+    "fieldContentEn": "English content (optional)",
+    "fieldImages": "Images",
+    "fieldImagesHint": "Up to 9; pick from the media library or upload",
+    "fieldLocation": "Location (optional)",
+    "fieldPinned": "Pinned",
+    "fieldPublished": "Published",
+    "published": "Published",
+    "hidden": "Hidden",
+    "imageCount": "{count} images",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this note?",
+    "failed": "Action failed: {message}",
+    "hint": "Notes appear as chat bubbles mixed into the home feed (by time, pinned first), and have their own page."
   }
 }

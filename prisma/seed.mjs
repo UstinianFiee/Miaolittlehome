@@ -382,6 +382,45 @@ async function seedAnnouncements() {
   }
 }
 
+async function seedShuoshuo() {
+  // 说说：短内容，以气泡卡片夹杂在首页文章流里
+  const rows = [
+    {
+      content:
+        "把首页的文章流和说说混在一起了 —— 长文归长文，随手记的碎念就用气泡卡片，看起来像在聊天。",
+      location: "广东 · 深圳",
+      images: JSON.stringify([DEMO_IMAGE_URL]),
+      pinned: true,
+      published: true,
+    },
+    {
+      content: "折腾了一晚上缓存失效，最后发现是路由组名字没写对。",
+      location: null,
+      images: "[]",
+      pinned: false,
+      published: true,
+    },
+    {
+      content: "相册页整理完了，照片还在慢慢传。",
+      location: "浙江 · 杭州",
+      images: "[]",
+      pinned: false,
+      published: true,
+    },
+    {
+      content: "这是一条已隐藏的说说，只用于验证后台的显示 / 隐藏功能。",
+      location: null,
+      images: "[]",
+      pinned: false,
+      published: false,
+    },
+  ];
+
+  for (const row of rows) {
+    await ensure(prisma.shuoshuo, { content: row.content }, row);
+  }
+}
+
 async function seedSettings() {
   // 播放列表以 JSON 存在 Setting 里，前台播放器直接读取
   const playlist = [
@@ -427,6 +466,7 @@ async function main() {
   await seedVideos();
   await seedSoftware();
   await seedAnnouncements();
+  await seedShuoshuo();
   await seedSettings();
 
   const counts = {
@@ -443,6 +483,7 @@ async function main() {
     software: await prisma.software.count(),
     softwareFiles: await prisma.softwareFile.count(),
     announcements: await prisma.announcement.count(),
+    shuoshuo: await prisma.shuoshuo.count(),
     settings: await prisma.setting.count(),
   };
 

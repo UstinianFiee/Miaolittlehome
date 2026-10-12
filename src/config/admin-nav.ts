@@ -5,6 +5,7 @@ import {
   ImagesIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
+  MessageCircleIcon,
   MessageSquareIcon,
   MusicIcon,
   PackageIcon,
@@ -52,6 +53,13 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
         icon: FileTextIcon,
         stage: 7,
         scopeKey: "adminPosts",
+      },
+      {
+        labelKey: "admin.nav.shuoshuo",
+        href: "/admin/shuoshuo",
+        icon: MessageCircleIcon,
+        stage: 0,
+        scopeKey: "adminShuoshuo",
       },
       {
         labelKey: "admin.nav.videos",

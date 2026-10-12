@@ -37,6 +37,7 @@ import { routing } from "@/i18n/routing";
 const FRONT_STATIC_PATHS = [
   "",
   "/posts",
+  "/shuoshuo",
   "/archive",
   "/categories",
   "/tags",
@@ -117,6 +118,11 @@ export function revalidateSiteSettings(): void {
 /** 公告变更后刷新前台。 */
 export function revalidateAnnouncements(): void {
   revalidateFront();
+}
+
+/** 说说变更后刷新前台（说说会夹杂在首页信息流里）。 */
+export function revalidateShuoshuo(): void {
+  revalidateFront(["/shuoshuo"]);
 }
 
 /** 关于页资料（头像 / 简介 / 社交 / 友链）变更后刷新前台（首页侧边栏也用到了它）。 */

@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { shuoshuoSelect, type ShuoshuoRecord } from "@/lib/shuoshuo";
 
 /**
  * 前台只读取「已发布」文章。
@@ -265,8 +266,92 @@ export async function getAlbumWithPhotos(id: number) {
   };
 }
 
-/** 读取已发布文章的当前浏览量（供前端刷新显示）。 */
-export async function getPublishedPostViews(slug: string): Promise<number | null> {
+// ---------- 首页信息流（文章 + 说说） ----------
+
+export type FeedEntry =
+  | { kind: "post"; id: number; createdAt: Date; post: PostCard }
+  | { kind: "shuoshuo"; id: number; createdAt: Date; shuoshuo: ShuoshuoRecord };
+
+/**
+ * 首页信息流：文章与说说按时间合并。
+ *
+ * 两张表没法在一条 SQL 里 union 再分页（Prisma 不支持），所以：
+ * 1) 只取两张表的 `(id, pinned, createdAt)` —— 数据量很小（每条几十字节）；
+ * 2) 在 JS 里按「置顶优先 → 时间倒序」合并排序，切出当前页；
+ * 3) 再按 id 批量取这一页的完整记录。
+ *
+ * 这样**分页边界是准确的**（不会出现某一页少几条），也不会把全部正文拉进内存。
+ */
+export async function listPublishedFeed(params: { page: number; pageSize: number }) {
+  const [postRows, shuoshuoRows] = await Promise.all([
+    prisma.post.findMany({
+      where: { published: true },
+      select: { id: true, pinned: true, createdAt: true },
+    }),
+    prisma.shuoshuo.findMany({
+      where: { published: true },
+      select: { id: true, pinned: true, createdAt: true },
+    }),
+  ]);
+
+  const merged = [
+    ...postRows.map((row) => ({
+      kind: "post" as const,
+      id: row.id,
+      pinned: row.pinned,
+      createdAt: row.createdAt,
+    })),
+    ...shuoshuoRows.map((row) => ({
+      kind: "shuoshuo" as const,
+      id: row.id,
+      pinned: row.pinned,
+      createdAt: row.createdAt,
+    })),
+  ].sort((a, b) => {
+    if (a.pinned !== b.pinned) {
+      return a.pinned ? -1 : 1;
+    }
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  const total = merged.length;
+  const start = Math.max(0, (params.page - 1) * params.pageSize);
+  const slice = merged.slice(start, start + params.pageSize);
+
+  const postIds = slice.filter((item) => item.kind === "post").map((item) => item.id);
+  const shuoshuoIds = slice.filter((item) => item.kind === "shuoshuo").map((item) => item.id);
+
+  const [posts, shuoshuo] = await Promise.all([
+    postIds.length
+      ? prisma.post.findMany({ where: { id: { in: postIds } }, select: postCardSelect })
+      : Promise.resolve([]),
+    shuoshuoIds.length
+      ? prisma.shuoshuo.findMany({ where: { id: { in: shuoshuoIds } }, select: shuoshuoSelect })
+      : Promise.resolve([]),
+  ]);
+
+  const postMap = new Map(posts.map((post) => [post.id, post]));
+  const shuoshuoMap = new Map(shuoshuo.map((item) => [item.id, item]));
+
+  const entries: FeedEntry[] = [];
+  for (const item of slice) {
+    if (item.kind === "post") {
+      const post = postMap.get(item.id);
+      if (post) {
+        entries.push({ kind: "post", id: item.id, createdAt: item.createdAt, post });
+      }
+    } else {
+      const one = shuoshuoMap.get(item.id);
+      if (one) {
+        entries.push({ kind: "shuoshuo", id: item.id, createdAt: item.createdAt, shuoshuo: one });
+      }
+    }
+  }
+
+  return { entries, total, pageSize: params.pageSize };
+}
+
+/** 读取已发布文章的当前浏览量（供前端刷新显示）。 */export async function getPublishedPostViews(slug: string): Promise<number | null> {
   const post = await prisma.post.findFirst({
     where: { slug, published: true },
     select: { views: true },

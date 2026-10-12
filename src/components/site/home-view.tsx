@@ -8,12 +8,13 @@ import { HeroWave } from "@/components/site/hero-wave";
 import { SitePagination } from "@/components/site/pagination";
 import { PostCardView } from "@/components/site/post-card";
 import { Reveal } from "@/components/site/reveal";
+import { ShuoshuoCard } from "@/components/site/shuoshuo-card";
 import { SiteSidebar } from "@/components/site/site-sidebar";
 import { Typewriter } from "@/components/site/typewriter";
-import { listPublishedPosts } from "@/lib/query";
+import { listPublishedFeed } from "@/lib/query";
 import { getSiteInfo } from "@/lib/settings";
 
-/** 首页每页文章数；超出通过分页查看。 */
+/** 首页每页条数（文章 + 说说合计）；超出通过分页查看。 */
 export const HOME_PAGE_SIZE = 5;
 
 /**
@@ -26,9 +27,11 @@ export const HOME_PAGE_SIZE = 5;
  */
 export async function HomeView({ locale, page }: { locale: string; page: number }) {
   const t = await getTranslations();
-  const { name, subtitle, backgrounds, backgroundVideo, pageBackground } = await getSiteInfo();
+  const site = await getSiteInfo();
+  const { name, subtitle, backgrounds, backgroundVideo, pageBackground, logo } = site;
 
-  const { items: posts, total, pageSize } = await listPublishedPosts({
+  // 文章与说说按时间混在一条流里（说说渲染成气泡卡片，一眼能分清）
+  const { entries, total, pageSize } = await listPublishedFeed({
     page,
     pageSize: HOME_PAGE_SIZE,
   });
@@ -80,17 +83,31 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
             <div className="mb-6 flex items-baseline justify-between gap-4">
               <h2 className="section-title font-display text-lg">{t("home.latest")}</h2>
               <span className="text-sm text-muted-foreground">
-                {t("site.postsCount", { count: total })}
+                {t("home.feedCount", { count: total })}
               </span>
             </div>
 
-            {posts.length === 0 ? (
-              <p className="empty-state py-16 text-center text-muted-foreground">{t("site.postsEmpty")}</p>
+            {entries.length === 0 ? (
+              <p className="empty-state py-16 text-center text-muted-foreground">
+                {t("site.postsEmpty")}
+              </p>
             ) : (
               <div>
-                {posts.map((post, index) => (
-                  <Reveal key={post.id} delay={Math.min(index, 5) * 50}>
-                    <PostCardView post={post} locale={locale} />
+                {entries.map((entry, index) => (
+                  <Reveal
+                    key={`${entry.kind}-${entry.id}`}
+                    delay={Math.min(index, 5) * 50}
+                  >
+                    {entry.kind === "post" ? (
+                      <PostCardView post={entry.post} locale={locale} />
+                    ) : (
+                      <ShuoshuoCard
+                        item={entry.shuoshuo}
+                        locale={locale}
+                        siteName={name}
+                        logo={logo}
+                      />
+                    )}
                   </Reveal>
                 ))}
               </div>

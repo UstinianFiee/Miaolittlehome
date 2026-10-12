@@ -42,6 +42,7 @@
     "primary": "主导航",
     "home": "首页",
     "posts": "文章",
+    "shuoshuo": "说说",
     "archive": "归档",
     "categories": "分类",
     "tags": "标签",
@@ -196,7 +197,8 @@
       "comments": "评论",
       "friends": "友链",
       "settings": "站点设置",
-      "logs": "日志"
+      "logs": "日志",
+      "shuoshuo": "说说"
     },
     "dashboard": {
       "posts": "文章",
@@ -206,7 +208,8 @@
       "media": "媒体",
       "friends": "友链",
       "recentOperations": "最近操作",
-      "noOperations": "暂无操作记录"
+      "noOperations": "暂无操作记录",
+      "shuoshuo": "说说"
     },
     "action": {
       "auth_login": "登录后台",
@@ -245,7 +248,10 @@
       "friend_delete": "删除友链",
       "profile_update": "更新个人资料",
       "logs_cleanup": "清理日志",
-      "site_settings_update": "更新站点信息"
+      "site_settings_update": "更新站点信息",
+      "shuoshuo_create": "发布说说",
+      "shuoshuo_update": "更新说说",
+      "shuoshuo_delete": "删除说说"
     }
   },
   "locale": {
@@ -291,7 +297,8 @@
     "browse": "浏览文章",
     "scroll": "向下滚动",
     "latest": "最新文章",
-    "viewAll": "查看全部"
+    "viewAll": "查看全部",
+    "feedCount": "{count} 条"
   },
   "media": {
     "title": "媒体库",
@@ -688,7 +695,11 @@
     "icp": "备案号",
     "icpHint": "显示在页脚底部；留空则整块不显示。",
     "icpLink": "备案链接",
-    "icpLinkHint": "一般是工信部备案查询页，如 https://beian.miit.gov.cn/。"
+    "icpLinkHint": "一般是工信部备案查询页，如 https://beian.miit.gov.cn/。",
+    "police": "公安网备号",
+    "policeHint": "留空则页脚不显示公安备案。和上面的 ICP 备案互不影响。",
+    "policeLink": "公安网备链接",
+    "policeLinkHint": "一般填 https://beian.mps.gov.cn/"
   },
   "notFound": {
     "title": "页面走丢了",
@@ -716,5 +727,37 @@
   "code": {
     "copy": "复制",
     "copied": "已复制"
+  },
+  "shuoshuo": {
+    "title": "说说",
+    "subtitle": "随手记下的碎片，长文之外的碎念。",
+    "count": "{count} 条",
+    "empty": "还没有说说"
+  },
+  "adminShuoshuo": {
+    "title": "说说管理",
+    "new": "写一条说说",
+    "edit": "编辑说说",
+    "empty": "还没有说说",
+    "colContent": "内容",
+    "colStatus": "状态",
+    "colTime": "时间",
+    "colActions": "操作",
+    "fieldContent": "说点什么",
+    "fieldContentEn": "英文内容（可选）",
+    "fieldImages": "配图",
+    "fieldImagesHint": "最多 9 张，从媒体库选或直接上传",
+    "fieldLocation": "地点（可选）",
+    "fieldPinned": "置顶",
+    "fieldPublished": "发布",
+    "published": "已发布",
+    "hidden": "已隐藏",
+    "imageCount": "{count} 张图",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "deleteConfirm": "确定删除这条说说？",
+    "failed": "操作失败：{message}",
+    "hint": "说说会以气泡卡片的形式夹杂在首页文章流里（按时间排序，置顶优先），另有独立的「说说」页。"
   }
 }
