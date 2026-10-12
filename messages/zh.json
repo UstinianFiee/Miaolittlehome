@@ -305,6 +305,7 @@
     "album": "所属相册",
     "noAlbum": "未归入相册",
     "setTitle": "标题",
+    "renameFailed": "重命名失败：{message}",
     "save": "保存"
   },
   "albums": {

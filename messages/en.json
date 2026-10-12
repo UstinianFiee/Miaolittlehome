@@ -305,6 +305,7 @@
     "album": "Album",
     "noAlbum": "Not in an album",
     "setTitle": "Title",
+    "renameFailed": "Rename failed: {message}",
     "save": "Save"
   },
   "albums": {

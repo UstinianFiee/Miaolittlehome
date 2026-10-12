@@ -2,6 +2,7 @@ import { FilmIcon, PinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { VideoThumb } from "@/components/video-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import { formatDual } from "@/lib/datetime";
@@ -50,6 +51,17 @@ export default async function VideosPage({ params }: Props) {
                       alt=""
                       loading="lazy"
                       className="aspect-video w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : video.sourceType === "local" ? (
+                    /* 没设封面时用视频首帧兜底，比一个胶片图标有用得多 */
+                    <VideoThumb
+                      src={video.srcUrl}
+                      className="aspect-video w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fallback={
+                        <div className="flex aspect-video w-full items-center justify-center">
+                          <FilmIcon className="size-8 text-muted-foreground" />
+                        </div>
+                      }
                     />
                   ) : (
                     <div className="flex aspect-video w-full items-center justify-center">

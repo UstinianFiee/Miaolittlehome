@@ -1,11 +1,20 @@
 "use client";
 
-import { CheckIcon, CopyIcon, FileAudioIcon, FilmIcon, ImageIcon, Trash2Icon } from "lucide-react";
+import {
+  CheckIcon,
+  CopyIcon,
+  FileAudioIcon,
+  FilmIcon,
+  ImageIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { FileUploader } from "@/components/admin/file-uploader";
+import { VideoThumb } from "@/components/video-thumb";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -53,6 +62,74 @@ function TypeIcon({ type }: { type: string }) {
     return <FileAudioIcon className="size-4" />;
   }
   return <FilmIcon className="size-4" />;
+}
+
+/**
+ * 视频封面：见 `VideoThumb`（单独一个文件，媒体字段的选图弹窗也要用）。
+ */
+
+/** 媒体标题：点一下就能改名（后端 PATCH 早就支持 title 了）。 */
+function MediaTitle({
+  item,
+  disabled,
+  onRename,
+}: {
+  item: MediaItem;
+  disabled: boolean;
+  onRename: (item: MediaItem, title: string) => Promise<void>;
+}) {
+  const t = useTranslations();
+  const [editing, setEditing] = React.useState(false);
+  const [value, setValue] = React.useState(item.title ?? "");
+
+  React.useEffect(() => {
+    setValue(item.title ?? "");
+  }, [item.title]);
+
+  async function commit() {
+    const next = value.trim();
+    setEditing(false);
+    if (!next || next === item.title) {
+      setValue(item.title ?? "");
+      return;
+    }
+    await onRename(item, next);
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={value}
+        disabled={disabled}
+        onChange={(event) => setValue(event.target.value)}
+        onBlur={() => void commit()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            void commit();
+          } else if (event.key === "Escape") {
+            setValue(item.title ?? "");
+            setEditing(false);
+          }
+        }}
+        className="h-7 w-full min-w-0 rounded border border-input bg-transparent px-1.5 text-sm outline-none focus-visible:border-ring"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => setEditing(true)}
+      title={item.title ?? item.path}
+      className="group flex w-full min-w-0 items-center gap-1.5 text-left"
+    >
+      <span className="truncate text-sm font-medium">{item.title ?? item.path}</span>
+      <PencilIcon className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+      <span className="sr-only">{t("media.setTitle")}</span>
+    </button>
+  );
 }
 
 export function MediaManager({
@@ -124,6 +201,29 @@ export function MediaManager({
     }
   }
 
+  async function rename(item: MediaItem, title: string) {
+    setPendingId(item.id);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/media/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        setError(t("media.renameFailed", { message: payload?.error ?? "" }));
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError(t("media.renameFailed", { message: "" }));
+    } finally {
+      setPendingId(null);
+    }
+  }
+
   async function copyPath(item: MediaItem) {
     try {
       await navigator.clipboard.writeText(item.path);
@@ -182,15 +282,23 @@ export function MediaManager({
                     loading="lazy"
                     className="h-full w-full object-contain"
                   />
+                ) : item.type === "video" ? (
+                  <VideoThumb
+                    src={item.path}
+                    className="h-full w-full object-cover"
+                    fallback={<TypeIcon type={item.type} />}
+                  />
                 ) : (
                   <TypeIcon type={item.type} />
                 )}
               </div>
 
               <div className="flex flex-1 flex-col gap-2 p-3">
-                <p className="truncate text-sm font-medium" title={item.title ?? item.path}>
-                  {item.title ?? item.path}
-                </p>
+                <MediaTitle
+                  item={item}
+                  disabled={pendingId === item.id}
+                  onRename={rename}
+                />
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
                   <TypeIcon type={item.type} />
                   {formatBytes(item.size)}

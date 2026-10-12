@@ -4,6 +4,7 @@ import { UploadIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { VideoThumb } from "@/components/video-thumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -174,9 +175,15 @@ export function MediaField({
                 className="overflow-hidden rounded border border-border transition-colors hover:border-primary"
               >
                 {preview === "video" ? (
-                  <span className="flex aspect-square w-full items-center justify-center bg-muted/40 p-1 text-[0.6rem] break-all text-muted-foreground">
-                    {option.title}
-                  </span>
+                  <VideoThumb
+                    src={option.path}
+                    className="aspect-square w-full object-cover"
+                    fallback={
+                      <span className="flex aspect-square w-full items-center justify-center bg-muted/40 p-1 text-[0.6rem] break-all text-muted-foreground">
+                        {option.title}
+                      </span>
+                    }
+                  />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
