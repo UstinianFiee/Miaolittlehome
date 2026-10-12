@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { MediaField, type MediaOption } from "@/components/admin/media-field";
+import { SuccessNote } from "@/components/admin/success-note";
 import { ICON_KEYS, iconLabel, isBrandIcon, ProfileIcon } from "@/components/site/profile-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -296,7 +297,7 @@ export function ProfileManager({
                     aria-label={t("adminProfile.removeLink")}
                     onClick={() => removeLink(index)}
                   >
-                    <Trash2Icon className="size-4" />
+                    <Trash2Icon className="trash-wiggle size-4" />
                   </Button>
                 </div>
               </li>
@@ -306,9 +307,7 @@ export function ProfileManager({
       </div>
 
       {message ? (
-        <p role="status" className="text-sm text-primary">
-          {message}
-        </p>
+        <SuccessNote>{message}</SuccessNote>
       ) : null}
 
       {error ? (

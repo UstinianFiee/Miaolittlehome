@@ -163,7 +163,14 @@
     "submitting": "登录中…",
     "invalidCredentials": "用户名或密码不正确",
     "tooManyAttempts": "登录尝试过于频繁，请稍后再试",
-    "genericError": "登录失败，请稍后重试"
+    "genericError": "登录失败，请稍后重试",
+    "strengthEmpty": "",
+    "strengthWeak": "弱",
+    "strengthFair": "中",
+    "strengthGood": "强",
+    "strengthStrong": "很强",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码"
   },
   "admin": {
     "title": "后台管理",

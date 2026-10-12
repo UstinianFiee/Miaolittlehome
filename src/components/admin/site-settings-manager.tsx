@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { MediaField, type MediaOption } from "@/components/admin/media-field";
+import { SuccessNote } from "@/components/admin/success-note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -273,7 +274,7 @@ export function SiteSettingsManager({
                       aria-label={t("adminSite.removeBackground")}
                       onClick={() => removeBackground(index)}
                     >
-                      <Trash2Icon className="size-4" />
+                      <Trash2Icon className="trash-wiggle size-4" />
                     </Button>
                   </div>
                 </div>
@@ -365,9 +366,7 @@ export function SiteSettingsManager({
       </div>
 
       {message ? (
-        <p role="status" className="text-sm text-primary">
-          {message}
-        </p>
+        <SuccessNote>{message}</SuccessNote>
       ) : null}
 
       {error ? (

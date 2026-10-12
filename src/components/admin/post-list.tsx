@@ -200,7 +200,7 @@ export function PostList({
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="empty-state py-10 text-center text-muted-foreground">
                   {t("posts.empty")}
                 </TableCell>
               </TableRow>
@@ -257,7 +257,7 @@ export function PostList({
                         disabled={deletingId === item.id}
                         onClick={() => void handleDelete(item)}
                       >
-                        <Trash2Icon className="size-4 text-destructive" />
+                        <Trash2Icon className="trash-wiggle size-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>

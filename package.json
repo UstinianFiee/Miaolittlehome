@@ -2,6 +2,9 @@
   "name": "blog",
   "version": "0.1.0",
   "private": true,
+  "description": "渺の小家 · 个人博客（Next.js 15 全栈，前台 ISR + 后台单管理员）",
+  "author": "UstinianFiee",
+  "license": "MIT",
   "engines": {
     "node": ">=20.0.0"
   },

@@ -1002,13 +1002,261 @@ button:not(:disabled):active,
   animation: icon-pop 440ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ---------------------------------------------------------------
+   表单微交互
+   一套统一的「手感」：标签坐电梯、输入后打勾、出错时轻晃。
+   都只改 transform / clip-path / opacity，不触发重排。
+   --------------------------------------------------------------- */
+
+/* 电梯式浮动标签：聚焦或有内容时上浮并缩小，但**从不消失** */
+.elevator-field {
+  position: relative;
+}
+
+.elevator-field > input {
+  height: 3.25rem;
+  padding-top: 1.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.elevator-field > .elevator-label {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  pointer-events: none;
+  color: var(--muted-foreground);
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 300ms ease;
+}
+
+.elevator-field:focus-within > .elevator-label,
+.elevator-field > input:not(:placeholder-shown) + .elevator-label {
+  transform: translateY(-1.28rem) scale(0.76);
+  color: var(--primary);
+}
+
+/* 输入框右侧的批改区（打勾 / 强度提示 / 显示密码） */
+.field-adornment {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* 角标里如果有可点的东西（例如显示密码），要单独放开 */
+.field-adornment > button {
+  pointer-events: auto;
+}
+
+/*
+ * 隐藏浏览器自带的密码可见切换按钮。
+ * Edge 的 ::-ms-reveal 固定在输入框最右侧，会和我们的打勾叠在一起；
+ * 各浏览器位置也不一致，索性自己画一个（见 login-form 里的眼睛按钮）。
+ */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+/* 老师批改式打勾：一笔画出来 */
+@keyframes tick-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes tick-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 默认继承文字颜色，用法处需要「批改绿」时加 .tick-ok */
+  animation: tick-pop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tick-ok {
+  color: #22c55e;
+}
+
+.tick > svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  overflow: visible;
+}
+
+.tick > svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: tick-draw 420ms cubic-bezier(0.65, 0, 0.35, 1) 80ms forwards;
+}
+
+/* 出错：框体轻晃（比一行红字显眼得多） */
+@keyframes field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  12% {
+    transform: translateX(-7px);
+  }
+  28% {
+    transform: translateX(6px);
+  }
+  44% {
+    transform: translateX(-5px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+  76% {
+    transform: translateX(-2px);
+  }
+  90% {
+    transform: translateX(1px);
+  }
+}
+
+.field-shake {
+  animation: field-shake 480ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/*
+ * 删除按钮 hover：垃圾桶左右摇两下。
+ * 危险操作给一点「要动手了」的拟人化提示，比纯变色更容易被注意到。
+ */
+@keyframes trash-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-9deg);
+  }
+  75% {
+    transform: rotate(9deg);
+  }
+}
+
+.trash-wiggle {
+  /* 标记用；实际动画由下面「按钮 hover 时摇里面的垃圾桶」触发，
+     这样不用给每个删除按钮都补一遍 hover 逻辑 */
+}
+
+button:hover .trash-wiggle {
+  animation: trash-wiggle 420ms ease-in-out;
+}
+
+/* 空状态：淡入 + 轻微上浮，避免列表为空时页面「啪」地一下是死的 */
+@keyframes empty-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.empty-state {
+  animation: empty-rise 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 密码强度温度计 */
+.thermo {
+  position: relative;
+  height: 0.375rem;
+  margin-top: 0.55rem;
+  border-radius: 9999px;
+  background-color: color-mix(in oklab, var(--foreground) 12%, transparent);
+  overflow: visible;
+}
+
+.thermo-track {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/*
+ * 液柱：整条铺满渐变，用 clip-path 从右侧裁掉未点亮的长度。
+ * 这样渐变坐标始终对齐整条轨道 —— 强度越高，露出来的部分越往红端走，
+ * 视觉上就是温度在升。（若改成按宽度缩放渐变，颜色会一直是蓝色。）
+ */
+.thermo-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: linear-gradient(
+    90deg,
+    #38bdf8 0%,
+    #22d3ee 26%,
+    #a3e635 46%,
+    #fbbf24 66%,
+    #fb923c 82%,
+    #ef4444 100%
+  );
+  transition: clip-path 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 温度计球泡：跟着液面前沿走，像读数 */
+.thermo-bulb {
+  position: absolute;
+  top: 50%;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 9999px;
+  border: 2px solid var(--card);
+  transform: translate(-50%, -50%);
+  transition:
+    left 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 420ms ease,
+    box-shadow 420ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
   .skeleton,
   .loading-dots > span,
   .icon-pop,
-  .ripple-wave {
+  .ripple-wave,
+  .field-shake,
+  .tick,
+  .tick > svg path,
+  .empty-state,
+  .trash-wiggle:hover svg {
     animation: none;
+  }
+
+  .tick > svg path {
+    stroke-dashoffset: 0;
   }
 
   .press,
@@ -1016,7 +1264,10 @@ button:not(:disabled):active,
   .lift,
   .media-zoom img,
   .media-zoom::after,
-  .btn-gradient {
+  .btn-gradient,
+  .elevator-field > .elevator-label,
+  .thermo-fill,
+  .thermo-bulb {
     transition: none;
   }
 

@@ -210,7 +210,7 @@ export function AlbumManager({ items }: { items: AlbumRow[] }) {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="empty-state py-10 text-center text-muted-foreground">
                   {t("albums.empty")}
                 </TableCell>
               </TableRow>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tick } from "@/components/ui/tick";
 import type { CommentView } from "@/lib/comment-view";
 import { formatDual } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
@@ -226,6 +227,16 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
   const [replyTo, setReplyTo] = React.useState<CommentView | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  // 提交失败时让表单轻晃一下（与后台登录页同一套反馈）
+  const [shaking, setShaking] = React.useState(false);
+
+  function triggerShake() {
+    setShaking(false);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setShaking(true));
+    });
+    window.setTimeout(() => setShaking(false), 560);
+  }
   const [submitting, setSubmitting] = React.useState(false);
 
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -297,6 +308,7 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
 
       if (!response.ok || !payload?.ok) {
         setError(t("comments.failed", { message: payload?.error ?? "" }));
+        triggerShake();
         return;
       }
 
@@ -329,6 +341,7 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
       form.reset();
     } catch {
       setError(t("comments.failed", { message: "" }));
+      triggerShake();
     } finally {
       setSubmitting(false);
     }
@@ -360,7 +373,7 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
       ) : null}
 
       {initialComments.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">{t("comments.empty")}</p>
+        <p className="empty-state py-10 text-center text-sm text-muted-foreground">{t("comments.empty")}</p>
       ) : (
         <ul className="mt-5 space-y-3">
           {initialComments.map((comment) => (
@@ -377,7 +390,7 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
         </ul>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit} className="mt-8 space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className={cn("mt-8 space-y-4", shaking && "field-shake")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-medium">{t("comments.formTitle")}</h3>
           {replyTo ? (
@@ -415,13 +428,14 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
         </div>
 
         {notice ? (
-          <p role="status" className="text-sm text-primary">
+          <p role="status" className="page-enter flex items-center gap-1.5 text-sm text-primary">
+            <Tick />
             {notice}
           </p>
         ) : null}
 
         {error ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="page-enter text-sm text-destructive">
             {error}
           </p>
         ) : null}

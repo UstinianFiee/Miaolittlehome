@@ -280,7 +280,7 @@ export function VideoManager({ items }: { items: VideoRow[] }) {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="empty-state py-10 text-center text-muted-foreground">
                   {t("adminVideos.empty")}
                 </TableCell>
               </TableRow>

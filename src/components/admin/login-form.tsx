@@ -1,12 +1,19 @@
 "use client";
 
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { ElevatorField } from "@/components/ui/elevator-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Tick } from "@/components/ui/tick";
+import { passwordStrength, STRENGTH_COLORS } from "@/lib/password-strength";
+import { cn } from "@/lib/utils";
+
+/** 停止输入后多久开始「批改」（毫秒）。太短会边打边闪，太长显得迟钝。 */
+const CHECK_DELAY_MS = 620;
 
 export function LoginForm({ siteName, logo }: { siteName: string; logo?: string }) {
   const t = useTranslations();
@@ -16,10 +23,53 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [username, setUsername] = React.useState("");
+  const [password, setPassword] = React.useState("");
+
+  // 两个字段的「批改结果」：只在停止输入一段时间后才置位
+  const [usernameOk, setUsernameOk] = React.useState(false);
+  const [passwordOk, setPasswordOk] = React.useState(false);
+
+  // 出错时让框体轻晃；靠先关后开重播动画
+  const [shaking, setShaking] = React.useState(false);
+  // 出错后红框保持到用户重新输入，别一晃就没了
+  const [failed, setFailed] = React.useState(false);
+  const [reveal, setReveal] = React.useState(false);
+
+  const strength = React.useMemo(() => passwordStrength(password), [password]);
+
   // 水合完成前禁用提交：避免未挂载时退化成原生表单提交（会把密码写进 URL）
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 暂停输入后校验：像老师等学生写完再打勾
+  React.useEffect(() => {
+    if (!username) {
+      setUsernameOk(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setUsernameOk(username.trim().length > 0), CHECK_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [username]);
+
+  React.useEffect(() => {
+    if (!password) {
+      setPasswordOk(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setPasswordOk(password.length >= 6), CHECK_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [password]);
+
+  function triggerShake() {
+    setShaking(false);
+    // 等一帧再打开，否则 class 没被移除过、动画不会重播
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setShaking(true));
+    });
+    window.setTimeout(() => setShaking(false), 560);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,7 +77,6 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
       return;
     }
 
-    const formData = new FormData(event.currentTarget);
     setPending(true);
     setError(null);
 
@@ -35,10 +84,7 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: String(formData.get("username") ?? ""),
-          password: String(formData.get("password") ?? ""),
-        }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (response.ok) {
@@ -60,8 +106,13 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
             ? t("login.invalidCredentials")
             : t("login.genericError")
       );
+      // 框体轻晃是主要反馈；下面那行文字只作为补充说明
+      setFailed(true);
+      triggerShake();
     } catch {
       setError(t("login.genericError"));
+      setFailed(true);
+      triggerShake();
     } finally {
       setPending(false);
     }
@@ -94,36 +145,120 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
         // 兜底：即便脚本未加载，也用 POST 提交到接口，绝不让密码进入 URL
         method="post"
         action="/api/admin/login"
-        className="space-y-4"
+        className="space-y-5"
       >
-        <div className="space-y-2">
-          <Label htmlFor="username">{t("login.username")}</Label>
+        <ElevatorField
+          id="username"
+          label={t("login.username")}
+          shake={shaking}
+          invalid={failed}
+          adornment={usernameOk && !failed ? <Tick /> : null}
+        >
           <Input
             id="username"
             name="username"
+            placeholder=" "
             autoComplete="username"
             required
             maxLength={64}
             autoFocus
-            className="h-11 transition-shadow duration-300 focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              setFailed(false);
+            }}
+            className={cn(
+              "pr-9 transition-shadow duration-300",
+              "focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--primary)_18%,transparent)]",
+              failed && "border-destructive focus-visible:border-destructive"
+            )}
           />
-        </div>
+        </ElevatorField>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">{t("login.password")}</Label>
-          <Input
+        <div>
+          <ElevatorField
             id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            maxLength={200}
-            className="h-11 transition-shadow duration-300 focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
-          />
+            label={t("login.password")}
+            shake={shaking}
+            invalid={failed}
+            adornment={
+              <>
+                {passwordOk && !failed ? (
+                  <Tick />
+                ) : password ? (
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: STRENGTH_COLORS[strength.level] }}
+                  >
+                    {t(`login.${strength.labelKey}`)}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={reveal ? t("login.hidePassword") : t("login.showPassword")}
+                  onClick={() => setReveal((current) => !current)}
+                  className="press rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {reveal ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+                </button>
+              </>
+            }
+          >
+            <Input
+              id="password"
+              name="password"
+              type={reveal ? "text" : "password"}
+              placeholder=" "
+              autoComplete="current-password"
+              required
+              maxLength={200}
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setFailed(false);
+              }}
+              className={cn(
+                "pr-16 transition-shadow duration-300",
+                "focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--primary)_18%,transparent)]",
+                failed && "border-destructive focus-visible:border-destructive"
+              )}
+            />
+          </ElevatorField>
+
+          {/*
+            密码强度温度计：液柱整条铺满渐变、靠 clip-path 裁出长度，
+            所以强度越高露出来的部分越往红端走 —— 视觉上就是温度在升。
+          */}
+          <div className="thermo" aria-hidden>
+            <div className="thermo-track">
+              <div
+                className="thermo-fill"
+                style={{ clipPath: `inset(0 ${100 - strength.score}% 0 0)` }}
+              />
+            </div>
+            <span
+              className="thermo-bulb"
+              style={{
+                left: `${strength.score}%`,
+                backgroundColor: STRENGTH_COLORS[strength.level],
+                boxShadow:
+                  strength.level > 0
+                    ? `0 0 10px ${STRENGTH_COLORS[strength.level]}, 0 0 4px ${STRENGTH_COLORS[strength.level]}`
+                    : "none",
+              }}
+            />
+          </div>
         </div>
 
         {error ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p
+            role="alert"
+            className="page-enter flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+          >
+            <span aria-hidden className="mt-px">
+              !
+            </span>
             {error}
           </p>
         ) : null}

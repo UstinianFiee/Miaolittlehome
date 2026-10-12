@@ -323,7 +323,7 @@ export function SoftwareManager({ items }: { items: SoftwareRow[] }) {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="empty-state py-10 text-center text-muted-foreground">
                   {t("adminSoftware.empty")}
                 </TableCell>
               </TableRow>
@@ -498,7 +498,7 @@ export function SoftwareManager({ items }: { items: SoftwareRow[] }) {
                           disabled={pending}
                           onClick={() => void removeFile(file)}
                         >
-                          <Trash2Icon className="size-4 text-destructive" />
+                          <Trash2Icon className="trash-wiggle size-4 text-destructive" />
                         </Button>
                       </TableCell>
                     </TableRow>

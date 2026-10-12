@@ -163,7 +163,14 @@
     "submitting": "Signing in…",
     "invalidCredentials": "Incorrect username or password",
     "tooManyAttempts": "Too many sign-in attempts, please try again later",
-    "genericError": "Sign-in failed, please try again later"
+    "genericError": "Sign-in failed, please try again later",
+    "strengthEmpty": "",
+    "strengthWeak": "Weak",
+    "strengthFair": "Fair",
+    "strengthGood": "Good",
+    "strengthStrong": "Strong",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "admin": {
     "title": "Admin",

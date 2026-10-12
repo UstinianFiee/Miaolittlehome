@@ -141,7 +141,7 @@ export function CommentManager({
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="empty-state py-10 text-center text-muted-foreground">
                   {t("comments.empty")}
                 </TableCell>
               </TableRow>
@@ -224,7 +224,7 @@ export function CommentManager({
                         disabled={pendingId === item.id}
                         onClick={() => void remove(item)}
                       >
-                        <Trash2Icon className="size-4 text-destructive" />
+                        <Trash2Icon className="trash-wiggle size-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>

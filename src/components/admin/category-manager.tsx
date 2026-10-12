@@ -215,7 +215,7 @@ export function CategoryManager({ items }: { items: CategoryRow[] }) {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="empty-state py-10 text-center text-muted-foreground">
                   {t("categories.empty")}
                 </TableCell>
               </TableRow>

@@ -177,7 +177,7 @@ export function AnnouncementManager({ items }: { items: AnnouncementRow[] }) {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={4} className="empty-state py-10 text-center text-muted-foreground">
                   {t("adminAnnouncements.empty")}
                 </TableCell>
               </TableRow>

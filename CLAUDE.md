@@ -19,8 +19,10 @@
 
 ## 上下文入口
 
-- README.md：项目入口与真实命令（阶段 1 建立并回填）
+- README.md：项目入口（简介 / 功能 / 技术栈 / 目录 / 使用说明）
+- docs/技术说明.md：实现细节与踩过的坑——**改代码前先看这份**
 - docs/SPEC.md：需求唯一来源——功能、数据模型、技术约束、阶段计划、开放问题
+- docs/部署手册.md（一页纸）/ docs/DEPLOY.md（含排障）：部署
 - prisma/schema.prisma：数据模型
 - src/middleware.ts：后台鉴权边界
 

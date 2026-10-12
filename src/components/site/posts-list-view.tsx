@@ -36,7 +36,7 @@ export async function PostsListView({ locale, page }: { locale: string; page: nu
           </header>
 
           {items.length === 0 ? (
-            <p className="py-16 text-center text-muted-foreground">{t("site.postsEmpty")}</p>
+            <p className="empty-state py-16 text-center text-muted-foreground">{t("site.postsEmpty")}</p>
           ) : (
             <div>
               {items.map((post, index) => (

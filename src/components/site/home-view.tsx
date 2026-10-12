@@ -85,7 +85,7 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
             </div>
 
             {posts.length === 0 ? (
-              <p className="py-16 text-center text-muted-foreground">{t("site.postsEmpty")}</p>
+              <p className="empty-state py-16 text-center text-muted-foreground">{t("site.postsEmpty")}</p>
             ) : (
               <div>
                 {posts.map((post, index) => (

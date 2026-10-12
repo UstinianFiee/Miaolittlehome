@@ -263,7 +263,7 @@ export function MediaManager({
       ) : null}
 
       {items.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border/70 bg-background py-16 text-center text-sm text-muted-foreground">
+        <p className="empty-state rounded-lg border border-dashed border-border/70 bg-background py-16 text-center text-sm text-muted-foreground">
           {t("media.empty")}
         </p>
       ) : (
@@ -330,7 +330,7 @@ export function MediaManager({
                     onClick={() => void copyPath(item)}
                   >
                     {copiedId === item.id ? (
-                      <CheckIcon className="size-4" />
+                      <CheckIcon className="icon-pop size-4" />
                     ) : (
                       <CopyIcon className="size-4" />
                     )}
@@ -343,7 +343,7 @@ export function MediaManager({
                     disabled={pendingId === item.id}
                     onClick={() => void remove(item)}
                   >
-                    <Trash2Icon className="size-4 text-destructive" />
+                    <Trash2Icon className="trash-wiggle size-4 text-destructive" />
                   </Button>
                 </div>
               </div>

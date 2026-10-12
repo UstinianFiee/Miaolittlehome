@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { SuccessNote } from "@/components/admin/success-note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,7 +134,7 @@ export function PlaylistManager({
         <p className="text-xs text-muted-foreground">{t("playlistAdmin.hint")}</p>
 
         {tracks.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{t("playlistAdmin.empty")}</p>
+          <p className="empty-state py-8 text-center text-sm text-muted-foreground">{t("playlistAdmin.empty")}</p>
         ) : (
           <ul className="space-y-3">
             {tracks.map((track, position) => (
@@ -228,7 +229,7 @@ export function PlaylistManager({
                     aria-label={t("playlistAdmin.remove")}
                     onClick={() => remove(position)}
                   >
-                    <Trash2Icon className="size-4 text-destructive" />
+                    <Trash2Icon className="trash-wiggle size-4 text-destructive" />
                   </Button>
                 </div>
               </li>
@@ -237,9 +238,7 @@ export function PlaylistManager({
         )}
 
         {message ? (
-          <p role="status" className="text-sm text-primary">
-            {message}
-          </p>
+          <SuccessNote>{message}</SuccessNote>
         ) : null}
 
         {error ? (
