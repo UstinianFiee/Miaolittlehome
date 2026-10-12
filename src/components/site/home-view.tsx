@@ -42,7 +42,7 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
         它们会跑到外层去和「内容区背景层（z=-20/-10）」混在一起，
         结果内容区那层半透明遮罩会盖在封面图上面，整屏发灰。
       */}
-      <section className="relative isolate -mt-[5.25rem] flex min-h-svh flex-col items-center justify-center overflow-hidden px-4 text-center sm:-mt-[5.75rem]">
+      <section className="hero-shell relative isolate -mt-[5.25rem] flex flex-col items-center justify-center overflow-hidden px-4 text-center sm:-mt-[5.75rem]">
         <HeroBackground images={backgrounds} video={backgroundVideo} />
 
         <HeroTitle

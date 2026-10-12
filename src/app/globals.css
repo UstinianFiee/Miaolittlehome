@@ -258,6 +258,8 @@
 .surface-glass {
   @apply rounded-lg border border-border;
   background-color: rgb(255 255 255 / 0.62);
+  /* iOS Safari 18 之前只认带前缀的写法，漏掉这行毛玻璃在 iPhone 上直接不生效 */
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
   backdrop-filter: blur(14px) saturate(1.1);
   box-shadow: 0 2px 10px rgb(0 0 0 / 0.06);
 }
@@ -270,6 +272,7 @@
 /* 触屏 / 低性能设备上关闭毛玻璃，避免滚动掉帧 */
 @media (prefers-reduced-motion: reduce) {
   .surface-glass {
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background-color: rgb(255 255 255 / 0.92);
   }
@@ -594,6 +597,27 @@
    首页封面
    文字颜色与遮罩都随主题变化，切换日夜时首屏有明显反馈。
    --------------------------------------------------------------- */
+
+/*
+ * 封面容器高度：整屏。
+ *
+ * 用 @supports 而不是「同一规则里写两遍 min-height」——后者会被构建期的
+ * CSS 压缩器（Lightning CSS）当成重复声明直接删掉，兜底就没了。
+ *
+ * 为什么需要兜底：svh 是较新的单位（iOS 15.4 / Chrome 108 起），
+ * 老一点的手机浏览器会丢掉这条声明，封面就塌成内容高度，
+ * 整屏大图变成一条横幅，观感跟 PC 完全不同。
+ */
+.hero-shell {
+  min-height: 100vh;
+}
+
+@supports (min-height: 100svh) {
+  .hero-shell {
+    min-height: 100svh;
+  }
+}
+
 /* 封面标题：日夜主题统一白字（封面是图片，白字最通用，深字在图上显脏） */
 .hero-title {
   position: relative;

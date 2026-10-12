@@ -158,7 +158,7 @@ function CommentBody({
             {isPending ? <Badge variant="outline">{t("comments.pendingBadge")}</Badge> : null}
             <time
               dateTime={comment.createdAtIso}
-              className="ml-auto shrink-0 text-xs text-muted-foreground"
+              className="ml-auto min-w-0 text-xs text-muted-foreground max-sm:ml-0 max-sm:w-full"
             >
               {comment.createdAtLabel}
             </time>
@@ -183,20 +183,22 @@ function CommentBody({
           </div>
 
           {comment.replies.length > 0 ? (
-            <ul className="mt-3 space-y-2 border-l-2 border-primary/25 pl-3">
+            /* 手机端缩进与留白收一点：375px 屏上嵌套回复的内容列只剩 110px 左右，
+               时间那行会被挤到折成三行（见 time 的 max-sm 处理） */
+            <ul className="mt-3 space-y-2 border-l-2 border-primary/25 pl-2.5 sm:pl-3">
               {comment.replies.map((reply) => (
                 <li
                   key={reply.id}
-                  className="rounded-md border border-border/50 bg-background/50 p-3"
+                  className="rounded-md border border-border/50 bg-background/50 p-2.5 sm:p-3"
                 >
-                  <div className="flex gap-2.5">
+                  <div className="flex gap-2 sm:gap-2.5">
                     <CommentAvatar name={reply.author} isAdmin={reply.isAdmin} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <AuthorLine comment={reply} />
                         <time
                           dateTime={reply.createdAtIso}
-                          className="ml-auto shrink-0 text-xs text-muted-foreground"
+                          className="ml-auto min-w-0 text-xs text-muted-foreground max-sm:ml-0 max-sm:w-full"
                         >
                           {reply.createdAtLabel}
                         </time>
