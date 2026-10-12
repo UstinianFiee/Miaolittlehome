@@ -54,9 +54,11 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
 
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
       setError(
-        data?.error === "invalid_credentials"
-          ? t("login.invalidCredentials")
-          : t("login.genericError")
+        response.status === 429
+          ? t("login.tooManyAttempts")
+          : data?.error === "invalid_credentials"
+            ? t("login.invalidCredentials")
+            : t("login.genericError")
       );
     } catch {
       setError(t("login.genericError"));

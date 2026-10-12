@@ -162,6 +162,7 @@
     "submit": "Sign in",
     "submitting": "Signing in…",
     "invalidCredentials": "Incorrect username or password",
+    "tooManyAttempts": "Too many sign-in attempts, please try again later",
     "genericError": "Sign-in failed, please try again later"
   },
   "admin": {

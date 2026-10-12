@@ -32,6 +32,61 @@ function tempRoot(baseDir: string): string {
   return path.join(baseDir, ".tmp");
 }
 
+/**
+ * 临时分片目录超过这个时长仍未完成，就视为废弃。
+ * 单个文件上限 100MB，留一天足够覆盖「传了一半去吃饭」这类情况。
+ */
+const STALE_UPLOAD_MS = 24 * 60 * 60 * 1000;
+/** 清理节流：最多每小时扫一次临时目录，避免每次 init 都去 stat 一堆目录。 */
+const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+let lastSweepAt = 0;
+
+/**
+ * 清理废弃的分片上传目录。
+ *
+ * 上传是**无状态**的：服务端不记录上传会话，分片直接落在 `<baseDir>/.tmp/<uploadId>`。
+ * 正常流程会在 complete（或失败分支）里删掉；但**客户端中途关页面 / 断网**时
+ * complete 永远不会到达，那些分片就会一直留在磁盘上慢慢堆积。
+ * 这里在每次开始新上传时顺手扫一遍，删掉超过 STALE_UPLOAD_MS 没动静的目录。
+ *
+ * @returns 删掉的目录数量
+ */
+export async function sweepStaleUploads(baseDir: string, force = false): Promise<number> {
+  const now = Date.now();
+  if (!force && now - lastSweepAt < SWEEP_INTERVAL_MS) {
+    return 0;
+  }
+  lastSweepAt = now;
+
+  let entries: string[];
+  try {
+    entries = await fs.readdir(tempRoot(baseDir));
+  } catch {
+    // 目录还不存在，没什么可清的
+    return 0;
+  }
+
+  let removed = 0;
+  for (const name of entries) {
+    const dir = path.join(tempRoot(baseDir), name);
+    try {
+      const stat = await fs.stat(dir);
+      if (!stat.isDirectory() || now - stat.mtimeMs < STALE_UPLOAD_MS) {
+        continue;
+      }
+      await fs.rm(dir, { recursive: true, force: true });
+      removed += 1;
+    } catch {
+      // 单个目录清理失败不影响其它，也不影响本次上传
+    }
+  }
+
+  if (removed > 0) {
+    console.log(`[upload] 清理了 ${removed} 个废弃的分片目录（${baseDir}）`);
+  }
+  return removed;
+}
+
 export function tempDirFor(baseDir: string, uploadId: string): string {
   if (!/^[a-z0-9-]{8,64}$/i.test(uploadId)) {
     throw new ChunkError("非法的上传标识", 400);
@@ -46,6 +101,9 @@ export async function prepareUpload(
 ): Promise<ChunkPlan> {
   const uploadId = crypto.randomUUID();
   await fs.mkdir(tempDirFor(baseDir, uploadId), { recursive: true });
+
+  // 顺手清掉废弃的临时分片（按小时节流，失败不影响本次上传）
+  await sweepStaleUploads(baseDir).catch(() => 0);
 
   return { uploadId, ...planChunks(size, options.directLimit, options.chunkSize) };
 }

@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 
+import { clientIpFromHeaders } from "@/lib/ip-region";
+import { clearLoginFailures, loginBlockedFor, recordLoginFailure } from "@/lib/login-guard";
 import { logOperation } from "@/lib/logs";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
@@ -18,6 +20,17 @@ function isValidCredential(value: unknown, maxLength: number): value is string {
 }
 
 export async function POST(request: Request) {
+  const ip = clientIpFromHeaders(request.headers) || "unknown";
+
+  // 登录失败限频：连续失败达阈值后锁定一段时间，避免被长期跑字典
+  const blockedFor = loginBlockedFor(ip);
+  if (blockedFor !== null) {
+    return NextResponse.json(
+      { ok: false, error: `登录尝试过于频繁，请 ${Math.ceil(blockedFor / 60)} 分钟后再试` },
+      { status: 429 }
+    );
+  }
+
   let body: LoginBody;
   try {
     body = (await request.json()) as LoginBody;
@@ -35,9 +48,11 @@ export async function POST(request: Request) {
   const passwordMatches = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
 
   if (!user || !passwordMatches) {
+    recordLoginFailure(ip);
     return NextResponse.json({ ok: false, error: "invalid_credentials" }, { status: 401 });
   }
 
+  clearLoginFailures(ip);
   await createSession(user);
   await logOperation({ action: "auth_login", target: user.username });
 
