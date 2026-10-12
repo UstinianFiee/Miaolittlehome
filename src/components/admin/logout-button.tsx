@@ -1,7 +1,6 @@
 "use client";
 
 import { LogOutIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -9,15 +8,15 @@ import { Button } from "@/components/ui/button";
 
 export function LogoutButton() {
   const t = useTranslations();
-  const router = useRouter();
   const [pending, setPending] = React.useState(false);
 
   async function handleLogout() {
     setPending(true);
     try {
       await fetch("/api/admin/logout", { method: "POST" });
-      router.replace("/admin/login");
-      router.refresh();
+      // 与登录同理：整页跳转保证 Cookie 的清除立即生效
+      window.location.replace("/admin/login");
+      return;
     } finally {
       setPending(false);
     }

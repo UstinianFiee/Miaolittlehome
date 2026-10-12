@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 
 export function LoginForm({ siteName, logo }: { siteName: string; logo?: string }) {
   const t = useTranslations();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [mounted, setMounted] = React.useState(false);
@@ -45,8 +44,11 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
       if (response.ok) {
         const from = searchParams.get("from");
         const target = from && from.startsWith("/admin") ? from : "/admin";
-        router.replace(target);
-        router.refresh();
+        // 用整页跳转（而不是 router.replace + router.refresh）：
+        // 登录刚写下的 Cookie 必须在「下一次真实导航」里带上，
+        // 客户端路由跳转容易命中 RSC 缓存、或被 middleware 再次弹回登录页，
+        // 表现为「接口 200 但页面没反应」。整页跳转最稳，代价只是一次导航。
+        window.location.replace(target);
         return;
       }
 
