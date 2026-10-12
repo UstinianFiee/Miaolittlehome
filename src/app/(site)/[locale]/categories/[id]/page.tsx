@@ -1,10 +1,8 @@
-import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PostCardView } from "@/components/site/post-card";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { pickLocalized } from "@/lib/localized";
 import { buildPageMetadata } from "@/lib/metadata";
@@ -44,17 +42,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const category = Number.isInteger(categoryId) ? await getCategoryById(categoryId) : null;
 
   if (!category) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-20 sm:px-6">
-        <p className="text-muted-foreground">{t("site.categoryNotFound")}</p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/categories">
-            <ArrowLeftIcon className="size-4" />
-            {t("site.categoriesTitle")}
-          </Link>
-        </Button>
-      </div>
-    );
+    // 走 notFound()：返回真正的 404 状态码，文案在同级 not-found.tsx 里
+    notFound();
   }
 
   const { items, total } = await listPublishedPosts({

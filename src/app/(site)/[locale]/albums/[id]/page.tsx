@@ -1,5 +1,6 @@
 import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PhotoGallery } from "@/components/site/photo-gallery";
@@ -40,17 +41,8 @@ export default async function AlbumPage({ params }: AlbumPageProps) {
   const album = Number.isInteger(albumId) ? await getAlbumWithPhotos(albumId) : null;
 
   if (!album) {
-    return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-20 sm:px-6">
-        <p className="text-muted-foreground">{t("site.albumNotFound")}</p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/albums">
-            <ArrowLeftIcon className="size-4" />
-            {t("site.albumsTitle")}
-          </Link>
-        </Button>
-      </div>
-    );
+    // 走 notFound()：返回真正的 404 状态码，文案在同级 not-found.tsx 里
+    notFound();
   }
 
   return (

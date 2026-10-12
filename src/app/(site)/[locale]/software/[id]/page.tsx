@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, DownloadIcon, PackageIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Badge } from "@/components/ui/badge";
@@ -61,17 +62,8 @@ export default async function SoftwareDetailPage({ params }: Props) {
   const item = Number.isInteger(softwareId) ? await getPublishedSoftware(softwareId) : null;
 
   if (!item) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-20 sm:px-6">
-        <p className="text-muted-foreground">{t("software.notFound")}</p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/software">
-            <ArrowLeftIcon className="size-4" />
-            {t("software.backToList")}
-          </Link>
-        </Button>
-      </div>
-    );
+    // 走 notFound()：返回真正的 404 状态码，文案在同级 not-found.tsx 里
+    notFound();
   }
 
   return (

@@ -1,5 +1,6 @@
 import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ArticleBar } from "@/components/site/article-bar";
@@ -69,17 +70,8 @@ export default async function PostPage({ params }: PostPageProps) {
   ]);
 
   if (!post) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-20 sm:px-6">
-        <p className="text-muted-foreground">{t("site.postNotFound")}</p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/posts">
-            <ArrowLeftIcon className="size-4" />
-            {t("site.backToPosts")}
-          </Link>
-        </Button>
-      </div>
-    );
+    // 走 notFound()：返回真正的 404 状态码，文案在同级 not-found.tsx 里
+    notFound();
   }
 
   const html = await renderMarkdown(pickLocalized(locale, post.content, post.contentEn));

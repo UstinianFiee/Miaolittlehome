@@ -1,5 +1,6 @@
 import { ArrowLeftIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { VideoPlayer } from "@/components/site/video-player";
@@ -49,17 +50,8 @@ export default async function VideoDetailPage({ params }: Props) {
   const video = Number.isInteger(videoId) ? await getPublishedVideo(videoId) : null;
 
   if (!video) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-20 sm:px-6">
-        <p className="text-muted-foreground">{t("videos.notFound")}</p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href="/videos">
-            <ArrowLeftIcon className="size-4" />
-            {t("videos.backToList")}
-          </Link>
-        </Button>
-      </div>
-    );
+    // 走 notFound()：返回真正的 404 状态码，文案在同级 not-found.tsx 里
+    notFound();
   }
 
   const title = pickLocalized(locale, video.title, video.titleEn);
