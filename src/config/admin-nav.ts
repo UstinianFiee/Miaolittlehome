@@ -1,4 +1,5 @@
 import {
+  DatabaseBackupIcon,
   FileTextIcon,
   FolderTreeIcon,
   GalleryHorizontalIcon,
@@ -159,6 +160,13 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
         icon: ScrollTextIcon,
         stage: 15,
         scopeKey: "adminLogs",
+      },
+      {
+        labelKey: "admin.nav.backup",
+        href: "/admin/backup",
+        icon: DatabaseBackupIcon,
+        stage: 0,
+        scopeKey: "adminBackup",
       },
     ],
   },

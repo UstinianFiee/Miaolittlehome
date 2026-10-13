@@ -198,7 +198,8 @@
       "friends": "Friends",
       "settings": "Settings",
       "logs": "Logs",
-      "shuoshuo": "Notes"
+      "shuoshuo": "Notes",
+      "backup": "Backup"
     },
     "dashboard": {
       "posts": "Posts",
@@ -251,7 +252,9 @@
       "site_settings_update": "Updated site info",
       "shuoshuo_create": "Create note",
       "shuoshuo_update": "Update note",
-      "shuoshuo_delete": "Delete note"
+      "shuoshuo_delete": "Delete note",
+      "backup_export": "Export backup",
+      "backup_import": "Import backup"
     }
   },
   "locale": {
@@ -759,5 +762,45 @@
     "deleteConfirm": "Delete this note?",
     "failed": "Action failed: {message}",
     "hint": "Notes appear as chat bubbles mixed into the home feed (by time, pinned first), and have their own page."
+  },
+  "adminBackup": {
+    "title": "Export / Import",
+    "subtitle": "Move posts, notes and comments to another server without touching the database file.",
+    "statsTitle": "Current content",
+    "statPosts": "Posts",
+    "statShuoshuo": "Notes",
+    "statComments": "Comments",
+    "statCategories": "Categories",
+    "statTags": "Tags",
+    "statAlbums": "Albums",
+    "statMedia": "Media",
+    "statVideos": "Videos",
+    "statSoftware": "Software",
+    "statAnnouncements": "Announcements",
+    "statFriends": "Friends",
+    "statFiles": "Files",
+    "exportTitle": "Export",
+    "exportHint": "Downloads a .zip; import it on the new server from this same page.",
+    "includeMedia": "Include media files",
+    "includeMediaHint": "Images / audio / video — {count} files · {size}",
+    "includeSoftware": "Include software packages",
+    "includeSoftwareHint": "{count} files · {size}; often large, include only if needed",
+    "estimate": "Estimated size: {size}",
+    "exportTooLarge": "Exceeds the 4GB limit — uncheck the software packages option",
+    "exportButton": "Export",
+    "excluded": "Admin account, operation logs and visit logs are not included. A fresh server creates its admin from environment variables on first deploy, so just sign in with that.",
+    "importTitle": "Import",
+    "importHint": "Pick a .zip produced by this site.",
+    "importWarning": "Import replaces everything: all current content is cleared and rebuilt from the archive. A snapshot of the current data is saved to the server backups directory first, so a wrong pick stays recoverable.",
+    "chooseFile": "Choose archive (.zip)",
+    "importButton": "Start import",
+    "importing": "Importing, please keep this page open…",
+    "uploading": "Uploading {percent}%",
+    "restoring": "Upload finished, restoring data…",
+    "resultTitle": "Import complete",
+    "resultSource": "Source: {site} · exported at {time}",
+    "resultFiles": "{count} files restored",
+    "resultSnapshot": "Pre-import snapshot saved as {file} ({size})",
+    "failed": "Import failed: {message}"
   }
 }

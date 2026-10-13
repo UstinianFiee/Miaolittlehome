@@ -198,7 +198,8 @@
       "friends": "友链",
       "settings": "站点设置",
       "logs": "日志",
-      "shuoshuo": "说说"
+      "shuoshuo": "说说",
+      "backup": "备份"
     },
     "dashboard": {
       "posts": "文章",
@@ -251,7 +252,9 @@
       "site_settings_update": "更新站点信息",
       "shuoshuo_create": "发布说说",
       "shuoshuo_update": "更新说说",
-      "shuoshuo_delete": "删除说说"
+      "shuoshuo_delete": "删除说说",
+      "backup_export": "导出备份",
+      "backup_import": "导入备份"
     }
   },
   "locale": {
@@ -759,5 +762,45 @@
     "deleteConfirm": "确定删除这条说说？",
     "failed": "操作失败：{message}",
     "hint": "说说会以气泡卡片的形式夹杂在首页文章流里（按时间排序，置顶优先），另有独立的「说说」页。"
+  },
+  "adminBackup": {
+    "title": "内容导出 / 导入",
+    "subtitle": "迁移服务器时，把文章、说说、评论这些内容整体搬过去，不用碰数据库文件。",
+    "statsTitle": "当前内容",
+    "statPosts": "文章",
+    "statShuoshuo": "说说",
+    "statComments": "评论",
+    "statCategories": "分类",
+    "statTags": "标签",
+    "statAlbums": "相册",
+    "statMedia": "媒体",
+    "statVideos": "视频",
+    "statSoftware": "软件",
+    "statAnnouncements": "公告",
+    "statFriends": "友链",
+    "statFiles": "文件",
+    "exportTitle": "导出备份",
+    "exportHint": "导出为一个 .zip 包，拿到新服务器的这个页面导入即可。",
+    "includeMedia": "包含媒体文件",
+    "includeMediaHint": "图片 / 音频 / 视频，共 {count} 个 · {size}",
+    "includeSoftware": "包含软件安装包",
+    "includeSoftwareHint": "共 {count} 个 · {size}；通常很大，按需勾选",
+    "estimate": "预计大小：{size}",
+    "exportTooLarge": "超过 4GB 上限，请取消勾选「软件安装包」",
+    "exportButton": "导出备份",
+    "excluded": "不含管理员账号、操作日志与访问记录 —— 新服务器首次部署时会用环境变量建好管理员，导入后直接用它登录即可。",
+    "importTitle": "导入备份",
+    "importHint": "选择本站导出的 .zip 备份包。",
+    "importWarning": "导入是「整体替换」：会先清空当前所有内容，再按备份包重建。导入前会自动把当前数据存一份快照到服务器的 backups 目录，万一选错了包还能找回。",
+    "chooseFile": "选择备份包（.zip）",
+    "importButton": "开始导入",
+    "importing": "导入中，请不要关闭页面…",
+    "uploading": "上传中 {percent}%",
+    "restoring": "上传完成，正在还原数据…",
+    "resultTitle": "导入完成",
+    "resultSource": "来源：{site} · 导出于 {time}",
+    "resultFiles": "还原文件 {count} 个",
+    "resultSnapshot": "导入前的快照已存为 {file}（{size}）",
+    "failed": "导入失败：{message}"
   }
 }

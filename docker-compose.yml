@@ -39,6 +39,8 @@ services:
       DATABASE_URL: file:/data/db/blog.db
       MEDIA_DIR: /data/media
       SOFTWARE_DIR: /data/software
+      # 内容导出 / 导入的暂存目录（分片临时文件、导入前的自动快照）
+      BACKUP_DIR: /data/backups
     volumes:
       - /data:/data
     expose:

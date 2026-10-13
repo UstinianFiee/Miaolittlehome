@@ -48,6 +48,9 @@ software/*
 # 例外：示例安装包随仓库自带
 !software/demo/
 
+# 备份暂存目录（导入前的自动快照、分片临时文件；生产在 /data/backups）
+backups/
+
 # Vditor 运行时资源（由 scripts/sync-vditor.mjs 从 node_modules 生成）
 public/vditor/
 

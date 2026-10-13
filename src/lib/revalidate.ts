@@ -153,3 +153,8 @@ export function revalidateAlbums(albumIds: (number | null | undefined)[] = []): 
   const ids = [...new Set(albumIds.filter((id): id is number => typeof id === "number"))];
   revalidateFront(ids.map((id) => `/albums/${id}`));
 }
+
+/** 内容整体替换（导入备份）后刷新整个前台。 */
+export function revalidateAll(): void {
+  revalidateFront();
+}
