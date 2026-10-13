@@ -40,7 +40,8 @@
     "wallEmpty": "墙还空着，来贴第一张便利贴吧",
     "albumsHint": "点开是一本本小相册，照片都归在各自动的册子里",
     "categoriesHint": "按内容归好的类，像挂在杆子上的一排书签",
-    "tagsHint": "更细的标签，同样是一排书签"
+    "tagsHint": "更细的标签，同样是一排书签",
+    "wallCount": "{count} 条留言"
   },
   "nav": {
     "primary": "主导航",
@@ -410,7 +411,8 @@
       "gesture": "手势",
       "misc": "其它"
     },
-    "fromEnv": "环境"
+    "fromEnv": "环境",
+    "wallFormTitle": "写留言"
   },
   "search": {
     "title": "搜索",

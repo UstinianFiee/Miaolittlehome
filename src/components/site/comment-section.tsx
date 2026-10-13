@@ -21,6 +21,13 @@ type CommentSectionProps = {
   initialComments: CommentView[];
   count: number;
   /**
+   * 只保留「写留言」表单，不渲染列表。
+   *
+   * 留言墙用：便利贴本身就是留言的列表，下面再来一遍评论列表是重复的。
+   * 但 `initialComments` 仍要传 —— 它用来判断本地待审项是否已通过审核。
+   */
+  formOnly?: boolean;
+  /**
    * 外部指定的回复对象（留言墙从便利贴里发起回复时用）。
    * 变了就同步进表单并滚过去，再通过 onReplyHandled 通知外部已消费。
    */
@@ -232,6 +239,7 @@ export function CommentSection({
   refId,
   initialComments,
   count,
+  formOnly = false,
   replyTarget,
   onReplyHandled,
 }: CommentSectionProps) {
@@ -373,13 +381,18 @@ export function CommentSection({
   }
 
   return (
-    <section className="surface mt-12 p-6 sm:p-7" id="comments">
+    <section
+      className={cn("surface p-6 sm:p-7", formOnly ? "mt-8" : "mt-12")}
+      id="comments"
+    >
       <h2 className="font-display flex items-center gap-2 text-lg">
         <MessageSquareIcon className="size-4" />
-        {t("comments.title")}
-        <span className="text-sm font-normal text-muted-foreground">
-          {t("comments.count", { count: totalCount })}
-        </span>
+        {formOnly ? t("comments.wallFormTitle") : t("comments.title")}
+        {formOnly ? null : (
+          <span className="text-sm font-normal text-muted-foreground">
+            {t("comments.count", { count: totalCount })}
+          </span>
+        )}
       </h2>
 
       {visiblePending.length > 0 ? (
@@ -397,8 +410,10 @@ export function CommentSection({
         </div>
       ) : null}
 
-      {initialComments.length === 0 ? (
-        <p className="empty-state py-10 text-center text-sm text-muted-foreground">{t("comments.empty")}</p>
+      {formOnly ? null : initialComments.length === 0 ? (
+        <p className="empty-state py-10 text-center text-sm text-muted-foreground">
+          {t("comments.empty")}
+        </p>
       ) : (
         <ul className="mt-5 space-y-3">
           {initialComments.map((comment) => (
@@ -415,9 +430,14 @@ export function CommentSection({
         </ul>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit} className={cn("mt-8 space-y-4", shaking && "field-shake")}>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className={cn("space-y-4", formOnly ? "mt-5" : "mt-8", shaking && "field-shake")}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-medium">{t("comments.formTitle")}</h3>
+          {/* formOnly 时上面的 h2 已经是「写留言」，这里就不再重复一个小标题 */}
+          {formOnly ? null : <h3 className="text-sm font-medium">{t("comments.formTitle")}</h3>}
           {replyTo ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{t("comments.replyTo", { name: replyTo.author })}</span>

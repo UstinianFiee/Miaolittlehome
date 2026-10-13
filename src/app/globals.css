@@ -1571,6 +1571,84 @@ html.is-loaded .site-preloader {
   }
 }
 
+/* ---------------------------------------------------------------
+   关于页：签名卡 + 社交胶囊 + 友链名片
+   --------------------------------------------------------------- */
+
+/* 签名卡：顶部一条主题色渐变细线，像信纸的页眉 */
+.about-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.about-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--primary) 70%, transparent),
+    color-mix(in oklab, var(--primary) 18%, transparent) 65%,
+    transparent
+  );
+}
+
+/* 头像外的光环：双层 box-shadow，悬停时向外扩散一圈 */
+.about-avatar {
+  box-shadow:
+    0 0 0 4px color-mix(in oklab, var(--card) 92%, transparent),
+    0 0 0 5px color-mix(in oklab, var(--primary) 26%, transparent);
+  transition: box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.about-card:hover .about-avatar {
+  box-shadow:
+    0 0 0 4px color-mix(in oklab, var(--card) 92%, transparent),
+    0 0 0 8px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+/* 社交胶囊：悬停时图标弹一下（与复制成功、保存成功同一套反馈） */
+.social-pill:hover svg {
+  animation: icon-pop 440ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 友链名片：顶部一条按 id 派生色相的细带，悬停抬起 */
+.friend-card {
+  position: relative;
+  overflow: hidden;
+  /* 名片顶带的主题色占比，由组件按 id 在 45%/62%/78% 之间取 */
+  --friend-mix: 62%;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.friend-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  /*
+   * 刻意**不按 id 派生随机色相** —— 那样几张名片凑在一起是彩虹色，整页会显得"拼贴"。
+   * 改成同一主题色里的深浅变化（--friend-mix 由组件按 id 在 45%/62%/78% 之间取），
+   * 既彼此分得开，又和整站是一套色。
+   */
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--primary) var(--friend-mix) , transparent),
+    color-mix(in oklab, var(--primary) 18%, transparent) 70%,
+    transparent
+  );
+}
+
+.friend-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
   .skeleton,
@@ -1584,7 +1662,8 @@ html.is-loaded .site-preloader {
   .trash-wiggle:hover svg,
   .preloader-pulse,
   .preloader-bar,
-  .emoji-pop {
+  .emoji-pop,
+  .social-pill:hover svg {
     animation: none;
   }
 
@@ -1609,7 +1688,9 @@ html.is-loaded .site-preloader {
   .tape-case,
   .tape-window,
   .tape-reel,
-  .bookmark {
+  .bookmark,
+  .about-avatar,
+  .friend-card {
     transition: none;
   }
 
@@ -1619,7 +1700,8 @@ html.is-loaded .site-preloader {
   .album-stack:hover::after,
   .tape-case:hover,
   .tape-case:hover .tape-reel,
-  .bookmark:hover {
+  .bookmark:hover,
+  .friend-card:hover {
     transform: none;
   }
 

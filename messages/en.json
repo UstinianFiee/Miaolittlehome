@@ -40,7 +40,8 @@
     "wallEmpty": "The board is empty — pin the first note",
     "albumsHint": "Each one is a small photo album",
     "categoriesHint": "Categories, hanging like bookmarks on a rail",
-    "tagsHint": "Finer tags, also on the rail"
+    "tagsHint": "Finer tags, also on the rail",
+    "wallCount": "{count} messages"
   },
   "nav": {
     "primary": "Primary navigation",
@@ -410,7 +411,8 @@
       "gesture": "Gestures",
       "misc": "Other"
     },
-    "fromEnv": "Device"
+    "fromEnv": "Device",
+    "wallFormTitle": "Leave a message"
   },
   "search": {
     "title": "Search",
