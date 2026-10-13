@@ -307,7 +307,8 @@ async function seedVideos() {
     {
       title: "示例视频：本站演示片段",
       titleEn: "Demo video clip",
-      cover: DEMO_IMAGE_URL,
+      // 故意不设封面：视频没有服务端缩略图，这里正好演示 VideoThumb 的首帧兜底
+      cover: null,
       sourceType: "local",
       srcUrl: "/media/demo/sample.mp4",
       description: "用于验证视频列表与播放页的示例视频。",

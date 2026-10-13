@@ -140,6 +140,8 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
           <img
             src={current.src}
             alt={current.title ?? ""}
+            loading="eager"
+            decoding="async"
             className="max-h-[86vh] max-w-[92vw] object-contain"
             onClick={(event) => event.stopPropagation()}
           />

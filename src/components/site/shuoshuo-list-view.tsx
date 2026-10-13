@@ -4,7 +4,7 @@ import { SitePagination } from "@/components/site/pagination";
 import { Reveal } from "@/components/site/reveal";
 import { ShuoshuoCard } from "@/components/site/shuoshuo-card";
 import { listPublishedShuoshuo } from "@/lib/shuoshuo";
-import { getSiteInfo } from "@/lib/settings";
+import { getProfile, getSiteInfo } from "@/lib/settings";
 
 /**
  * 说说列表（独立页）。
@@ -15,7 +15,9 @@ import { getSiteInfo } from "@/lib/settings";
  */
 export async function ShuoshuoListView({ locale, page }: { locale: string; page: number }) {
   const t = await getTranslations();
-  const site = await getSiteInfo();
+  const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
+  // 头像用「关于」页设置的那个，没设再回退到站点 Logo
+  const avatar = profile.avatar || site.logo;
 
   const { items, total, pageSize } = await listPublishedShuoshuo({ page });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -40,7 +42,7 @@ export async function ShuoshuoListView({ locale, page }: { locale: string; page:
         <div>
           {items.map((item, index) => (
             <Reveal key={item.id} delay={Math.min(index, 5) * 50}>
-              <ShuoshuoCard item={item} locale={locale} siteName={site.name} logo={site.logo} />
+              <ShuoshuoCard item={item} locale={locale} siteName={site.name} avatar={avatar} />
             </Reveal>
           ))}
         </div>

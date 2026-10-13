@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import NextLink from "next/link";
 import { Suspense } from "react";
+import { ArrowLeftIcon } from "lucide-react";
 
 import { LoginForm } from "@/components/admin/login-form";
 import { Particles } from "@/components/site/particles";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { catalogs } from "@/lib/messages";
 import { getSiteInfo } from "@/lib/settings";
 
@@ -38,6 +41,20 @@ export default async function AdminLoginPage() {
       )}
 
       <Particles className="pointer-events-none absolute inset-0 -z-10 size-full" />
+
+      {/* 主题切换：登录页不在 AdminShell 里，单独放一个，否则深色系统下进不去浅色 */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+
+      {/* 返回前台：后台不参与语言路由，这里用 next/link */}
+      <NextLink
+        href="/"
+        className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-background/70 px-3 py-1.5 text-sm text-muted-foreground backdrop-blur transition-colors hover:text-foreground"
+      >
+        <ArrowLeftIcon className="size-4" />
+        {catalogs.zh.admin.backToSite}
+      </NextLink>
 
       <Suspense fallback={null}>
         <LoginForm siteName={name} logo={logo} />

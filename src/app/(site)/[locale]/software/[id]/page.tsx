@@ -82,6 +82,8 @@ export default async function SoftwareDetailPage({ params }: Props) {
             <img
               src={item.icon}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="size-16 shrink-0 rounded-lg border border-border/60 object-cover"
             />
           ) : (

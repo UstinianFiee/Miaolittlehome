@@ -11,6 +11,7 @@ import { RippleLayer } from "@/components/site/ripple-layer";
 import { RouteProgress } from "@/components/site/route-progress";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { SitePreloader } from "@/components/site/site-preloader";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getSiteInfo, getSiteVersion } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -89,6 +90,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     getSiteVersion(),
   ]);
 
+  const { name, logo } = site;
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
@@ -123,6 +126,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               ) : null}
               {/* 站点设置改动后，把还停在旧版本上的客户端路由缓存刷掉 */}
               <ConfigSync version={siteVersion} />
+              {/* 访问时的进场加载动画（只在页面还没加载完时出现，见组件注释） */}
+              <SitePreloader logo={logo} siteName={name} />
               <RouteProgress />
               <RippleLayer />
               <SiteHeader />

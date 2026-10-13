@@ -7,6 +7,7 @@ import * as React from "react";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { LogoutButton } from "@/components/admin/logout-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -90,6 +91,9 @@ export function AdminShell({
                 {t("admin.backToSite")}
               </NextLink>
             </Button>
+            {/* 主题切换：后台也要有。没有它的话，系统是深色模式时后台就被锁死在深色，
+                连个切回浅色的入口都没有 */}
+            <ThemeToggle />
             <span aria-hidden className="mx-1 h-5 w-px bg-current opacity-20" />
             <LogoutButton />
           </div>

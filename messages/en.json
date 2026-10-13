@@ -36,7 +36,11 @@
     "author": "By",
     "readingProgress": "Reading progress",
     "backToTop": "Back to top",
-    "articleNav": "Article navigation"
+    "articleNav": "Article navigation",
+    "wallEmpty": "The board is empty — pin the first note",
+    "albumsHint": "Each one is a small photo album",
+    "categoriesHint": "Categories, hanging like bookmarks on a rail",
+    "tagsHint": "Finer tags, also on the rail"
   },
   "nav": {
     "primary": "Primary navigation",
@@ -391,7 +395,22 @@
     "statusApproved": "Approved",
     "wallSource": "Guestbook",
     "approveFailed": "Action failed: {message}",
-    "siteOwner": "Owner"
+    "siteOwner": "Owner",
+    "repliesLabel": "replies",
+    "detail": "Details",
+    "detailTitle": "Note details",
+    "noReplies": "No replies yet",
+    "fromRegion": "From",
+    "fromBrowser": "Browser",
+    "fromOS": "OS",
+    "postedAt": "Posted",
+    "emoji": "Insert emoji",
+    "emojiGroup": {
+      "mood": "Mood",
+      "gesture": "Gestures",
+      "misc": "Other"
+    },
+    "fromEnv": "Device"
   },
   "search": {
     "title": "Search",

@@ -24,6 +24,39 @@ export function VideoThumb({
 }) {
   const ref = React.useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = React.useState(false);
+  /**
+   * 「进了视口附近才去请求」—— 视频列表一页可能有几十个缩略图，
+   * 每个都要向服务端要一段数据才能 seek 出第 1 秒。用 IntersectionObserver
+   * 观察元素本身，没进入视口前不给 src，浏览器就不会发起请求。
+   */
+  const [visible, setVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || visible) {
+      return;
+    }
+
+    if (typeof IntersectionObserver !== "function") {
+      // 老浏览器没有 IO：直接给 src，至少能正常显示
+      setVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      // 提前 300px 开始加载，滚到的时候基本已经不空了
+      { rootMargin: "300px 0px" }
+    );
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [visible]);
 
   /*
    * 服务端渲染出来的 <video> 会在 hydration 之前就开始加载，
@@ -34,7 +67,7 @@ export function VideoThumb({
     if (ref.current?.error) {
       setFailed(true);
     }
-  }, []);
+  }, [visible]);
 
   if (failed) {
     return <>{fallback}</>;
@@ -43,7 +76,8 @@ export function VideoThumb({
   return (
     <video
       ref={ref}
-      src={`${src}#t=1`}
+      /* 没进视口前不给 src：既不发请求也不会 seek，容器有固定的 aspect-video，不会抖动 */
+      src={visible ? `${src}#t=1` : undefined}
       muted
       playsInline
       preload="metadata"

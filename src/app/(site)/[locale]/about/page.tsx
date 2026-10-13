@@ -45,6 +45,8 @@ export default async function AboutPage({ params }: Props) {
           <img
             src={profile.avatar}
             alt={displayName}
+            loading="lazy"
+            decoding="async"
             className="size-20 shrink-0 rounded-full border border-border/60 object-cover"
           />
         ) : (

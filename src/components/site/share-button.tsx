@@ -84,10 +84,10 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
             {t("share.qr")}
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
+        <DialogContent className="min-w-0 sm:max-w-sm">
+          <DialogHeader className="min-w-0">
             <DialogTitle>{t("share.qrTitle")}</DialogTitle>
-            <DialogDescription className="truncate">{url}</DialogDescription>
+            <DialogDescription className="min-w-0 truncate">{url}</DialogDescription>
           </DialogHeader>
 
           <div className="flex justify-center">
@@ -99,10 +99,11 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
                 width={240}
                 height={240}
                 data-testid="share-qr"
-                className="rounded border border-border/60 bg-white p-2"
+                /* max-w-full + h-auto：窄屏（320px）下不能把弹窗顶宽 */
+                className="h-auto max-w-full rounded border border-border/60 bg-white p-2"
               />
             ) : (
-              <div className="flex size-[240px] items-center justify-center text-sm text-muted-foreground">
+              <div className="flex size-[240px] max-w-full items-center justify-center text-sm text-muted-foreground">
                 {t("share.qrLoading")}
               </div>
             )}

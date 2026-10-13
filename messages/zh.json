@@ -36,7 +36,11 @@
     "author": "作者",
     "readingProgress": "阅读进度",
     "backToTop": "回到顶部",
-    "articleNav": "文章导航"
+    "articleNav": "文章导航",
+    "wallEmpty": "墙还空着，来贴第一张便利贴吧",
+    "albumsHint": "点开是一本本小相册，照片都归在各自动的册子里",
+    "categoriesHint": "按内容归好的类，像挂在杆子上的一排书签",
+    "tagsHint": "更细的标签，同样是一排书签"
   },
   "nav": {
     "primary": "主导航",
@@ -391,7 +395,22 @@
     "statusApproved": "已通过",
     "wallSource": "留言墙",
     "approveFailed": "操作失败：{message}",
-    "siteOwner": "站长"
+    "siteOwner": "站长",
+    "repliesLabel": "条回复",
+    "detail": "详情",
+    "detailTitle": "留言详情",
+    "noReplies": "还没有回复",
+    "fromRegion": "来自",
+    "fromBrowser": "浏览器",
+    "fromOS": "系统",
+    "postedAt": "发布于",
+    "emoji": "插入表情",
+    "emojiGroup": {
+      "mood": "表情",
+      "gesture": "手势",
+      "misc": "其它"
+    },
+    "fromEnv": "环境"
   },
   "search": {
     "title": "搜索",

@@ -12,7 +12,7 @@ import { ShuoshuoCard } from "@/components/site/shuoshuo-card";
 import { SiteSidebar } from "@/components/site/site-sidebar";
 import { Typewriter } from "@/components/site/typewriter";
 import { listPublishedFeed } from "@/lib/query";
-import { getSiteInfo } from "@/lib/settings";
+import { getProfile, getSiteInfo } from "@/lib/settings";
 
 /** 首页每页条数（文章 + 说说合计）；超出通过分页查看。 */
 export const HOME_PAGE_SIZE = 5;
@@ -27,8 +27,11 @@ export const HOME_PAGE_SIZE = 5;
  */
 export async function HomeView({ locale, page }: { locale: string; page: number }) {
   const t = await getTranslations();
-  const site = await getSiteInfo();
-  const { name, subtitle, backgrounds, backgroundVideo, pageBackground, logo } = site;
+  const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
+  const { name, subtitle, backgrounds, backgroundVideo, pageBackground } = site;
+
+  // 说说气泡的头像用「关于」页设置的那个，没设再回退到站点 Logo
+  const avatar = profile.avatar || site.logo;
 
   // 文章与说说按时间混在一条流里（说说渲染成气泡卡片，一眼能分清）
   const { entries, total, pageSize } = await listPublishedFeed({
@@ -105,7 +108,7 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
                         item={entry.shuoshuo}
                         locale={locale}
                         siteName={name}
-                        logo={logo}
+                        avatar={avatar}
                       />
                     )}
                   </Reveal>

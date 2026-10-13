@@ -1,0 +1,282 @@
+"use client";
+
+import { InfoIcon, ReplyIcon, ShieldCheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import * as React from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import type { CommentView } from "@/lib/comment-view";
+import { formatDual } from "@/lib/datetime";
+
+/**
+ * 留言墙：小板子 + 便利贴。
+ *
+ * 设计取向：
+ * - **便利贴的颜色跟着主题走** —— 用 `color-mix(primary, card)` 混色而不是俗套的黄/粉/蓝，
+ *   深浅主题自动切换，和站点整体不割裂。每张用不同的 primary 占比，同一色系里彼此分得开。
+ * - **文字用站点的展示字体**（`font-display`），这样墙读起来是"站内的东西"而不是第三方组件。
+ * - **点一下翻面**：正面是内容，背面是发言人（昵称 / 归属地 / 浏览器 / 系统 / 时间）。
+ * - **「详情」弹窗**：完整内容 + 全部回复，并且可以直接从这里发起回复。
+ *
+ * 布局用 CSS columns 做瀑布流（比 grid 更适合长短不一的纸条），
+ * 每张纸条带一个固定的轻微倾角 —— 手贴便利贴不可能完全对齐，倾角是"对"的一部分。
+ */
+
+/** 每张便利贴的 primary 占比，循环取，保证相邻的几张不一样 */
+const NOTE_MIXES = ["8%", "13%", "18%", "11%", "16%"] as const;
+
+/** 由 id 派生一个稳定的倾角（-2.5° ~ +2.5°），刷新不会跳 */
+function noteRotation(id: number, index: number): number {
+  return (((id + index * 7) % 5) - 2) * 1.25;
+}
+
+function Speaker({ comment }: { comment: CommentView }) {
+  const t = useTranslations();
+
+  return (
+    <div className="space-y-2 text-sm">
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-medium",
+            comment.isAdmin
+              ? "border-primary/40 bg-primary/15 text-primary"
+              : "border-border/60 bg-background/60"
+          )}
+        >
+          {comment.isAdmin ? (
+            <ShieldCheckIcon className="size-4" />
+          ) : (
+            (comment.author || "?").trim().slice(0, 1).toUpperCase()
+          )}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate font-medium">{comment.author || t("comments.anonymous")}</p>
+          {comment.isAdmin ? (
+            <p className="text-xs text-primary">{t("comments.siteOwner")}</p>
+          ) : null}
+        </div>
+      </div>
+
+      {/*
+        标签列必须 shrink-0 + nowrap：「发布于」这种两字标签在窄纸条里
+        会被挤成「发布」/「于」两行，看着像坏了。让它固定，由右侧的值换行。
+      */}
+      <dl className="space-y-1.5 text-xs text-muted-foreground">
+        {comment.ipRegion ? (
+          <div className="flex justify-between gap-3">
+            <dt className="shrink-0 whitespace-nowrap">{t("comments.fromRegion")}</dt>
+            <dd className="min-w-0 text-right break-words text-[color:var(--card-foreground)]">
+              {comment.ipRegion}
+            </dd>
+          </div>
+        ) : null}
+        {comment.browser || comment.os ? (
+          <div className="flex justify-between gap-3">
+            <dt className="shrink-0 whitespace-nowrap">{t("comments.fromEnv")}</dt>
+            <dd className="min-w-0 text-right break-words text-[color:var(--card-foreground)]">
+              {[comment.browser, comment.os].filter(Boolean).join(" · ")}
+            </dd>
+          </div>
+        ) : null}
+        <div className="flex justify-between gap-3">
+          <dt className="shrink-0 whitespace-nowrap">{t("comments.postedAt")}</dt>
+          <dd className="min-w-0 text-right break-words text-[color:var(--card-foreground)]">
+            {formatDual(new Date(comment.createdAtIso))}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+function Note({
+  comment,
+  index,
+  onDetail,
+}: {
+  comment: CommentView;
+  index: number;
+  onDetail: (comment: CommentView) => void;
+}) {
+  const t = useTranslations();
+  const [flipped, setFlipped] = React.useState(false);
+
+  return (
+    <div
+      className={cn("flip-card mb-5 break-inside-avoid", flipped && "flipped")}
+      style={{ rotate: `${noteRotation(comment.id, index)}deg` }}
+      onClick={() => setFlipped((value) => !value)}
+      role="button"
+      tabIndex={0}
+      aria-expanded={flipped}
+      // 键盘也要能翻：回车 / 空格
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          setFlipped((value) => !value);
+        }
+      }}
+    >
+      <div className="flip-inner">
+        {/* 正面：内容 */}
+        {/*
+          min-h 不是随便定的：背面（发言人信息 + 详情按钮）是 absolute 撑满正面的高度，
+          正面太矮的话背面会溢出。按「头像行 + 3 行信息 + 按钮」实测取 11.5rem。
+        */}
+        <div
+          className="sticky-note flip-face flex min-h-[11.5rem] flex-col rounded-md p-4 pt-5"
+          style={{ "--note-mix": NOTE_MIXES[index % NOTE_MIXES.length] } as React.CSSProperties}
+        >
+          <span aria-hidden className="sticky-tape" />
+          <p className="font-display text-sm leading-7 break-words whitespace-pre-wrap line-clamp-[10]">
+            {comment.content}
+          </p>
+          <p className="mt-auto pt-3 text-[0.7rem] text-muted-foreground">
+            {comment.replies.length > 0
+              ? `${comment.replies.length} ${t("comments.repliesLabel")}`
+              : comment.createdAtLabel}
+          </p>
+        </div>
+
+        {/* 背面：发言人信息 + 详情 */}
+        <div className="flip-back">
+          <div
+            className="sticky-note flip-face flex h-full flex-col overflow-hidden rounded-md p-4"
+            style={{ "--note-mix": NOTE_MIXES[index % NOTE_MIXES.length] } as React.CSSProperties}
+          >
+            <Speaker comment={comment} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full"
+              // 别再让外层那张卡的点击把牌翻回去
+              onClick={(event) => {
+                event.stopPropagation();
+                onDetail(comment);
+              }}
+            >
+              <InfoIcon className="size-3.5" />
+              {t("comments.detail")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function WallBoard({
+  comments,
+  onReply,
+}: {
+  comments: CommentView[];
+  /** 从某张便利贴发起回复（由外层接到评论表单上） */
+  onReply: (comment: CommentView) => void;
+}) {
+  const t = useTranslations();
+  const [detail, setDetail] = React.useState<CommentView | null>(null);
+
+  return (
+    <>
+      <div className="board mt-6 p-4 sm:p-5">
+        <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+          {comments.map((comment, index) => (
+            <Note
+              key={comment.id}
+              comment={comment}
+              index={index}
+              onDetail={setDetail}
+            />
+          ))}
+        </div>
+      </div>
+
+      <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetail(null)}>
+        <DialogContent className="min-w-0 sm:max-w-lg">
+          {detail ? (
+            <>
+              <DialogHeader className="min-w-0">
+                <DialogTitle className="font-display">{t("comments.detailTitle")}</DialogTitle>
+              </DialogHeader>
+
+              <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+                <article className="rounded-lg border border-border/60 bg-card/40 p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{detail.author || t("comments.anonymous")}</span>
+                    {detail.isAdmin ? (
+                      <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.7rem] text-primary">
+                        {t("comments.siteOwner")}
+                      </span>
+                    ) : null}
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {detail.createdAtLabel}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 break-words whitespace-pre-wrap">
+                    {detail.content}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {[detail.ipRegion, detail.browser, detail.os].filter(Boolean).join(" · ")}
+                  </p>
+                </article>
+
+                {detail.replies.length > 0 ? (
+                  <ul className="space-y-2 border-l-2 border-primary/25 pl-3">
+                    {detail.replies.map((reply) => (
+                      <li key={reply.id} className="rounded-md border border-border/50 bg-background/50 p-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">
+                            {reply.author || t("comments.anonymous")}
+                          </span>
+                          {reply.isAdmin ? (
+                            <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.7rem] text-primary">
+                              {t("comments.siteOwner")}
+                            </span>
+                          ) : null}
+                          <span className="ml-auto text-[0.7rem] text-muted-foreground">
+                            {reply.createdAtLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-sm leading-6 break-words whitespace-pre-wrap">
+                          {reply.content}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-state py-6 text-center text-sm text-muted-foreground">
+                    {t("comments.noReplies")}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    onReply(detail);
+                    setDetail(null);
+                  }}
+                >
+                  <ReplyIcon className="size-3.5" />
+                  {t("comments.reply")}
+                </Button>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

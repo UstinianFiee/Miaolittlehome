@@ -4,6 +4,7 @@ import { MessageSquareIcon, ReplyIcon, ShieldCheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { EmojiPicker } from "@/components/site/emoji-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,12 @@ type CommentSectionProps = {
   refId: number | null;
   initialComments: CommentView[];
   count: number;
+  /**
+   * 外部指定的回复对象（留言墙从便利贴里发起回复时用）。
+   * 变了就同步进表单并滚过去，再通过 onReplyHandled 通知外部已消费。
+   */
+  replyTarget?: CommentView | null;
+  onReplyHandled?: () => void;
 };
 
 const STORAGE_KEY = "pending-comments";
@@ -220,7 +227,14 @@ function CommentBody({
   );
 }
 
-export function CommentSection({ scope, refId, initialComments, count }: CommentSectionProps) {
+export function CommentSection({
+  scope,
+  refId,
+  initialComments,
+  count,
+  replyTarget,
+  onReplyHandled,
+}: CommentSectionProps) {
   const t = useTranslations();
 
   const [pending, setPending] = React.useState<PendingComment[]>([]);
@@ -263,6 +277,17 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
     walk(initialComments);
     return ids;
   }, [initialComments]);
+
+  // 外部（留言墙）指定的回复对象：同步进来并滚到表单，然后告知外部已消费
+  React.useEffect(() => {
+    if (!replyTarget) {
+      return;
+    }
+    setReplyTo(replyTarget);
+    setNotice(null);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    onReplyHandled?.();
+  }, [replyTarget, onReplyHandled]);
 
   const visiblePending = React.useMemo(
     () =>
@@ -416,7 +441,15 @@ export function CommentSection({ scope, refId, initialComments, count }: Comment
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="comment-content">{t("comments.content")}</Label>
+          <div className="flex flex-wrap items-center gap-x-2">
+            <Label htmlFor="comment-content">{t("comments.content")}</Label>
+            {/* 表情：插进 textarea 光标处，不影响表单本身（提交仍读 FormData） */}
+            <EmojiPicker
+              textareaId="comment-content"
+              label={t("comments.emoji")}
+              align="right"
+            />
+          </div>
           <Textarea id="comment-content" name="content" rows={5} maxLength={1000} required />
           <p className="text-xs text-muted-foreground">{t("comments.contentHint")}</p>
         </div>
