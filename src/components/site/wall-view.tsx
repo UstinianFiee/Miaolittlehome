@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -14,15 +15,26 @@ import type { CommentView } from "@/lib/comment-view";
  * （`CommentSection` 传 `formOnly`）。但待审提示还留着：自己刚发的留言还没上墙时，
  * 得让人看见它确实提交成功了。
  *
+ * 便利贴**按时间倒序分页**（`/wall/page/N`），最新的一直在最前面。
  * 两段之间靠 `replyTarget` 联动：在便利贴的「详情」里点回复，
  * 这里接住并灌进表单（CommentSection 会滚过去）。
+ *
+ * `pagination` 由**服务端页面**用插槽传进来，而不是在这里 import ——
+ * `SitePagination` 是 async 服务端组件（内部 `await getTranslations()`），
+ * 在客户端组件里渲染会直接抛 "getTranslations is not supported in Client Components"。
  */
 export function WallView({
   comments,
   count,
+  page,
+  totalPages,
+  pagination,
 }: {
   comments: CommentView[];
   count: number;
+  page: number;
+  totalPages: number;
+  pagination?: ReactNode;
 }) {
   const t = useTranslations();
 
@@ -36,6 +48,7 @@ export function WallView({
         <p className="text-muted-foreground">{t("site.wallDescription")}</p>
         <p className="text-sm text-muted-foreground">
           {t("site.wallCount", { count })}
+          {totalPages > 1 ? ` · ${t("site.pageInfo", { page, totalPages })}` : ""}
         </p>
       </header>
 
@@ -46,6 +59,8 @@ export function WallView({
       ) : (
         <WallBoard comments={comments} onReply={setReplyTarget} />
       )}
+
+      {pagination}
 
       <CommentSection
         scope="wall"

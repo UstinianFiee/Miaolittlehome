@@ -40,8 +40,9 @@
     "wallEmpty": "墙还空着，来贴第一张便利贴吧",
     "albumsHint": "点开是一本本小相册，照片都归在各自动的册子里",
     "categoriesHint": "按内容归好的类，像挂在杆子上的一排书签",
-    "tagsHint": "更细的标签，同样是一排书签",
-    "wallCount": "{count} 条留言"
+    "tagsHint": "更细的分类，一墙小贴纸",
+    "wallCount": "{count} 条留言",
+    "archiveHint": "按年月倒序，看这些文字是什么时候落下来的。"
   },
   "nav": {
     "primary": "主导航",

@@ -342,6 +342,75 @@
 }
 
 /* ---------------------------------------------------------------
+   导航项：选中态用「主题色 + 下划线」而不是灰底
+   --------------------------------------------------------------- */
+.nav-item {
+  position: relative;
+}
+
+.nav-item::after {
+  content: "";
+  position: absolute;
+  bottom: 0.3rem;
+  left: 50%;
+  height: 2px;
+  width: 1.15rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  transform: translateX(-50%) scaleX(0);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 悬停时露出半截，选中时整条展开 */
+.nav-item:hover::after {
+  transform: translateX(-50%) scaleX(0.5);
+  opacity: 0.55;
+}
+
+.nav-item[data-active="true"]::after {
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------
+   标签页：贴纸卡片（刻意和「分类」的书签区分开）
+
+   分类是"竖长条挂在横杆上"（.bookmark），标签是"一墙小方贴纸"：
+   方块 + 内部分割线 + 固定轻微倾角，悬停时抬起并把角度归正。
+   倾角由 id 派生，刷新不会跳；颜色统一走主题色深浅变化，不引入杂色。
+   --------------------------------------------------------------- */
+.tag-card {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, var(--border));
+  background-color: color-mix(in oklab, var(--primary) var(--tag-mix), var(--card));
+  padding: 0.4rem 0.7rem 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+/* 中间一条细分割线，把"名字"和"篇数"分开 */
+.tag-card::before {
+  content: "";
+  align-self: stretch;
+  width: 1px;
+  background: color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+
+.tag-card:hover {
+  transform: translateY(-3px) rotate(0deg) !important;
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.12);
+}
+
+/* ---------------------------------------------------------------
    Shiki 代码高亮（双主题）
    渲染时只输出 CSS 变量（--shiki-light* / --shiki-dark*），
    这里按 .dark 切换，无需重新高亮。
@@ -1690,7 +1759,8 @@ html.is-loaded .site-preloader {
   .tape-reel,
   .bookmark,
   .about-avatar,
-  .friend-card {
+  .friend-card,
+  .tag-card {
     transition: none;
   }
 
@@ -1701,7 +1771,8 @@ html.is-loaded .site-preloader {
   .tape-case:hover,
   .tape-case:hover .tape-reel,
   .bookmark:hover,
-  .friend-card:hover {
+  .friend-card:hover,
+  .tag-card:hover {
     transform: none;
   }
 

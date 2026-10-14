@@ -67,7 +67,7 @@ export function MobileNav({ siteName, logo }: { siteName: string; logo?: string 
           <NextLink
             href={adminEntry.href}
             onClick={() => setOpen(false)}
-            className="font-display press flex items-center gap-2 rounded-md px-2.5 py-2 text-base text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+            className="font-display press flex items-center gap-2 rounded-md px-2.5 py-2 text-base text-muted-foreground transition-colors hover:text-foreground"
           >
             <LogInIcon className="size-4" />
             {t(adminEntry.labelKey)}

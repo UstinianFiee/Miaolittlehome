@@ -34,11 +34,17 @@ export function NavLinks({ className, onNavigate }: NavLinksProps) {
               href={item.href}
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
+              data-active={active ? "true" : "false"}
               className={cn(
-                "font-display press rounded-md px-2.5 py-2 text-base whitespace-nowrap transition-colors",
+                "font-display nav-item press rounded-md px-2.5 py-2 text-base whitespace-nowrap transition-colors",
+                /*
+                 * 不用 bg-accent：--accent 是 10% 的蓝（浅色）/ 45% 的灰（深色），
+                 * 当底色会让文字发糊、对比度掉得厉害。改成「选中=主题色+下划线，
+                 * 悬停=只变文字色」，清晰得多。
+                 */
                 active
-                  ? "bg-accent font-medium text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                  ? "font-medium text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {t(item.labelKey)}

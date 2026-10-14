@@ -40,8 +40,9 @@
     "wallEmpty": "The board is empty — pin the first note",
     "albumsHint": "Each one is a small photo album",
     "categoriesHint": "Categories, hanging like bookmarks on a rail",
-    "tagsHint": "Finer tags, also on the rail",
-    "wallCount": "{count} messages"
+    "tagsHint": "Finer-grained labels, a wall of little stickers",
+    "wallCount": "{count} messages",
+    "archiveHint": "Newest first, grouped by year and month."
   },
   "nav": {
     "primary": "Primary navigation",

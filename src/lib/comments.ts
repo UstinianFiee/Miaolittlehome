@@ -106,6 +106,56 @@ export async function listApprovedComments(target: CommentTarget): Promise<Comme
   return buildTree(rows);
 }
 
+/** 留言墙每页条数。 */
+export const WALL_PAGE_SIZE = 12;
+
+/**
+ * 留言墙专用：**顶层留言按时间倒序分页**（最新的在最前），并带上各自的所有回复。
+ *
+ * 和 `listApprovedComments` 的区别不只是排序：
+ * - 那里是「一次取全部再组装树」，留言一多就会无限变长；
+ * - 这里先只取一页顶层（一个 IN 查询带出它们的回复），树只在这一页内组装。
+ *
+ * 回复仍然按时间**升序**（先说的话在前面），符合阅读习惯。
+ */
+export async function listWallComments(params: { page?: number; pageSize?: number } = {}) {
+  const pageSize = params.pageSize ?? WALL_PAGE_SIZE;
+  const page = Math.max(1, Math.floor(params.page ?? 1));
+
+  const where: Prisma.CommentWhereInput = {
+    type: "wall",
+    refId: null,
+    parentId: null,
+    approved: true,
+  };
+
+  const [total, roots] = await Promise.all([
+    prisma.comment.count({ where }),
+    prisma.comment.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: commentSelect,
+    }),
+  ]);
+
+  const replies = roots.length
+    ? await prisma.comment.findMany({
+        where: { parentId: { in: roots.map((root) => root.id) }, approved: true },
+        orderBy: { createdAt: "asc" },
+        select: commentSelect,
+      })
+    : [];
+
+  return {
+    total,
+    items: buildTree([...roots, ...replies]),
+    page,
+    pageSize,
+  };
+}
+
 export type CreateCommentInput = {
   type: CommentType;
   refId: number | null;
