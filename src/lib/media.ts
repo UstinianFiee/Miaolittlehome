@@ -13,6 +13,7 @@ import {
   writeChunk,
   type ChunkPlan,
 } from "@/lib/chunked-upload";
+import { ALLOWED_EXTENSIONS, type MediaKind } from "@/lib/media-extensions";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -36,13 +37,11 @@ export const CHUNK_SIZE = 8 * 1024 * 1024;
 export const DIRECT_UPLOAD_LIMIT = 10 * 1024 * 1024;
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-export type MediaKind = "image" | "audio" | "video";
+export type { MediaKind } from "@/lib/media-extensions";
 
-const ALLOWED_EXTENSIONS: Record<MediaKind, string[]> = {
-  image: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg"],
-  audio: [".mp3", ".m4a", ".wav", ".ogg"],
-  video: [".mp4", ".webm", ".mov"],
-};
+// 扩展名白名单放在 media-extensions.ts（纯数据，客户端组件也要用），
+// 这里转出去，老的 `import { ALLOWED_EXTENSIONS } from "@/lib/media"` 仍然有效。
+export { ALLOWED_EXTENSIONS, MEDIA_KINDS, MEDIA_ACCEPT } from "@/lib/media-extensions";
 
 export class MediaError extends Error {
   readonly status: number;

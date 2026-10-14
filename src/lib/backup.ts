@@ -6,6 +6,8 @@ import type { Writable } from "node:stream";
 import type { Prisma } from "@prisma/client";
 
 import { MEDIA_DIR } from "@/lib/media";
+import { formatDual } from "@/lib/datetime";
+import { formatBytes } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getSiteInfo } from "@/lib/settings";
 import { SOFTWARE_DIR } from "@/lib/software-storage";
@@ -231,9 +233,110 @@ export type BackupArchiveSummary = {
 
 export type PreparedBackup = {
   payload: Buffer;
+  /** 人看的清单，随包一起塞进去（见 buildManifest 的注释） */
+  manifest: Buffer;
   files: BackupFileEntry[];
   summary: BackupArchiveSummary;
 };
+
+/** 各表在清单里的中文名与量词。顺序就是清单里的展示顺序。 */
+const MANIFEST_ROWS: { key: BackupTableName; label: string; unit: string }[] = [
+  { key: "posts", label: "文章", unit: "篇" },
+  { key: "shuoshuo", label: "说说", unit: "条" },
+  { key: "comments", label: "评论", unit: "条" },
+  { key: "categories", label: "分类", unit: "个" },
+  { key: "tags", label: "标签", unit: "个" },
+  { key: "postTags", label: "文章-标签关联", unit: "条" },
+  { key: "albums", label: "相册", unit: "个" },
+  { key: "media", label: "媒体记录", unit: "条" },
+  { key: "videos", label: "视频", unit: "个" },
+  { key: "software", label: "软件", unit: "个" },
+  { key: "softwareFiles", label: "安装包", unit: "个" },
+  { key: "announcements", label: "公告", unit: "条" },
+  { key: "friends", label: "友链", unit: "个" },
+  { key: "settings", label: "站点设置", unit: "项" },
+];
+
+/**
+ * 生成包内的 `README.txt`。
+ *
+ * 为什么需要它：文章、说说这些内容**全都存在 `backup.json` 里**（一张表一个数组），
+ * 不是一个个单独的文件。用户解压后只看到 `backup.json` + `media/`，
+ * 很自然会以为"文章没导出来"。这份清单就是用来消除这个误解的。
+ *
+ * 文件名刻意用 ASCII 的 `README.txt`：Info-ZIP 的 `unzip 6.00` 不认 UTF-8 标志位，
+ * 中文条目名解出来是乱码（内容里的中文没问题）。
+ */
+function buildManifest(
+  counts: BackupCounts,
+  files: BackupFileEntry[],
+  siteName: string,
+  exportedAt: Date,
+  options: BackupFileOptions
+): Buffer {
+  const mediaFiles = files.filter((file) => file.entry.startsWith("media/"));
+  const softwareFiles = files.filter((file) => file.entry.startsWith("software/"));
+  const bytes = files.reduce((total, file) => total + file.size, 0);
+
+  const rows = MANIFEST_ROWS.map(
+    (row) => `  ${row.label.padEnd(14, "　")}${counts[row.key]} ${row.unit}`
+  ).join("\n");
+
+  const text = `${siteName} · 内容备份
+================================================================
+
+导出时间：${formatDual(exportedAt)}
+
+这个包里有什么
+----------------------------------------------------------------
+
+  backup.json     所有内容的原始数据。文章、说说、评论、设置都在这一个文件里，
+                  不是一个个单独的文件，所以解压后看不到 .md 之类的东西是正常的。
+                  导入时读的就是它。
+  README.txt      本文件
+${
+  options.media
+    ? `  media/          媒体文件（图片 / 音频 / 视频），共 ${mediaFiles.length} 个\n`
+    : "  （本次未包含媒体文件）\n"
+}${
+    options.software
+      ? `  software/       软件安装包，共 ${softwareFiles.length} 个\n`
+      : "  （本次未包含软件安装包）\n"
+  }
+内容清单
+----------------------------------------------------------------
+
+${rows}
+
+  文件合计        ${files.length} 个 · ${formatBytes(bytes)}
+
+怎么用
+----------------------------------------------------------------
+
+  1. 登录新服务器的后台（首次部署时用环境变量里的管理员账号）
+  2. 打开 系统 → 备份
+  3. 选这个 .zip，点「开始导入」
+
+  导入是整体替换：会先清空当前所有内容，再按这个包重建。
+  导入前系统会自动把当前数据存一份快照到服务器的 backups 目录。
+
+不含什么
+----------------------------------------------------------------
+
+  管理员账号、操作日志、访问记录。
+  账号的密码哈希跨库迁移没有意义 —— 新服务器首次部署时已经按环境变量建好了管理员，
+  导入后直接用它登录即可。
+
+提示
+----------------------------------------------------------------
+
+  · 本包由应用自身导出，与数据库文件格式无关，可以跨版本导入。
+  · 只想搬内容、不想动数据库文件的话，用这个包就够了。
+  · 如果需要连数据库文件一起整体备份，那属于运维层面，用 scripts/backup.sh。
+`;
+
+  return Buffer.from(text, "utf8");
+}
 
 /**
  * 收集数据与文件清单，并做大小预检。
@@ -268,8 +371,11 @@ export async function prepareBackup(options: BackupFileOptions): Promise<Prepare
     throw new BackupError("备份包超过 4GB 上限，请取消勾选「软件安装包」后重试", 413);
   }
 
+  const exportedAt = new Date();
+
   return {
     payload,
+    manifest: buildManifest(counts, files, site.name, exportedAt, options),
     files,
     summary: {
       counts,
@@ -294,6 +400,8 @@ export async function writePreparedArchive(
 ): Promise<void> {
   const writer = new ZipWriter(out);
   await writer.addBuffer("backup.json", prepared.payload, true);
+  // 清单排在数据后面、文件前面 —— 解压时一眼能看到"内容都在 backup.json 里"
+  await writer.addBuffer("README.txt", prepared.manifest, true);
   for (const file of prepared.files) {
     await writer.addFile(file.entry, file.absolute);
   }

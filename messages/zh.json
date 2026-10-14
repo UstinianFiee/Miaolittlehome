@@ -801,7 +801,7 @@
     "statFriends": "友链",
     "statFiles": "文件",
     "exportTitle": "导出备份",
-    "exportHint": "导出为一个 .zip 包，拿到新服务器的这个页面导入即可。",
+    "exportHint": "导出为一个 .zip 包，拿到新服务器的这个页面导入即可。包里有 backup.json（文章、说说、评论、设置等都在这个文件里，不是单独的文件）、一份 README.txt 清单，以及勾选的媒体文件。",
     "includeMedia": "包含媒体文件",
     "includeMediaHint": "图片 / 音频 / 视频，共 {count} 个 · {size}",
     "includeSoftware": "包含软件安装包",

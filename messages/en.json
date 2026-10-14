@@ -801,7 +801,7 @@
     "statFriends": "Friends",
     "statFiles": "Files",
     "exportTitle": "Export",
-    "exportHint": "Downloads a .zip; import it on the new server from this same page.",
+    "exportHint": "Downloads a .zip; import it on the new server from this same page. It contains backup.json (posts, notes, comments and settings all live inside this single file, not as separate files), a README.txt summary, plus the media you checked.",
     "includeMedia": "Include media files",
     "includeMediaHint": "Images / audio / video — {count} files · {size}",
     "includeSoftware": "Include software packages",

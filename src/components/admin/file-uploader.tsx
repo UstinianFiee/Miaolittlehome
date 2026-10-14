@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { MEDIA_ACCEPT } from "@/lib/media-extensions";
 
 type InitResponse = {
   ok: boolean;
@@ -124,6 +125,7 @@ export function FileUploader({
           ref={inputRef}
           type="file"
           multiple
+          accept={MEDIA_ACCEPT}
           className="hidden"
           onChange={(event) => void handleFiles(event.target.files)}
         />
