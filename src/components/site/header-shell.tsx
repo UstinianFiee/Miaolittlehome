@@ -27,13 +27,14 @@ export function HeaderShell({ children }: { children: React.ReactNode }) {
     <header className="fixed inset-x-0 top-0 z-50 w-full px-3 pt-3 sm:px-4 sm:pt-4">
       <div
         className={cn(
-          // 1280px 起胶囊放宽到 78rem：导航项是英文时（Categories / Guestbook…）需要更多横向空间
-          "mx-auto flex h-16 w-full max-w-6xl items-center gap-2 rounded-xl border px-4 transition-all duration-300 sm:h-[4.25rem] sm:px-6 xl:max-w-[78rem]",
+          // 1280px 起胶囊放宽到 78rem、2xl 再放宽到 86rem：
+          // 英文导航项多（Home / Categories / Guestbook / Friends…），需要横向空间
+          "mx-auto flex h-16 w-full max-w-6xl items-center gap-2 rounded-xl border px-4 transition-all duration-300 sm:h-[4.25rem] sm:px-6 xl:max-w-[78rem] 2xl:max-w-[86rem]",
           transparent
             ? // 首页封面是深色图片区，导航在这层始终用白字（与标题一致）
               "border-transparent bg-black/10 text-white shadow-none [&_*]:text-current"
             : // 用 --nav-bg 而不是 bg-card/40：后者实际只有约 29% 不透明，压在背景图上会发灰
-              "border-border/50 bg-[color:var(--nav-bg)] text-[color:var(--card-foreground)] shadow-sm backdrop-blur-md"
+              "border-border bg-[color:var(--nav-bg)] text-[color:var(--card-foreground)] shadow-sm backdrop-blur-sm"
         )}
       >
         {children}

@@ -40,7 +40,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             attribute="class"
             defaultTheme="system"
             enableSystem
-            disableTransitionOnChange
           >
             <div className="flex min-h-screen flex-col">{children}</div>
           </ThemeProvider>

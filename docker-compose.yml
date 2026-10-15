@@ -1,8 +1,8 @@
 # 生产编排：应用容器 + Nginx 反代
 #
-# 使用方式（在项目根目录）：
-#   cp deploy/.env.production.example .env.production   # 填好密钥
-#   sudo mkdir -p /data && sudo chown -R 1001:1001 /data
+# 首次空库部署见 docs/部署手册.md；已有站点见 docs/更新手册.md。
+# 升级保留原 .env.production、数据挂载和项目目录，RUN_SEED 必须为 false。
+# 核对挂载并完成停机冷备份后，才执行：
 #   docker compose --env-file .env.production up -d --build
 #
 # 注意 --env-file：构建阶段要把 NEXT_PUBLIC_SITE_URL 内联进产物（见下方 build.args），
@@ -18,7 +18,8 @@
 #   DATA_DIR/software/      软件安装包（Nginx 直出）
 #   DATA_DIR/backups/       导出包与导入前的自动快照
 #
-# **备份 = 备份这一个目录**；**升级 = 保留这个目录**，容器重建不影响内容。
+# 升级保留原数据目录及生产配置，关闭 seed；先停写再冷备份完整目录（含 WAL）。
+# 配置和证书另行备份；迁移可能改变数据库，保留挂载不能替代备份与验收。
 # 宿主机目录的属主要设成 1001:1001（容器里的运行用户），否则会写不进去。
 
 services:
@@ -47,6 +48,7 @@ services:
       PORT: "3000"
       HOSTNAME: 0.0.0.0
       # 存储路径：容器内固定用 /data，宿主机目录由 DATA_DIR 决定（见上方说明）
+      DATA_DIR: /data
       DATABASE_URL: file:/data/db/blog.db
       MEDIA_DIR: /data/media
       SOFTWARE_DIR: /data/software

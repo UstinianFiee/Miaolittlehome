@@ -5,8 +5,8 @@
  * `.hero-wave*`），越靠前的层波高越浅、越不透明、流得越快，叠出层次。
  *
  * `pageBackground` 是内容区背景图（可能为空）：
- * 传空时波浪填纯色页面底色；传了图就复刻内容区那层「固定背景图 + 半透明遮罩」，
- * 保证波浪与内容区无缝衔接。
+ * 传空时波浪填纯色页面底色；传了图就复刻内容区底部的轻遮罩，
+ * 让波浪与更清晰的背景图无缝衔接。
  */
 
 type WaveLayer = {
@@ -54,7 +54,7 @@ export function HeroWave({ pageBackground }: { pageBackground: string }) {
                   backgroundPosition: "center",
                 }}
               />
-              {/* 与布局里的遮罩保持同一种透明度 */}
+              {/* 波浪填充颜色保持原主题底色；只在其上叠既有波峰提亮，不额外染色。 */}
               <div className="absolute inset-0 bg-background/75" />
             </>
           ) : (

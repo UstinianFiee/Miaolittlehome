@@ -28,6 +28,7 @@ export const navItems: readonly NavItem[] = [
   { labelKey: "nav.videos", href: "/videos" },
   { labelKey: "nav.software", href: "/software" },
   { labelKey: "nav.wall", href: "/wall" },
+  { labelKey: "nav.friends", href: "/friends" },
   { labelKey: "nav.about", href: "/about" },
 ] as const;
 

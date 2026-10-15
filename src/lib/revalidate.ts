@@ -45,6 +45,7 @@ const FRONT_STATIC_PATHS = [
   "/videos",
   "/software",
   "/wall",
+  "/friends",
   "/about",
   "/search",
 ];

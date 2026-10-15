@@ -76,6 +76,45 @@ export async function renderMarkdown(source: string): Promise<string> {
   }
 }
 
+export type MarkdownHeading = { depth: 2 | 3 | 4; id: string; label: string };
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&#(?:x([\da-f]+)|(\d+));/gi, (_match, hex: string | undefined, decimal: string | undefined) => {
+      const codePoint = Number.parseInt(hex ?? decimal ?? "", hex ? 16 : 10);
+      return Number.isFinite(codePoint) && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : "";
+    })
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+}
+
+/** 从已渲染 HTML 提取带 rehype-slug 实际锚点的目录，避免目录 slug 与正文不一致。 */
+export function extractMarkdownHeadings(html: string): MarkdownHeading[] {
+  const headings: MarkdownHeading[] = [];
+  const pattern = /<h([2-4])\b([^>]*)>([\s\S]*?)<\/h\1>/gi;
+
+  for (const match of html.matchAll(pattern)) {
+    const depth = Number(match[1]) as MarkdownHeading["depth"];
+    const id = match[2].match(/\bid="([^"]+)"/i)?.[1];
+    const label = decodeHtmlEntities(match[3].replace(/<[^>]+>/g, " "))
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (id && label) {
+      headings.push({ depth, id: decodeHtmlEntities(id), label });
+    }
+  }
+
+  return headings;
+}
+
 /** 纯文本摘要：从 Markdown 内容里提取一段可读文字（列表页兜底用）。 */
 export function excerptFromMarkdown(source: string, length = 120): string {
   const plain = source

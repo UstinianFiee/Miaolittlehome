@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +52,15 @@ const EMPTY = {
   sort: "0",
 };
 
-export function VideoManager({ items }: { items: VideoRow[] }) {
+export function VideoManager({
+  items,
+  images,
+  videos,
+}: {
+  items: VideoRow[];
+  images: MediaOption[];
+  videos: MediaOption[];
+}) {
   const t = useTranslations();
   const router = useRouter();
 
@@ -192,26 +201,45 @@ export function VideoManager({ items }: { items: VideoRow[] }) {
           />
         </div>
 
-        <div className="space-y-2 lg:col-span-2">
-          <Label htmlFor="video-src">{t("adminVideos.fieldSrcUrl")}</Label>
-          <Input
-            id="video-src"
-            value={form.srcUrl}
-            onChange={(event) => setForm({ ...form, srcUrl: event.target.value })}
-            maxLength={1000}
-            required
-            placeholder="/media/… 或 https://…"
-          />
-          <p className="text-xs text-muted-foreground">{t("adminVideos.fieldSrcUrlHint")}</p>
-        </div>
+        {/*
+          本地视频直接用媒体字段（可手填 / 上传 / 从媒体库挑）；
+          外链 iframe 只能是网址，保持纯输入框。
+        */}
+        {form.sourceType === "local" ? (
+          <div className="space-y-2 lg:col-span-2">
+            <MediaField
+              id="video-src"
+              label={t("adminVideos.fieldSrcUrl")}
+              hint={t("adminVideos.fieldSrcUrlHint")}
+              value={form.srcUrl}
+              onChange={(next) => setForm({ ...form, srcUrl: next })}
+              options={videos}
+              preview="video"
+              accept="video/*"
+            />
+          </div>
+        ) : (
+          <div className="space-y-2 lg:col-span-2">
+            <Label htmlFor="video-src">{t("adminVideos.fieldSrcUrl")}</Label>
+            <Input
+              id="video-src"
+              value={form.srcUrl}
+              onChange={(event) => setForm({ ...form, srcUrl: event.target.value })}
+              maxLength={1000}
+              required
+              placeholder="https://…"
+            />
+            <p className="text-xs text-muted-foreground">{t("adminVideos.fieldSrcUrlHint")}</p>
+          </div>
+        )}
 
         <div className="space-y-2 lg:col-span-2">
-          <Label htmlFor="video-cover">{t("adminVideos.fieldCover")}</Label>
-          <Input
+          <MediaField
             id="video-cover"
+            label={t("adminVideos.fieldCover")}
             value={form.cover}
-            onChange={(event) => setForm({ ...form, cover: event.target.value })}
-            maxLength={500}
+            onChange={(next) => setForm({ ...form, cover: next })}
+            options={images}
           />
         </div>
 

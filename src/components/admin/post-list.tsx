@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { DualTime } from "@/components/site/dual-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ export type PostListItem = {
   views: number;
   categoryName: string | null;
   tagNames: string[];
-  updatedAtLabel: string;
+  updatedAt: string;
 };
 
 type PostListProps = {
@@ -242,8 +243,8 @@ export function PostList({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{item.views}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground tabular-nums">
-                    {item.updatedAtLabel}
+                  <TableCell className="text-xs text-muted-foreground">
+                    <DualTime date={item.updatedAt} variant="stacked" />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

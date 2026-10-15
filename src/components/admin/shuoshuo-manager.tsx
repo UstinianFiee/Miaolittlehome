@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { MediaField, type MediaOption } from "@/components/admin/media-field";
+import { DualTime } from "@/components/site/dual-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDual } from "@/lib/datetime";
 
 export type ShuoshuoRow = {
   id: number;
@@ -350,8 +350,8 @@ export function ShuoshuoManager({
                       ) : null}
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground tabular-nums">
-                    {formatDual(new Date(item.createdAt))}
+                  <TableCell className="text-xs text-muted-foreground">
+                    <DualTime date={item.createdAt} variant="stacked" />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

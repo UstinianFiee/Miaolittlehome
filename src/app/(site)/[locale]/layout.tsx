@@ -100,7 +100,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             attribute="class"
             defaultTheme="system"
             enableSystem
-            disableTransitionOnChange
           >
             <div
               className={cn(
@@ -117,11 +116,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                     style={{ backgroundImage: `url("${site.pageBackground}")` }}
                   />
                   {/*
-                    半透明遮罩：压在背景图之上、内容之下。
-                    透明度压到 75% 而不是 88%——再高就只剩纯色底了，背景图等于白设。
-                    卡片本身也是半透明的，文字对比度靠卡片承担。
+                    背景图遮罩保持轻薄：上方稍微压暗/提亮，向下快速淡出，避免整页蒙一层灰白。
+                    文章卡片与说说气泡各自承担文字可读性；具体透明度集中定义在 globals.css。
                   */}
-                  <div aria-hidden className="fixed inset-0 -z-10 bg-background/75" />
+                  <div aria-hidden className="page-background-scrim fixed inset-0 -z-10" />
                 </>
               ) : null}
               {/* 站点设置改动后，把还停在旧版本上的客户端路由缓存刷掉 */}

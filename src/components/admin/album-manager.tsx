@@ -5,6 +5,7 @@ import NextLink from "next/link";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,7 @@ export type AlbumRow = {
 
 const EMPTY_FORM = { name: "", nameEn: "", description: "", cover: "", sort: "0" };
 
-export function AlbumManager({ items }: { items: AlbumRow[] }) {
+export function AlbumManager({ items, images }: { items: AlbumRow[]; images: MediaOption[] }) {
   const t = useTranslations();
   const router = useRouter();
 
@@ -178,15 +179,14 @@ export function AlbumManager({ items }: { items: AlbumRow[] }) {
         </div>
 
         <div className="space-y-2 lg:col-span-2">
-          <Label htmlFor="album-cover">{t("albums.cover")}</Label>
-          <Input
+          <MediaField
             id="album-cover"
+            label={t("albums.cover")}
+            hint={t("albums.coverHint")}
             value={form.cover}
-            onChange={(event) => setForm({ ...form, cover: event.target.value })}
-            maxLength={500}
-            placeholder="/media/2026/10/xxx.thumb.webp"
+            onChange={(next) => setForm({ ...form, cover: next })}
+            options={images}
           />
-          <p className="text-xs text-muted-foreground">{t("albums.coverHint")}</p>
         </div>
       </form>
 

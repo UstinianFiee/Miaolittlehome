@@ -3,12 +3,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { DualTime } from "@/components/site/dual-time";
 import { VideoPlayer } from "@/components/site/video-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { formatDual } from "@/lib/datetime";
 import { pickLocalized } from "@/lib/localized";
 import { buildPageMetadata } from "@/lib/metadata";
 import { getPublishedVideo, listPublishedVideoIds } from "@/lib/videos";
@@ -72,7 +72,7 @@ export default async function VideoDetailPage({ params }: Props) {
           <Badge variant="secondary">
             {video.sourceType === "iframe" ? t("videos.iframeSource") : t("videos.localSource")}
           </Badge>
-          <time dateTime={video.createdAt.toISOString()}>{formatDual(video.createdAt)}</time>
+          <DualTime date={video.createdAt} />
         </div>
       </header>
 

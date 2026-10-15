@@ -4,60 +4,66 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 /**
- * 站点配置同步器（不渲染任何东西）。
+ * Foreground content synchronizer (renders nothing).
  *
- * ## 解决什么问题
- *
- * 后台改了站点设置（比如内容区背景图）之后：
- * - 服务端：`revalidatePath` 会把 ISR 缓存刷掉 ✓
- * - 浏览器：**客户端路由缓存不会被清掉** ✗
- *
- * 所以用户回到前台整页加载能看到新背景，但点导航/分页切过去，
- * 拿到的还是改动前那份预取数据 —— 表现就是「首页变了，后面的页面还是旧的」。
- * 这是 Next.js 的已知限制（`revalidatePath` 只在 Server Action 里才会把失效信息
- * 回传给客户端），官方给的解法就是在客户端调用 `router.refresh()`。
- *
- * ## 怎么做的
- *
- * 布局把**渲染时的配置版本号**传进来，这里向 `/api/site-version` 问一次当前值：
- * - 一样 → 什么都不做（正常情况，配置没改）
- * - 不一样 → `router.refresh()` 拉一份新的，当前路由连同布局一起重新渲染
- *
- * `router.refresh()` 之后新 HTML 会带上新版本号，下一轮自然就相等了。
- * 另外用 `refreshedFor` 兜底：同一个版本号只刷一次，避免服务端异常时反复刷新。
+ * Route-handler revalidation clears the server ISR cache, but an already-open
+ * tab may continue using Next's client router cache. Poll the content digest and
+ * refresh the current route when an admin edit is detected. The digest covers
+ * site settings, posts, videos, albums/media, friends, and approved comments.
  */
+const CHECK_INTERVAL_MS = 10_000;
+const REFRESH_RETRY_MS = 30_000;
+
 export function ConfigSync({ version }: { version: string }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [refreshedFor, setRefreshedFor] = React.useState<string | null>(null);
+  const lastRefresh = React.useRef<{ target: string; at: number } | null>(null);
 
   React.useEffect(() => {
-    if (refreshedFor === version) {
-      return;
-    }
-
     let cancelled = false;
+    let checking = false;
 
-    fetch("/api/site-version", { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { version?: string } | null) => {
-        if (cancelled || !data?.version) {
+    async function checkVersion() {
+      if (checking) return;
+      checking = true;
+
+      try {
+        const response = await fetch("/api/site-version", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { version?: string };
+        if (cancelled || !data.version) return;
+        if (data.version === version) {
+          lastRefresh.current = null;
           return;
         }
-        if (data.version !== version) {
-          // 记下「已经为这个版本刷过」，避免刷新后服务端仍返回旧值时死循环
-          setRefreshedFor(version);
+
+        const now = performance.now();
+        const previous = lastRefresh.current;
+        if (
+          !previous ||
+          previous.target !== data.version ||
+          now - previous.at >= REFRESH_RETRY_MS
+        ) {
+          // Retry stale/failed refreshes without refreshing on every polling tick.
+          lastRefresh.current = { target: data.version, at: now };
           router.refresh();
         }
-      })
-      .catch(() => {
-        // 网络异常时静默放弃：这只是锦上添花，不该影响页面
-      });
+      } catch {
+        // Network errors are transient; the next polling tick will retry.
+      } finally {
+        checking = false;
+      }
+    }
+
+    void checkVersion();
+    const timer = window.setInterval(() => void checkVersion(), CHECK_INTERVAL_MS);
 
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
     };
-  }, [version, pathname, refreshedFor, router]);
+  }, [version, pathname, router]);
 
   return null;
 }

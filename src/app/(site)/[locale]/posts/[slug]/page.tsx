@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ArticleBar } from "@/components/site/article-bar";
+import { ArticleToc } from "@/components/site/article-toc";
 import { CodeCopy } from "@/components/site/code-copy";
+import { DualTime } from "@/components/site/dual-time";
 import { MarkdownContent } from "@/components/site/markdown-content";
 import { ShareButton } from "@/components/site/share-button";
 import { CommentSection } from "@/components/site/comment-section";
@@ -15,9 +17,8 @@ import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { countCommentViews, toCommentViews } from "@/lib/comment-view";
 import { listApprovedComments } from "@/lib/comments";
-import { formatDual } from "@/lib/datetime";
 import { pickLocalized } from "@/lib/localized";
-import { renderMarkdown } from "@/lib/markdown";
+import { extractMarkdownHeadings, renderMarkdown } from "@/lib/markdown";
 import { buildAlternates } from "@/lib/metadata";
 import { getPublishedPostBySlug, listPublishedSlugs } from "@/lib/query";
 import { getSiteInfo } from "@/lib/settings";
@@ -75,6 +76,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   const html = await renderMarkdown(pickLocalized(locale, post.content, post.contentEn));
+  const headings = extractMarkdownHeadings(html);
   const commentTree = await listApprovedComments({ type: "post", refId: post.id });
   const commentViews = toCommentViews(commentTree);
   const title = pickLocalized(locale, post.title, post.titleEn);
@@ -94,104 +96,107 @@ export default async function PostPage({ params }: PostPageProps) {
             className="fixed inset-0 -z-20 bg-cover bg-center"
             style={{ backgroundImage: `url("${site.postBackground}")` }}
           />
-          <div aria-hidden className="fixed inset-0 -z-10 bg-background/82" />
+          <div aria-hidden className="page-background-scrim fixed inset-0 -z-10" />
         </>
       ) : null}
 
-      <article className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      {/*
-        正文包一层玻璃卡：低不透明度 + backdrop-blur，背景图能透出来，
-        模糊又把底层抹平，所以文字对比度不会被背景图拉低。
-      */}
-      <div id="article-body" className="surface-glass p-5 sm:p-8">
-      {/* 标题居中，下面一行是发布时间 / 作者 / 分类 / 浏览，再用分隔线切到正文 */}
-      <header className="mb-8 text-center">
-        <h1 className="font-display text-3xl leading-snug text-balance sm:text-4xl">{title}</h1>
+      <article className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        {/*
+          正文卡片 + 右侧粘性目录。目录放侧边栏，阅读区不再插入额外区块，
+          窄屏隐藏目录，正文保持单列；文章进度仍按整张 #article-body 计算。
+        */}
+        <div id="article-body" className="surface-glass p-5 sm:p-8">
+          <div className={`grid items-start gap-8 ${headings.length > 0 ? "lg:grid-cols-[minmax(0,1fr)_15rem]" : ""}`}>
+            <div className="min-w-0">
+              {/* 标题居中，下面一行是发布时间 / 作者 / 分类 / 浏览，再用分隔线切到正文 */}
+              <header className="mb-8 text-center">
+                <h1 className="font-display text-3xl leading-snug text-balance sm:text-4xl">{title}</h1>
 
-        {summary ? (
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground text-balance">{summary}</p>
-        ) : null}
+                {summary ? (
+                  <p className="mx-auto mt-4 max-w-2xl text-muted-foreground text-balance">{summary}</p>
+                ) : null}
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
-          <span>
-            {t("site.publishedAt")}{" "}
-            <time dateTime={post.createdAt.toISOString()}>{formatDual(post.createdAt)}</time>
-          </span>
-          <span aria-hidden className="opacity-50">
-            ·
-          </span>
-          <span>
-            {t("site.author")} {site.author}
-          </span>
-          {isUpdated ? (
-            <>
-              <span aria-hidden className="opacity-50">
-                ·
-              </span>
-              <span>
-                {t("site.updatedAt")}{" "}
-                <time dateTime={post.updatedAt.toISOString()}>{formatDual(post.updatedAt)}</time>
-              </span>
-            </>
-          ) : null}
-          {post.category ? (
-            <>
-              <span aria-hidden className="opacity-50">
-                ·
-              </span>
-              <Link
-                href={`/categories/${post.category.id}`}
-                className="underline-offset-4 hover:text-primary hover:underline"
-              >
-                {pickLocalized(locale, post.category.name, post.category.nameEn)}
-              </Link>
-            </>
-          ) : null}
-          <span aria-hidden className="opacity-50">
-            ·
-          </span>
-          <ViewCounter slug={post.slug} initialViews={post.views} />
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+                  <span>
+                    {t("site.publishedAt")} <DualTime date={post.createdAt} />
+                  </span>
+                  <span aria-hidden className="opacity-50">·</span>
+                  <span>
+                    {t("site.author")} {site.author}
+                  </span>
+                  {isUpdated ? (
+                    <>
+                      <span aria-hidden className="opacity-50">·</span>
+                      <span>
+                        {t("site.updatedAt")} <DualTime date={post.updatedAt} />
+                      </span>
+                    </>
+                  ) : null}
+                  {post.category ? (
+                    <>
+                      <span aria-hidden className="opacity-50">·</span>
+                      <Link
+                        href={`/categories/${post.category.id}`}
+                        className="underline-offset-4 hover:text-primary hover:underline"
+                      >
+                        {pickLocalized(locale, post.category.name, post.category.nameEn)}
+                      </Link>
+                    </>
+                  ) : null}
+                  <span aria-hidden className="opacity-50">·</span>
+                  <ViewCounter slug={post.slug} initialViews={post.views} />
+                </div>
+
+                {post.tags.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                    {post.tags.map(({ tag }) => (
+                      <Link key={tag.id} href={`/tags/${tag.slug}`}>
+                        <Badge variant="secondary">{tag.name}</Badge>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+
+                <hr className="mt-7 border-0 border-t border-border/70" />
+              </header>
+
+              <MarkdownContent html={html} />
+              <CodeCopy />
+            </div>
+
+            {headings.length > 0 ? (
+              <aside className="hidden self-stretch lg:block">
+                <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto">
+                  <ArticleToc headings={headings} title={t("site.articleContents")} />
+                </div>
+              </aside>
+            ) : null}
+          </div>
         </div>
 
-        {post.tags.length > 0 ? (
-          <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-            {post.tags.map(({ tag }) => (
-              <Link key={tag.id} href={`/tags/${tag.slug}`}>
-                <Badge variant="secondary">{tag.name}</Badge>
-              </Link>
-            ))}
-          </div>
-        ) : null}
-
-        {/* 分隔符：把标题区与正文分开 */}
-        <hr className="mt-7 border-0 border-t border-border/70" />
-      </header>
-
-      <MarkdownContent html={html} />
-      {/* 给正文里的代码块挂「复制」按钮（挂载后增强，不参与 hydration） */}
-      <CodeCopy />
-      </div>
 
       {/* 阅读进度条 + 文章导航栏（滚过标题后出现） */}
       <ArticleBar title={title} />
 
-      <CommentSection
-        scope="post"
-        refId={post.id}
-        initialComments={commentViews}
-        count={countCommentViews(commentViews)}
-      />
+      <div className="w-full" data-testid="article-comments">
+        <CommentSection
+          scope="post"
+          refId={post.id}
+          initialComments={commentViews}
+          count={countCommentViews(commentViews)}
+        />
 
-      <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-6">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/posts">
-            <ArrowLeftIcon className="size-4" />
-            {t("site.backToPosts")}
-          </Link>
-        </Button>
+        <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-6">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/posts">
+              <ArrowLeftIcon className="size-4" />
+              {t("site.backToPosts")}
+            </Link>
+          </Button>
 
-        <ShareButton path={`/${locale}/posts/${post.slug}`} title={title} />
-      </footer>
+          <ShareButton path={`/${locale}/posts/${post.slug}`} />
+        </footer>
+      </div>
     </article>
     </div>
   );

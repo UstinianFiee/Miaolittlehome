@@ -1,8 +1,8 @@
 import { EyeIcon, PinIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { DualTime } from "@/components/site/dual-time";
 import { Link } from "@/i18n/navigation";
-import { formatDual } from "@/lib/datetime";
 import { pickLocalized } from "@/lib/localized";
 import type { PostCard } from "@/lib/query";
 
@@ -52,12 +52,12 @@ export function PostCardView({ post, locale }: { post: PostCard; locale: string 
             </h2>
           </div>
 
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground">
             {summary}
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <time dateTime={post.createdAt.toISOString()}>{formatDual(post.createdAt)}</time>
+            <DualTime date={post.createdAt} />
             {post.category ? (
               <span>
                 ·{" "}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import type { AboutDetails } from "@/lib/settings";
 import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { SuccessNote } from "@/components/admin/success-note";
 import { ICON_KEYS, iconLabel, isBrandIcon, ProfileIcon } from "@/components/site/profile-icon";
@@ -29,6 +30,7 @@ export type ProfileRow = {
   avatar: string;
   bio: string;
   links: ProfileLinkRow[];
+  about: AboutDetails;
 };
 
 const BRAND_KEYS = ICON_KEYS.filter(isBrandIcon);
@@ -93,6 +95,7 @@ export function ProfileManager({
   const [name, setName] = React.useState(initial.name);
   const [avatar, setAvatar] = React.useState(initial.avatar);
   const [bio, setBio] = React.useState(initial.bio);
+  const [about, setAbout] = React.useState(initial.about);
   const [links, setLinks] = React.useState<ProfileLinkRow[]>(initial.links);
 
   const [pending, setPending] = React.useState(false);
@@ -136,6 +139,7 @@ export function ProfileManager({
           name,
           avatar,
           bio,
+          about,
           // 地址为空的条目直接丢弃，避免存下一堆空行
           links: links.filter((link) => link.url.trim().length > 0),
         }),
@@ -219,6 +223,21 @@ export function ProfileManager({
         onChange={setAvatar}
         options={images}
       />
+
+      <div className="space-y-4 border-t border-border/60 pt-5">
+        <h3 className="font-medium">{t("aboutEdit.title")}</h3>
+        <p className="text-xs text-muted-foreground">{t("aboutEdit.hint")}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(["role", "location", "motto", "skills", "interests", "projects", "story"] as const).map(key => (
+            <div key={key} className={key === "story" || key === "projects" ? "space-y-2 sm:col-span-2" : "space-y-2"}>
+              <Label htmlFor={`about-${key}`}>{t(`aboutEdit.${key}`)}</Label>
+              <Textarea id={`about-${key}`} value={about[key]} rows={key === "story" ? 6 : 2}
+                maxLength={key === "story" ? 5000 : key === "projects" ? 2000 : key === "skills" || key === "interests" ? 1000 : key === "motto" ? 200 : 80}
+                onChange={event => setAbout(previous => ({ ...previous, [key]: event.target.value }))} />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* 自定义链接 */}
       <div className="space-y-3">

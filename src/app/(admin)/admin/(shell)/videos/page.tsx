@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 import { VideoManager, type VideoRow } from "@/components/admin/video-manager";
+import type { MediaOption } from "@/components/admin/media-field";
 import { catalogs } from "@/lib/messages";
+import { listMedia } from "@/lib/media";
 import { listVideosForAdmin } from "@/lib/videos";
 
 export const metadata: Metadata = {
@@ -9,7 +11,11 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminVideosPage() {
-  const videos = await listVideosForAdmin();
+  const [videos, images, videoMedia] = await Promise.all([
+    listVideosForAdmin(),
+    listMedia({ type: "image", limit: 200 }),
+    listMedia({ type: "video", limit: 200 }),
+  ]);
 
   const items: VideoRow[] = videos.map((video) => ({
     id: video.id,
@@ -24,5 +30,16 @@ export default async function AdminVideosPage() {
     sort: video.sort,
   }));
 
-  return <VideoManager items={items} />;
+  const imageOptions: MediaOption[] = images.map((image) => ({
+    id: image.id,
+    path: image.path,
+    title: image.title ?? image.path,
+  }));
+  const videoOptions: MediaOption[] = videoMedia.map((item) => ({
+    id: item.id,
+    path: item.path,
+    title: item.title ?? item.path,
+  }));
+
+  return <VideoManager items={items} images={imageOptions} videos={videoOptions} />;
 }

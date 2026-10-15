@@ -54,12 +54,28 @@ export type ProfileLink = {
   url: string;
 };
 
+export const ABOUT_FIELD_LIMITS = {
+  role: 80, location: 80, motto: 200, skills: 1000, interests: 1000,
+  story: 5000, projects: 2000,
+} as const;
+export type AboutDetails = Record<keyof typeof ABOUT_FIELD_LIMITS, string>;
+export function normalizeAbout(input: unknown): AboutDetails {
+  const record = input && typeof input === "object" ? input as Record<string, unknown> : {};
+  return Object.fromEntries(Object.entries(ABOUT_FIELD_LIMITS).map(([key, limit]) =>
+    [key, typeof record[key] === "string" ? record[key].trim().slice(0, limit) : ""]
+  )) as AboutDetails;
+}
+function parseAbout(raw: string | undefined): AboutDetails {
+  try { return normalizeAbout(JSON.parse(raw || "{}")); } catch { return normalizeAbout(null); }
+}
+
 export type ProfileSettings = {
   /** 个人显示名；留空则回退到站点名。 */
   name: string;
   avatar: string;
   bio: string;
   links: ProfileLink[];
+  about: AboutDetails;
 };
 
 const LEGACY_SOCIAL_META: Record<SocialKey, { icon: string; label: string }> = {
@@ -138,6 +154,7 @@ export async function getProfile(): Promise<ProfileSettings> {
     avatar: settings[PROFILE_AVATAR_KEY] ?? "",
     bio: settings[PROFILE_BIO_KEY] ?? "",
     links: rawLinks === undefined ? legacyLinks(settings) : parseLinks(rawLinks),
+    about: parseAbout(settings["profile.about"]),
   };
 }
 
@@ -233,13 +250,95 @@ export async function getSiteInfo(): Promise<SiteInfo> {
  * 不会造成多余的重渲染。
  */
 export async function getSiteVersion(): Promise<string> {
-  const rows = await prisma.setting.findMany({
-    where: { key: { startsWith: "site." } },
-    orderBy: { key: "asc" },
-    select: { key: true, value: true },
-  });
+  /*
+   * This version is used by ConfigSync in every foreground route, not only the
+   * settings page. Include the public-facing database content as well as site
+   * settings, so open tabs notice admin edits after the server ISR cache is
+   * invalidated. Blog datasets are intentionally queried as compact projections;
+   * no logs, private comment fields, download counters, or media bytes are read.
+   */
+  const [settings, posts, postTags, categories, tags, shuoshuo, announcements, albums, media, videos, software, softwareFiles, friends, comments] = await Promise.all([
+    prisma.setting.findMany({
+      where: {
+        OR: [
+          { key: { startsWith: "site." } },
+          { key: { startsWith: "profile." } },
+          { key: { startsWith: "social." } },
+          { key: { startsWith: "player." } },
+          { key: "playlist" },
+        ],
+      },
+      orderBy: { key: "asc" },
+      select: { key: true, value: true },
+    }),
+    prisma.post.findMany({
+      orderBy: { id: "asc" },
+      select: {
+        id: true, title: true, titleEn: true, slug: true, summary: true, summaryEn: true,
+        content: true, contentEn: true, cover: true, categoryId: true, published: true,
+        pinned: true, createdAt: true,
+      },
+    }),
+    prisma.postTag.findMany({ orderBy: [{ postId: "asc" }, { tagId: "asc" }], select: { postId: true, tagId: true } }),
+    prisma.category.findMany({ orderBy: { id: "asc" }, select: { id: true, name: true, nameEn: true, type: true, sort: true } }),
+    prisma.tag.findMany({ orderBy: { id: "asc" }, select: { id: true, name: true, slug: true } }),
+    prisma.shuoshuo.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, content: true, contentEn: true, images: true, location: true, published: true, pinned: true, createdAt: true },
+    }),
+    prisma.announcement.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, content: true, pinned: true, published: true, createdAt: true, updatedAt: true },
+    }),
+    prisma.album.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, name: true, nameEn: true, cover: true, description: true, sort: true, createdAt: true },
+    }),
+    prisma.media.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, type: true, path: true, thumb: true, albumId: true, title: true, size: true, createdAt: true },
+    }),
+    prisma.video.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, title: true, titleEn: true, cover: true, sourceType: true, srcUrl: true, description: true, published: true, pinned: true, sort: true, createdAt: true },
+    }),
+    prisma.software.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, name: true, nameEn: true, icon: true, description: true, published: true, sort: true, createdAt: true },
+    }),
+    prisma.softwareFile.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, softwareId: true, version: true, platform: true, fileName: true, filePath: true, fileSize: true, createdAt: true },
+    }),
+    prisma.friend.findMany({
+      orderBy: { id: "asc" },
+      select: { id: true, name: true, url: true, avatar: true, description: true, sort: true },
+    }),
+    prisma.comment.findMany({
+      where: { approved: true },
+      orderBy: { id: "asc" },
+      select: { id: true, type: true, refId: true, author: true, content: true, browser: true, os: true, ipRegion: true, isAdmin: true, parentId: true, createdAt: true },
+    }),
+  ]);
 
-  return createHash("sha1").update(JSON.stringify(rows)).digest("hex").slice(0, 12);
+  const data = {
+    settings,
+    posts,
+    postTags,
+    categories,
+    tags,
+    shuoshuo,
+    announcements,
+    albums,
+    media: media.map((item) => ({ ...item, size: item.size.toString() })),
+    videos,
+    software,
+    softwareFiles: softwareFiles.map((item) => ({ ...item, fileSize: item.fileSize.toString() })),
+    friends,
+    comments,
+  };
+
+  return createHash("sha1").update(JSON.stringify(data)).digest("hex").slice(0, 12);
 }
 
 export function siteToSettings(input: Partial<SiteInfo>): Record<string, string> {  const entries: Record<string, string> = {};
@@ -303,6 +402,7 @@ export function siteToSettings(input: Partial<SiteInfo>): Record<string, string>
 
 export function profileToSettings(input: Partial<ProfileSettings>): Record<string, string> {
   const entries: Record<string, string> = {};
+  if (input.about !== undefined) entries["profile.about"] = JSON.stringify(normalizeAbout(input.about));
 
   if (typeof input.name === "string") {
     entries[PROFILE_NAME_KEY] = input.name.trim();

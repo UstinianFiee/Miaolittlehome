@@ -1,4 +1,9 @@
 {
+  "timeDisplay": {
+    "local": "Local time",
+    "reference": "Reference zone",
+    "expand": "Show UTC and Beijing time"
+  },
   "site": {
     "description": "Miao's Nook — notes on code, life and small thoughts.",
     "postsTitle": "Posts",
@@ -37,6 +42,7 @@
     "readingProgress": "Reading progress",
     "backToTop": "Back to top",
     "articleNav": "Article navigation",
+    "articleContents": "Table of contents",
     "wallEmpty": "The board is empty — pin the first note",
     "albumsHint": "Each one is a small photo album",
     "categoriesHint": "Categories, hanging like bookmarks on a rail",
@@ -56,6 +62,7 @@
     "videos": "Videos",
     "software": "Software",
     "wall": "Guestbook",
+    "friends": "Friends",
     "about": "About",
     "admin": "Admin",
     "search": "Search"
@@ -120,6 +127,7 @@
     "notFound": "Post not found",
     "editorPlaceholder": "Write your content here, Markdown supported",
     "editorLoading": "Loading editor…",
+    "editorLoadFailed": "The editor could not be loaded. Refresh the page and try again.",
     "search": "Search"
   },
   "categories": {
@@ -397,9 +405,15 @@
     "statusApproved": "Approved",
     "wallSource": "Guestbook",
     "approveFailed": "Action failed: {message}",
+    "cascaded": "Approved. {count} parent comment(s) were approved too — replies stay hidden otherwise.",
+    "parentPending": "Parent pending",
+    "parentPendingHint": "A reply only shows on the site once its parent comment is approved. Approving this one also approves the parent.",
+    "rejectWithReplies": "Reject this comment? Its {count} replies will be hidden from the site too.",
+    "deleteWithReplies": "Delete this comment? Its {count} replies will be deleted as well, and cannot be recovered.",
     "siteOwner": "Owner",
     "repliesLabel": "replies",
     "detail": "Details",
+    "expandContent": "Read the full message",
     "detailTitle": "Note details",
     "noReplies": "No replies yet",
     "fromRegion": "From",
@@ -445,7 +459,18 @@
     "repeatAll": "Repeat all",
     "repeatOne": "Repeat one",
     "trackCount": "{count} tracks",
-    "nowPlaying": "Now playing"
+    "nowPlaying": "Now playing",
+    "move": "Move player",
+    "dragHint": "Drag the orb or handle to move. Focus the cover or handle and use arrow keys; Shift moves faster, Home resets to the bottom right.",
+    "loading": "Loading audio…",
+    "nativePlayback": "Using standard playback. Spectrum analysis is unavailable for this source.",
+    "spectrumUnavailable": "Audio analysis is unavailable. Using standard playback.",
+    "loadFailed": "Audio could not load. Press play to retry.",
+    "networkError": "Unable to load audio. Check the network or source address and retry.",
+    "decodeError": "Unable to decode this audio. The file may be damaged or unsupported.",
+    "unsupportedAudio": "This source is unavailable or unsupported by your browser. Try another track.",
+    "playBlocked": "Your browser has not allowed playback yet. Press play again.",
+    "seekFailed": "This source cannot seek to that position yet."
   },
   "playlistAdmin": {
     "title": "Playlist",
@@ -570,10 +595,29 @@
     "allHint": "{count} announcements",
     "pinned": "Pinned"
   },
+  "aboutEdit": {
+    "title": "About page details", "hint": "Optional fields stay hidden when empty. Separate skills and interests with commas or new lines. Empty skills show the site stack; empty projects show recent posts.",
+    "role": "Role / occupation", "location": "City (optional)", "motto": "A thought / motto", "skills": "Skills (up to 24)", "interests": "Interests (up to 24)",
+    "projects": "Projects (one per line: name | https://url | description, up to 8)", "story": "More about me / a letter to the future (plain text, blank lines separate paragraphs)"
+  },
+  "aboutPage": {
+    "eyebrow": "A LITTLE ABOUT ME", "hello": "Hello, I'm {name}", "intro": "Welcome to my little corner. A place for words, photos and pieces of everyday life.", "sayHello": "Say hello",
+    "footprints": "A FEW THINGS LEFT ALONG THE WAY", "littleWorld": "A little world, always growing", "posts": "Posts", "notes": "Notes", "albums": "Albums", "friends": "Neighbors",
+    "motto": "Turn days into words. Keep the things that matter.", "skills": "Technologies I explore", "skillsHint": "Learning, experimenting, and bringing ideas to life.", "builtWith": "What this site is built with", "builtHint": "From pages to data, from ideas to a working site. The technologies behind this blog.",
+    "contact": "Let's keep in touch", "contactHint": "A shared interest or just passing by — you're welcome here.", "leaveMessage": "Leave a message", "projects": "Things I've made", "recentWriting": "Recently written", "writingEmpty": "The next story is on its way.", "allWriting": "Browse all posts",
+    "interests": "Things I enjoy", "explore": "Beyond the words", "photoTitle": "Collected moments", "photoHint": "Browse little slices of life", "noteTitle": "Everyday notes", "noteHint": "Small things worth remembering", "friendTitle": "Neighboring planets", "friendHint": "Visit other corners of the web",
+    "moments": "A few moments to keep", "openAlbum": "Open album", "photoAlt": "Album moment {index}", "playlist": "The site's playlist", "playlistHint": "Open the music player in the corner of the page to listen.",
+    "story": "A little more about me", "latestNote": "The latest little note", "readNotes": "Read more notes", "thanks": "Thank you for taking a moment to get to know this place.", "visitFriends": "Explore the friend galaxy"
+  },
   "about": {
     "social": "Elsewhere",
-    "friends": "Friends",
     "empty": "The owner hasn't filled in a profile yet."
+  },
+  "friends": {
+    "title": "Friends Galaxy",
+    "subtitle": "Independent little worlds, connected by shared links.",
+    "empty": "The galaxy is quiet for now. Friends will appear here.",
+    "visit": "Visit {name}"
   },
   "share": {
     "copy": "Copy link",

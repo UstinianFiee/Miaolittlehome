@@ -17,6 +17,7 @@ export async function PUT(request: Request) {
     const body = (await request.json()) as Partial<ProfileSettings>;
 
     const entries = profileToSettings({
+      about: body.about,
       name: typeof body.name === "string" ? body.name.slice(0, 50) : undefined,
       avatar: typeof body.avatar === "string" ? body.avatar.slice(0, 500) : undefined,
       bio: typeof body.bio === "string" ? body.bio.slice(0, 1000) : undefined,

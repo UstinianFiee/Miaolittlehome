@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,7 @@ const PLATFORM_LABEL_KEYS: Record<string, string> = {
   ios: "software.platformIos",
 };
 
-export function SoftwareManager({ items }: { items: SoftwareRow[] }) {
+export function SoftwareManager({ items, images }: { items: SoftwareRow[]; images: MediaOption[] }) {
   const t = useTranslations();
   const router = useRouter();
 
@@ -247,12 +248,12 @@ export function SoftwareManager({ items }: { items: SoftwareRow[] }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="software-icon">{t("adminSoftware.fieldIcon")}</Label>
-          <Input
+          <MediaField
             id="software-icon"
+            label={t("adminSoftware.fieldIcon")}
             value={form.icon}
-            onChange={(event) => setForm({ ...form, icon: event.target.value })}
-            maxLength={500}
+            onChange={(next) => setForm({ ...form, icon: next })}
+            options={images}
           />
         </div>
 

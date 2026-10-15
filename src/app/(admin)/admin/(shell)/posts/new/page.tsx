@@ -5,6 +5,7 @@ import NextLink from "next/link";
 import { PostForm } from "@/components/admin/post-form";
 import { Button } from "@/components/ui/button";
 import { catalogs } from "@/lib/messages";
+import { listMedia } from "@/lib/media";
 import { listCategories, listTags } from "@/lib/taxonomy";
 
 export const metadata: Metadata = {
@@ -12,7 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default async function NewPostPage() {
-  const [categories, tags] = await Promise.all([listCategories(), listTags()]);
+  const [categories, tags, images] = await Promise.all([
+    listCategories(),
+    listTags(),
+    listMedia({ type: "image" }),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -29,6 +34,11 @@ export default async function NewPostPage() {
       <PostForm
         categories={categories.map((category) => ({ id: category.id, name: category.name }))}
         knownTagNames={tags.map((tag) => tag.name)}
+        coverImages={images.map((image) => ({
+          id: image.id,
+          path: image.path,
+          title: image.title ?? image.path,
+        }))}
       />
     </div>
   );

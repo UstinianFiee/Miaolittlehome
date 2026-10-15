@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { SuccessNote } from "@/components/admin/success-note";
+import { DualTime } from "@/components/site/dual-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDual } from "@/lib/datetime";
 
 type OperationItem = {
   id: number;
@@ -339,8 +339,8 @@ export function LogViewer() {
                   <TableCell className="max-w-0 truncate text-sm text-muted-foreground">
                     {item.detail ?? "—"}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground tabular-nums">
-                    {formatDual(new Date(item.createdAt))}
+                  <TableCell className="text-xs text-muted-foreground">
+                    <DualTime date={item.createdAt} variant="stacked" />
                   </TableCell>
                 </TableRow>
               ))
@@ -352,8 +352,8 @@ export function LogViewer() {
                   <TableCell className="max-w-0 truncate text-xs text-muted-foreground">
                     {item.ua ?? "—"}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground tabular-nums">
-                    {formatDual(new Date(item.createdAt))}
+                  <TableCell className="text-xs text-muted-foreground">
+                    <DualTime date={item.createdAt} variant="stacked" />
                   </TableCell>
                 </TableRow>
               ))

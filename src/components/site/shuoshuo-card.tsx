@@ -1,6 +1,6 @@
 import { MapPinIcon } from "lucide-react";
 
-import { formatDual } from "@/lib/datetime";
+import { DualTime } from "@/components/site/dual-time";
 import { pickLocalized } from "@/lib/localized";
 import { parseImages, type ShuoshuoRecord } from "@/lib/shuoshuo";
 
@@ -15,7 +15,7 @@ import { parseImages, type ShuoshuoRecord } from "@/lib/shuoshuo";
  * 尾巴在 DOM 上排在气泡**前面**（不是气泡的子元素），气泡的不透明底色会盖住它的根部。
  * 这样有两个好处：
  *
- * 1. 路径**不闭合**（`M12 0 Q3 3 0 8 Q3 13 12 16`，没有 `Z`），
+ * 1. 路径**不闭合**（`M14 1 C10 5 6 7 2 8 C6 9 10 12 14 17`，没有 `Z`），
  *    所以只有两段外沿被描边 —— 不会像「旋转 45° 的方块」那样在接缝处留下一条竖线。
  * 2. 尾巴向右多伸进气泡 2px，被气泡底色盖住，填充与气泡之间不会出现发丝缝。
  *
@@ -38,7 +38,7 @@ export function ShuoshuoCard({
   const columns = images.length === 1 ? 1 : images.length <= 4 ? 2 : 3;
 
   return (
-    <article className="mb-4 flex gap-3 sm:gap-4">
+    <article className="shuoshuo-card mb-5 flex items-start gap-3 sm:gap-4">
       {/* 头像：关于页设置的头像，没设就回退成主题色圆点 */}
       <div className="shrink-0">
         {avatar ? (
@@ -47,12 +47,12 @@ export function ShuoshuoCard({
             src={avatar}
             alt=""
             loading="lazy"
-            className="size-9 rounded-full border border-border object-cover sm:size-10"
+            className="bubble-avatar size-9 rounded-full object-cover sm:size-10"
           />
         ) : (
           <span
             aria-hidden
-            className="block size-9 rounded-full bg-primary/70 sm:size-10"
+            className="bubble-avatar block size-9 rounded-full bg-primary sm:size-10"
           />
         )}
       </div>
@@ -62,11 +62,11 @@ export function ShuoshuoCard({
           {/* 尾巴：指向左侧头像。排在气泡前面，根部被气泡底色盖住 */}
           <svg
             aria-hidden
-            viewBox="0 0 10 16"
-            className="absolute top-3.5 -left-2 h-4 w-2.5"
+            viewBox="0 0 14 18"
+            className="absolute top-3 -left-3 h-[18px] w-[14px]"
           >
             <path
-              d="M10 1 L1 8 L10 15"
+              d="M14 1 C10 5 6 7 2 8 C6 9 10 12 14 17"
               fill="var(--bubble-bg)"
               stroke="var(--bubble-border)"
               strokeWidth="1"
@@ -75,7 +75,8 @@ export function ShuoshuoCard({
             />
           </svg>
 
-          <div className="bubble relative px-4 py-3">
+          <div className="bubble relative px-4 py-4 sm:px-5">
+            <p className="bubble-author mb-2 text-sm break-words">{siteName}</p>
             <p className="text-sm leading-7 break-words whitespace-pre-wrap">{content}</p>
 
             {images.length > 0 ? (
@@ -107,19 +108,17 @@ export function ShuoshuoCard({
                 ))}
               </div>
             ) : null}
+            {/* 元信息也放在气泡实色底上，避免直接压在背景图上发灰。 */}
+            <div className="bubble-meta mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3 text-xs">
+              <DualTime date={item.createdAt} />
+              {item.location ? (
+                <span className="inline-flex min-w-0 items-center gap-1 break-words">
+                  <MapPinIcon className="size-3 shrink-0" />
+                  {item.location}
+                </span>
+              ) : null}
+            </div>
           </div>
-        </div>
-
-        {/* 元信息放在气泡外面，像聊天记录的时间 */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-xs text-muted-foreground">
-          <span className="font-medium text-[color:var(--card-foreground)]">{siteName}</span>
-          {item.location ? (
-            <span className="inline-flex items-center gap-1">
-              <MapPinIcon className="size-3" />
-              {item.location}
-            </span>
-          ) : null}
-          <time dateTime={item.createdAt.toISOString()}>{formatDual(item.createdAt)}</time>
         </div>
       </div>
     </article>

@@ -2,10 +2,10 @@ import { FilmIcon, PinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { DualTime } from "@/components/site/dual-time";
 import { VideoThumb } from "@/components/video-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
-import { formatDual } from "@/lib/datetime";
 import { pickLocalized } from "@/lib/localized";
 import { buildPageMetadata } from "@/lib/metadata";
 import { listPublishedVideos } from "@/lib/videos";
@@ -98,9 +98,9 @@ export default async function VideosPage({ params }: Props) {
                   {video.description ? (
                     <p className="line-clamp-2 text-sm text-muted-foreground">{video.description}</p>
                   ) : null}
-                  <p className="text-xs text-muted-foreground">{formatDual(video.createdAt)}</p>
                 </div>
               </Link>
+              <DualTime date={video.createdAt} className="mt-1 ml-1 text-xs text-muted-foreground" />
             </li>
           ))}
         </ul>

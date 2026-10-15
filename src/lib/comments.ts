@@ -106,8 +106,8 @@ export async function listApprovedComments(target: CommentTarget): Promise<Comme
   return buildTree(rows);
 }
 
-/** 留言墙每页条数。 */
-export const WALL_PAGE_SIZE = 12;
+/** 留言墙每页条数：控制便利贴墙的首屏长度。 */
+export const WALL_PAGE_SIZE = 6;
 
 /**
  * 留言墙专用：**顶层留言按时间倒序分页**（最新的在最前），并带上各自的所有回复。
@@ -281,19 +281,52 @@ export async function listCommentsForAdmin(params: {
     (id): id is number => typeof id === "number"
   );
 
-  const posts = postIds.length
-    ? await prisma.post.findMany({
-        where: { id: { in: postIds } },
-        select: { id: true, title: true, slug: true },
-      })
-    : [];
+  const parentIds = [
+    ...new Set(rows.map((row) => row.parentId).filter((id): id is number => id !== null)),
+  ];
+  const rowIds = rows.map((row) => row.id);
+
+  const [posts, parents, replyCounts] = await Promise.all([
+    postIds.length
+      ? prisma.post.findMany({
+          where: { id: { in: postIds } },
+          select: { id: true, title: true, slug: true },
+        })
+      : Promise.resolve([]),
+    // 回复只有在整条上级链都通过审核后才会在前台出现（见 buildTree），
+    // 后台需要知道父留言的审核状态，否则会出现「显示已通过、前台却看不到」。
+    parentIds.length
+      ? prisma.comment.findMany({
+          where: { id: { in: parentIds } },
+          select: { id: true, approved: true },
+        })
+      : Promise.resolve([]),
+    rowIds.length
+      ? prisma.comment.groupBy({
+          by: ["parentId"],
+          where: { parentId: { in: rowIds } },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
   const postById = new Map(posts.map((post) => [post.id, post]));
+  const parentApprovedById = new Map(parents.map((parent) => [parent.id, parent.approved]));
+  const replyCountByParent = new Map(
+    replyCounts
+      .filter((entry) => entry.parentId !== null)
+      .map((entry) => [entry.parentId as number, entry._count._all])
+  );
 
   const items = rows.map((row) => ({
     ...row,
     refType: row.type as CommentType,
     refId: row.refId,
     post: row.type === "post" && row.refId !== null ? postById.get(row.refId) ?? null : null,
+    /** 父留言是否已通过审核；顶层留言为 null。 */
+    parentApproved: row.parentId === null ? null : parentApprovedById.get(row.parentId) ?? null,
+    /** 该条下面的回复数量（用于提示「退回后回复也会被隐藏」）。 */
+    replyCount: replyCountByParent.get(row.id) ?? 0,
   }));
 
   return { total, items, pageSize };
@@ -309,14 +342,48 @@ export async function countCommentsByStatus() {
   return { pending, approved, total };
 }
 
+/**
+ * 审核通过 / 退回一条评论。
+ *
+ * **通过回复时必须连带把上级链一起通过**：前台 `buildTree` 会隐藏
+ * 「父留言不可见」的回复，所以只通过回复本身的话，后台显示「已通过」，
+ * 前台却永远看不到它 —— 这是审核里最容易踩的坑。
+ *
+ * 返回 `cascaded`（被连带通过的上级 id 列表），供后台提示。
+ */
 export async function setCommentApproved(id: number, approved: boolean) {
   const existing = await prisma.comment.findUnique({
     where: { id },
-    select: { id: true, type: true, refId: true, author: true },
+    select: { id: true, type: true, refId: true, author: true, parentId: true },
   });
 
   if (!existing) {
     return null;
+  }
+
+  const cascaded: number[] = [];
+
+  if (approved && existing.parentId !== null) {
+    // 最多向上找 5 层，与 buildTree 的保护上限保持一致
+    let cursor: number | null = existing.parentId;
+    for (let hop = 0; cursor !== null && hop < 5; hop += 1) {
+      const parent: { id: number; parentId: number | null; approved: boolean } | null =
+        await prisma.comment.findUnique({
+          where: { id: cursor },
+          select: { id: true, parentId: true, approved: true },
+        });
+
+      if (!parent) {
+        break;
+      }
+
+      if (!parent.approved) {
+        await prisma.comment.update({ where: { id: parent.id }, data: { approved: true } });
+        cascaded.push(parent.id);
+      }
+
+      cursor = parent.parentId;
+    }
   }
 
   const updated = await prisma.comment.update({
@@ -325,7 +392,13 @@ export async function setCommentApproved(id: number, approved: boolean) {
     select: { id: true, approved: true },
   });
 
-  return { ...updated, refType: existing.type, refId: existing.refId, author: existing.author };
+  return {
+    ...updated,
+    refType: existing.type,
+    refId: existing.refId,
+    author: existing.author,
+    cascaded,
+  };
 }
 
 export async function deleteComment(id: number) {

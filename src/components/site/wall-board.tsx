@@ -4,6 +4,7 @@ import { InfoIcon, ReplyIcon, ShieldCheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { DualTime } from "@/components/site/dual-time";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { CommentView } from "@/lib/comment-view";
-import { formatDual } from "@/lib/datetime";
 
 /**
  * 留言墙：小板子 + 便利贴。
@@ -31,6 +31,15 @@ import { formatDual } from "@/lib/datetime";
 
 /** 每张便利贴的 primary 占比，循环取，保证相邻的几张不一样 */
 const NOTE_MIXES = ["8%", "13%", "18%", "11%", "16%"] as const;
+const NOTE_PREVIEW_LIMIT = 120;
+
+function getNotePreview(content: string) {
+  const characters = Array.from(content);
+  return {
+    text: characters.slice(0, NOTE_PREVIEW_LIMIT).join(""),
+    truncated: characters.length > NOTE_PREVIEW_LIMIT,
+  };
+}
 
 /** 由 id 派生一个稳定的倾角（-2.5° ~ +2.5°），刷新不会跳 */
 function noteRotation(id: number, index: number): number {
@@ -89,8 +98,8 @@ function Speaker({ comment }: { comment: CommentView }) {
         ) : null}
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 whitespace-nowrap">{t("comments.postedAt")}</dt>
-          <dd className="min-w-0 text-right break-words text-[color:var(--card-foreground)]">
-            {formatDual(new Date(comment.createdAtIso))}
+          <dd className="min-w-0 text-right">
+            <DualTime date={comment.createdAtIso} variant="stacked" className="items-end" />
           </dd>
         </div>
       </dl>
@@ -109,6 +118,7 @@ function Note({
 }) {
   const t = useTranslations();
   const [flipped, setFlipped] = React.useState(false);
+  const preview = getNotePreview(comment.content);
 
   return (
     <div
@@ -120,6 +130,10 @@ function Note({
       aria-expanded={flipped}
       // 键盘也要能翻：回车 / 空格
       onKeyDown={(event) => {
+        // 内部的「展开全文 / 详情」是原生按钮，不要抢它自己的键盘激活事件。
+        if (event.target !== event.currentTarget) {
+          return;
+        }
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           setFlipped((value) => !value);
@@ -137,13 +151,30 @@ function Note({
           style={{ "--note-mix": NOTE_MIXES[index % NOTE_MIXES.length] } as React.CSSProperties}
         >
           <span aria-hidden className="sticky-tape" />
-          <p className="font-display text-sm leading-7 break-words whitespace-pre-wrap line-clamp-[10]">
-            {comment.content}
+          <p className="font-display text-sm leading-7 break-words whitespace-pre-wrap">
+            {preview.text}
+            {preview.truncated ? (
+              <button
+                type="button"
+                className="ml-0.5 inline rounded-sm text-primary underline decoration-primary/50 underline-offset-2 hover:decoration-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label={t("comments.expandContent")}
+                title={t("comments.expandContent")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDetail(comment);
+                }}
+              >
+                …
+              </button>
+            ) : null}
           </p>
-          <p className="mt-auto pt-3 text-[0.7rem] text-muted-foreground">
-            {comment.replies.length > 0
-              ? `${comment.replies.length} ${t("comments.repliesLabel")}`
-              : comment.createdAtLabel}
+          <p className="mt-auto flex items-center gap-2 pt-3 text-[0.7rem] text-muted-foreground">
+            {comment.replies.length > 0 ? (
+              <span>
+                {comment.replies.length} {t("comments.repliesLabel")}
+              </span>
+            ) : null}
+            <DualTime date={comment.createdAtIso} className="ml-auto" />
           </p>
         </div>
 
@@ -218,9 +249,10 @@ export function WallBoard({
                         {t("comments.siteOwner")}
                       </span>
                     ) : null}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {detail.createdAtLabel}
-                    </span>
+                    <DualTime
+                      date={detail.createdAtIso}
+                      className="ml-auto text-xs text-muted-foreground"
+                    />
                   </div>
                   <p className="mt-2 text-sm leading-6 break-words whitespace-pre-wrap">
                     {detail.content}
@@ -243,9 +275,10 @@ export function WallBoard({
                               {t("comments.siteOwner")}
                             </span>
                           ) : null}
-                          <span className="ml-auto text-[0.7rem] text-muted-foreground">
-                            {reply.createdAtLabel}
-                          </span>
+                          <DualTime
+                            date={reply.createdAtIso}
+                            className="ml-auto text-[0.7rem] text-muted-foreground"
+                          />
                         </div>
                         <p className="mt-1.5 text-sm leading-6 break-words whitespace-pre-wrap">
                           {reply.content}

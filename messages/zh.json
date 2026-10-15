@@ -1,4 +1,9 @@
 {
+  "timeDisplay": {
+    "local": "本地时间",
+    "reference": "参考时区",
+    "expand": "查看 UTC 与北京时间"
+  },
   "site": {
     "description": "渺の小家 —— 记录技术、生活与琐碎念头的地方。",
     "postsTitle": "文章",
@@ -37,6 +42,7 @@
     "readingProgress": "阅读进度",
     "backToTop": "回到顶部",
     "articleNav": "文章导航",
+    "articleContents": "文章目录",
     "wallEmpty": "墙还空着，来贴第一张便利贴吧",
     "albumsHint": "点开是一本本小相册，照片都归在各自动的册子里",
     "categoriesHint": "按内容归好的类，像挂在杆子上的一排书签",
@@ -56,6 +62,7 @@
     "videos": "视频",
     "software": "软件",
     "wall": "留言墙",
+    "friends": "友链",
     "about": "关于",
     "admin": "后台",
     "search": "搜索"
@@ -120,6 +127,7 @@
     "notFound": "文章不存在",
     "editorPlaceholder": "在此撰写正文，支持 Markdown",
     "editorLoading": "编辑器加载中…",
+    "editorLoadFailed": "编辑器加载失败，请刷新页面后重试。",
     "search": "搜索"
   },
   "categories": {
@@ -397,9 +405,15 @@
     "statusApproved": "已通过",
     "wallSource": "留言墙",
     "approveFailed": "操作失败：{message}",
+    "cascaded": "已通过，并连带通过 {count} 条上级留言（否则回复在前台不会显示）。",
+    "parentPending": "上级待审核",
+    "parentPendingHint": "回复只有在上级留言通过审核后才会在前台显示。点「通过」会一并通过上级留言。",
+    "rejectWithReplies": "确定退回这条留言？它下面的 {count} 条回复也会在前台隐藏。",
+    "deleteWithReplies": "确定删除这条留言？它下面的 {count} 条回复会一并删除，且不可恢复。",
     "siteOwner": "站长",
     "repliesLabel": "条回复",
     "detail": "详情",
+    "expandContent": "查看完整留言",
     "detailTitle": "留言详情",
     "noReplies": "还没有回复",
     "fromRegion": "来自",
@@ -445,7 +459,18 @@
     "repeatAll": "列表循环",
     "repeatOne": "单曲循环",
     "trackCount": "共 {count} 首",
-    "nowPlaying": "正在播放"
+    "nowPlaying": "正在播放",
+    "move": "移动播放器",
+    "dragHint": "拖动圆球或手柄移动；聚焦封面或手柄后用方向键微调，Shift 加快，Home 回到右下角。",
+    "loading": "正在加载音频…",
+    "nativePlayback": "已切换普通播放，当前音源无法分析频谱。",
+    "spectrumUnavailable": "音频分析暂不可用，已使用普通播放。",
+    "loadFailed": "音频加载失败，请点击播放重试。",
+    "networkError": "无法加载音频，请检查网络或音源地址后重试。",
+    "decodeError": "无法解码此音频，文件可能损坏或格式不受支持。",
+    "unsupportedAudio": "音源不可用或浏览器不支持此格式，请尝试其他曲目。",
+    "playBlocked": "浏览器暂未允许播放，请再次点击播放按钮。",
+    "seekFailed": "此音源暂不支持跳转到该位置。"
   },
   "playlistAdmin": {
     "title": "播放列表",
@@ -570,10 +595,48 @@
     "allHint": "共 {count} 条公告",
     "pinned": "置顶"
   },
+  "aboutEdit": {
+    "title": "关于页扩展内容",
+    "hint": "可选内容留空即隐藏。技能和兴趣用逗号或换行分隔；未填技能时展示本站技术栈，未填作品时展示最新文章。不需要填写出生年份等隐私信息。",
+    "role": "身份 / 职业",
+    "location": "所在城市（可选）",
+    "motto": "一句话 / 座右铭",
+    "skills": "技能清单（最多展示 24 项）",
+    "interests": "兴趣清单（最多展示 24 项）",
+    "projects": "作品集（每行：名称 | https://地址 | 简介，最多 8 项）",
+    "story": "更多关于我 / 写给未来的话（纯文本，空行分段）"
+  },
+  "aboutPage": {
+    "eyebrow": "关于我 · ABOUT ME",
+    "hello": "你好，我是{name}",
+    "intro": "欢迎来到我的小小世界。文字、照片与生活片段，都慢慢留在这里。",
+    "sayHello": "打个招呼",
+    "footprints": "在这里，留下了一些痕迹",
+    "littleWorld": "一个慢慢生长的小世界",
+    "posts": "篇文章", "notes": "条说说", "albums": "本相册", "friends": "位邻居",
+    "motto": "把日子写成文字，把喜欢留在这里。",
+    "skills": "我在探索的技术", "skillsHint": "学习、尝试，再把想法一点点做出来。",
+    "builtWith": "这个小站的技术底座", "builtHint": "从页面到数据，从想法到上线。以下是本站实际使用的技术。",
+    "contact": "保持联系", "contactHint": "有共同的话题，或者只是路过，都欢迎来聊聊。", "leaveMessage": "去留言墙坐坐",
+    "projects": "做过的小作品", "recentWriting": "最近写下的文字", "writingEmpty": "下一篇故事，正在路上。", "allWriting": "看看全部文章",
+    "interests": "生活里的喜欢", "explore": "不止于文字",
+    "photoTitle": "光影收藏", "photoHint": "去相册翻翻生活的切片",
+    "noteTitle": "日常碎念", "noteHint": "那些值得记下的小事",
+    "friendTitle": "相遇的星球", "friendHint": "去朋友们的小站串门",
+    "moments": "留住一些瞬间", "openAlbum": "打开相册", "photoAlt": "相册瞬间 {index}",
+    "playlist": "小站的播放列表", "playlistHint": "想听的话，可以打开页面角落的音乐播放器。",
+    "story": "再多认识我一点", "latestNote": "最近的一条碎念", "readNotes": "继续读说说",
+    "thanks": "谢谢你，愿意花一点时间认识这里。", "visitFriends": "逛逛友链星系"
+  },
   "about": {
     "social": "社交链接",
-    "friends": "友情链接",
     "empty": "站长还没有填写个人资料。"
+  },
+  "friends": {
+    "title": "友链星系",
+    "subtitle": "一颗颗独立的小星球，因为彼此链接而相遇。",
+    "empty": "星系还很安静，友链正在等待加入。",
+    "visit": "访问 {name}"
   },
   "share": {
     "copy": "复制链接",

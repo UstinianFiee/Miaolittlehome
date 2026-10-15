@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import type { MediaOption } from "@/components/admin/media-field";
 import { PlaylistManager, type AudioMediaOption } from "@/components/admin/playlist-manager";
 import { catalogs } from "@/lib/messages";
 import { listMedia } from "@/lib/media";
@@ -11,12 +12,19 @@ export const metadata: Metadata = {
 
 /** 音乐播放器设置：曲目列表在全站播放器中循环播放。 */
 export default async function AdminPlaylistPage() {
-  const [tracks, audio] = await Promise.all([
+  const [tracks, audio, images] = await Promise.all([
     getPlaylist(),
     listMedia({ type: "audio", limit: 100 }),
+    listMedia({ type: "image", limit: 100 }),
   ]);
 
   const audioMedia: AudioMediaOption[] = audio.map((item) => ({
+    id: item.id,
+    path: item.path,
+    title: item.title ?? item.path,
+  }));
+
+  const imageOptions: MediaOption[] = images.map((item) => ({
     id: item.id,
     path: item.path,
     title: item.title ?? item.path,
@@ -32,6 +40,7 @@ export default async function AdminPlaylistPage() {
         cover: track.cover ?? "",
       }))}
       audioMedia={audioMedia}
+      images={imageOptions}
     />
   );
 }

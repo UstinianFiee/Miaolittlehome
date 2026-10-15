@@ -10,6 +10,19 @@ import { shuoshuoSelect, type ShuoshuoRecord } from "@/lib/shuoshuo";
 
 export const SITE_PAGE_SIZE = 10;
 
+/** About page uses only public content, never drafts or unfiled media. */
+export async function getAboutOverview() {
+  const [posts, notes, albums, friends, recent, photos, latestNote] = await Promise.all([
+    prisma.post.count({ where: { published: true } }),
+    prisma.shuoshuo.count({ where: { published: true } }),
+    prisma.album.count(), prisma.friend.count(),
+    prisma.post.findMany({ where: { published: true }, take: 3, orderBy: { createdAt: "desc" }, select: { slug: true, title: true, titleEn: true, createdAt: true } }),
+    prisma.media.findMany({ where: { type: "image", albumId: { not: null } }, take: 3, orderBy: { createdAt: "desc" }, select: { id: true, path: true, thumb: true, title: true, albumId: true } }),
+    prisma.shuoshuo.findFirst({ where: { published: true }, orderBy: { createdAt: "desc" }, select: { content: true, contentEn: true, createdAt: true } }),
+  ]);
+  return { posts, notes, albums, friends, recent, photos, latestNote };
+}
+
 export const postCardSelect = {
   id: true,
   title: true,

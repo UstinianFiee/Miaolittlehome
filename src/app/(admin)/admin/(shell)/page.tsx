@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
-import { formatDual } from "@/lib/datetime";
 import { catalogs } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 
@@ -53,7 +52,7 @@ export default async function AdminDashboardPage() {
         id: item.id,
         action: item.action,
         target: item.target,
-        createdAt: formatDual(item.createdAt),
+        createdAt: item.createdAt.toISOString(),
       }))}
     />
   );

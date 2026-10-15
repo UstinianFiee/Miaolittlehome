@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
 import * as React from "react";
 
+import { MarkdownEditor } from "@/components/admin/markdown-editor";
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,20 +18,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-
-function EditorSkeleton() {
-  const t = useTranslations();
-  return (
-    <div className="flex h-[560px] items-center justify-center rounded-md border border-dashed border-border/70 text-sm text-muted-foreground">
-      {t("posts.editorLoading")}
-    </div>
-  );
-}
-
-const MarkdownEditor = dynamic(
-  () => import("@/components/admin/markdown-editor").then((mod) => mod.MarkdownEditor),
-  { ssr: false, loading: () => <EditorSkeleton /> }
-);
 
 export type PostFormInitial = {
   id: number;
@@ -48,12 +35,13 @@ export type PostFormInitial = {
 type PostFormProps = {
   categories: { id: number; name: string }[];
   knownTagNames: string[];
+  coverImages: MediaOption[];
   initial?: PostFormInitial;
 };
 
 const NO_CATEGORY = "none";
 
-export function PostForm({ categories, knownTagNames, initial }: PostFormProps) {
+export function PostForm({ categories, knownTagNames, coverImages, initial }: PostFormProps) {
   const t = useTranslations();
   const router = useRouter();
 
@@ -198,16 +186,13 @@ export function PostForm({ categories, knownTagNames, initial }: PostFormProps) 
             <p className="text-xs text-muted-foreground">{t("posts.fieldTagsHint")}</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cover">{t("posts.fieldCover")}</Label>
-            <Input
-              id="cover"
-              value={cover}
-              onChange={(event) => setCover(event.target.value)}
-              maxLength={500}
-              placeholder="/media/..."
-            />
-          </div>
+          <MediaField
+            id="cover"
+            label={t("posts.fieldCover")}
+            value={cover}
+            onChange={setCover}
+            options={coverImages}
+          />
 
           <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
             <Label htmlFor="published" className="cursor-pointer">

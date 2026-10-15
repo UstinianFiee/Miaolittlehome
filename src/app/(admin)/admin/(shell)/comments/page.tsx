@@ -43,6 +43,8 @@ export default async function AdminCommentsPage({ searchParams }: { searchParams
     ipRegion: item.ipRegion,
     approved: item.approved,
     parentId: item.parentId,
+    parentApproved: item.parentApproved,
+    replyCount: item.replyCount,
     createdAt: item.createdAt.toISOString(),
     refType: item.refType,
     post: item.post ? { id: item.post.id, title: item.post.title, slug: item.post.slug } : null,

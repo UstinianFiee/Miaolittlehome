@@ -53,122 +53,151 @@
 
 /* ---------------------------------------------------------------
    浅色主题
-   浅灰底 + 半透明白卡片 + 深灰文字 + 蓝色强调
+   浅灰底 + 暖白内容面板 + 深绿灰文字 + 薄荷主色，杏色与淡紫少量点缀
    --------------------------------------------------------------- */
 :root {
   --radius: 0.375rem;
 
   --background: #eef0f3;
-  --foreground: #3f3f3f;
-  --card: rgb(253 253 253 / 0.86);
-  --card-foreground: #333333;
-  --popover: #ffffff;
-  --popover-foreground: #333333;
+  --foreground: #34473f;
+  --card: #fffefb;
+  --card-foreground: #1c3027;
+  --popover: #fffefb;
+  --popover-foreground: #1c3027;
 
-  --primary: #2f8fd0;
+  --primary: #146c57;
   --primary-foreground: #ffffff;
-  --secondary: rgb(240 241 243 / 0.9);
-  --secondary-foreground: #444444;
-  --muted: rgb(236 238 241 / 0.9);
-  /* 原来的 #8a9098 在 #eef0f3 上只有约 3.2:1，正文级别的次要文字会发糊 */
-  --muted-foreground: #666d78;
-  --accent: rgb(47 143 208 / 0.1);
-  --accent-foreground: #1f6f9e;
+  --secondary: #edf5ef;
+  --secondary-foreground: #34473f;
+  --muted: #edf3ef;
+  /* 辅助文字保持可读；颜色只做少量点缀，正文不使用淡色字。 */
+  --muted-foreground: #52675e;
+  --accent: rgb(20 108 87 / 0.09);
+  --accent-foreground: #145d4a;
+  --tone-mint: #146c57;
+  --tone-mint-bg: #eaf7f0;
+  --tone-apricot: #995126;
+  --tone-apricot-bg: #fff3e6;
+  --tone-lilac: #71529b;
+  --tone-lilac-bg: #f5effb;
 
-  /* 悬浮导航胶囊专用底色：bg-card/40 实际只有约 29% 不透明，压在背景图上会发灰 */
-  --nav-bg: rgb(252 252 253 / 0.82);
+  --nav-bg: rgb(255 254 251 / 0.96);
+  --surface-raised: rgb(255 254 251 / 0.98);
+  --reading-bg: rgb(255 254 251 / 0.97);
+  --surface-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 5px 18px rgb(15 23 42 / 0.05);
+  --surface-image-shadow: 0 2px 4px rgb(15 23 42 / 0.06), 0 8px 24px rgb(15 23 42 / 0.1);
+  --scrim-top: 48%;
+  --scrim-middle: 30%;
+  --scrim-bottom: 22%;
 
   --destructive: #d9534f;
   --destructive-foreground: #ffffff;
 
-  --border: #e1e3e7;
-  --input: #dcdfe3;
-  --ring: #2f8fd0;
+  --border: #d6e3d9;
+  --input: #a3bbaa;
+  --ring: var(--primary);
 
-  --chart-1: #2f8fd0;
-  --chart-2: #45a2c9;
-  --chart-3: #6b7f8f;
-  --chart-4: #d9a441;
-  --chart-5: #c4736b;
+  --chart-1: var(--tone-mint);
+  --chart-2: var(--tone-apricot);
+  --chart-3: var(--tone-lilac);
+  --chart-4: #698469;
+  --chart-5: #a4636d;
 
-  --sidebar: #f7f8fa;
-  --sidebar-foreground: #3d3d3d;
-  --sidebar-primary: #2f8fd0;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgb(47 143 208 / 0.1);
-  --sidebar-accent-foreground: #1f6f9e;
-  --sidebar-border: #e1e3e7;
-  --sidebar-ring: #2f8fd0;
+  --sidebar: #f6f8f4;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
   /*
    * 说说气泡：比普通卡片多一点主题色，一眼就能和文章卡片区分开。
    * 刻意用**不透明**色 —— 气泡尾巴是用 SVG 三角叠在气泡上的，
    * 半透明底色会在重叠处叠出更深的色块，露出接缝。
    */
-  --bubble-bg: #e9f2fb;
-  --bubble-border: #c6dff2;
+  --bubble-bg: #effaf4;
+  --bubble-border: #acd6be;
+  --bubble-foreground: #284638;
+  --bubble-muted: #4b6b59;
+  --bubble-shadow: 0 2px 3px rgb(35 48 41 / 0.04), 0 8px 22px rgb(35 48 41 / 0.08);
 
   /*
    * 便利贴的"纸"。同样**必须不透明**：
    * 留言墙的便利贴是 3D 翻牌（正反两面），半透明底色会让背面透出来，
-   * 翻牌就废了。--card 自带 0.86 的 alpha，不能直接拿来混色。
+   * 翻牌就废了。纸色独立于普通卡片，避免未来调整透明度时互相影响。
    */
   --note-paper: #fdfdfe;
 }
 
 /* ---------------------------------------------------------------
    深色主题
-   #090909 底 + rgba(40,44,52,.72) 半透明卡片 + #ddd/#aaa 灰阶文字
+   保留 #090909 底与波浪 + 深绿灰内容面板 + 高对比文字
    --------------------------------------------------------------- */
 .dark {
   --background: #090909;
-  --foreground: #bdbdbd;
-  --card: rgb(40 44 52 / 0.72);
-  --card-foreground: #dcdcdc;
-  --popover: #1b1e24;
-  --popover-foreground: #dcdcdc;
+  --foreground: #d8e6de;
+  --card: #192923;
+  --card-foreground: #f0f8f3;
+  --popover: #1f332a;
+  --popover-foreground: #f0f8f3;
 
-  --primary: #5eb3e4;
-  --primary-foreground: #08131b;
-  --secondary: rgb(51 51 51 / 0.55);
-  --secondary-foreground: #dcdcdc;
-  --muted: rgb(28 30 34 / 0.7);
-  /* 原来的 #8b8b8b 在半透明卡片上（背景图透出来）对比度会掉到 3:1 以下 */
-  --muted-foreground: #a3a9b2;
-  --accent: rgb(83 93 102 / 0.45);
-  --accent-foreground: #ffffff;
+  --primary: #86d9b7;
+  --primary-foreground: #102c20;
+  --secondary: #283c32;
+  --secondary-foreground: #e0eee6;
+  --muted: #23382d;
+  --muted-foreground: #adc4b6;
+  --accent: rgb(134 217 183 / 0.12);
+  --accent-foreground: #b9ecd5;
+  --tone-mint: #86d9b7;
+  --tone-mint-bg: #1b382c;
+  --tone-apricot: #efbd8d;
+  --tone-apricot-bg: #392d22;
+  --tone-lilac: #c9b0ed;
+  --tone-lilac-bg: #2e283e;
 
-  /* 悬浮导航胶囊专用底色 */
-  --nav-bg: rgb(26 29 35 / 0.78);
+  --nav-bg: rgb(20 34 27 / 0.97);
+  --surface-raised: rgb(25 41 35 / 0.98);
+  --reading-bg: rgb(23 36 30 / 0.97);
+  --surface-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 6px 20px rgb(0 0 0 / 0.16);
+  --surface-image-shadow: 0 2px 4px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.26);
+  --scrim-top: 58%;
+  --scrim-middle: 42%;
+  --scrim-bottom: 34%;
 
   /* 说说气泡（见浅色主题里的说明，必须不透明） */
-  --bubble-bg: #16222e;
-  --bubble-border: #26435c;
+  --bubble-bg: #15392c;
+  --bubble-border: #417961;
+  --bubble-foreground: #e5f7ed;
+  --bubble-muted: #b1d4c1;
+  --bubble-shadow: 0 2px 4px rgb(0 0 0 / 0.12), 0 8px 22px rgb(0 0 0 / 0.2);
 
   /* 便利贴的纸（同样必须不透明，翻牌才不会透出背面） */
-  --note-paper: #242a33;
+  --note-paper: #242d28;
 
   --destructive: #e06c75;
   --destructive-foreground: #ffffff;
 
-  --border: #333333;
-  --input: #3a3d42;
-  --ring: #5eb3e4;
+  --border: #375246;
+  --input: #587865;
+  --ring: var(--primary);
 
-  --chart-1: #5eb3e4;
-  --chart-2: #6fc3a8;
-  --chart-3: #9aa7b4;
-  --chart-4: #e0b061;
-  --chart-5: #d98a80;
+  --chart-1: var(--tone-mint);
+  --chart-2: var(--tone-apricot);
+  --chart-3: var(--tone-lilac);
+  --chart-4: #b3c7a1;
+  --chart-5: #dfaab5;
 
-  --sidebar: #101216;
-  --sidebar-foreground: #cfcfcf;
-  --sidebar-primary: #5eb3e4;
-  --sidebar-primary-foreground: #08131b;
-  --sidebar-accent: rgb(83 93 102 / 0.35);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a2d33;
-  --sidebar-ring: #5eb3e4;
+  --sidebar: #18211c;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 @layer base {
@@ -190,7 +219,7 @@
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
     line-height: 1.8;
-    /* 顶部一层极淡的蓝色光晕，给纯色底一点层次。
+    /* 顶部一层极淡的薄荷色光晕，给纯色底一点层次。
        注意不要用 background-attachment: fixed —— 滚动时会让浏览器反复重绘整页背景。 */
     background-image: radial-gradient(
       1100px 520px at 50% -12%,
@@ -200,7 +229,7 @@
     background-repeat: no-repeat;
   }
 
-  /* 标题统一用高对比色：深色下 #dcdcdc，浅色下 #333 */
+  /* 标题与正文使用不同的高对比色，保留清楚的阅读层级。 */
   h1,
   h2,
   h3,
@@ -250,78 +279,178 @@
    通用视觉构件
    --------------------------------------------------------------- */
 
-/* 半透明卡片：文章条目、侧栏小工具、表单区块统一用它 */
+/* 内容底板承担可读性；列表卡片不使用逐卡模糊，保持滚动轻快。 */
 .surface {
   @apply rounded-lg border border-border bg-card;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.08);
-  /* 刻意不加 backdrop-filter：卡片数量多，毛玻璃会让滚动时持续重绘、明显掉帧。
-     卡片底色本身已是半透明，叠在纯色页面背景上观感一致。 */
+  box-shadow: var(--surface-shadow);
 }
 
-/*
- * 有内容区背景图时把卡片底色加实一档。
- * 背景图（照片）比纯色底复杂得多，卡片太透会明显压低正文对比度；
- * 加实后背景仍能从卡片间隙透出来，页面又不失层次。
- */
+/* 轻柔处理背景纹理，不再降低照片饱和度；深浅主题分别控制遮罩强度。 */
+.page-background-scrim {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--background) var(--scrim-top), transparent) 0%,
+    color-mix(in srgb, var(--background) var(--scrim-middle), transparent) 44%,
+    color-mix(in srgb, var(--background) var(--scrim-bottom), transparent) 100%
+  );
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* 波浪仍使用原有 --background 与 --hero-wave-tint，不跟随内容遮罩调色。 */
 .has-page-bg .surface {
-  background-color: rgb(253 253 253 / 0.94);
+  background-color: var(--surface-raised);
+  box-shadow: var(--surface-image-shadow);
 }
 
-.dark .has-page-bg .surface {
-  background-color: rgb(40 44 52 / 0.9);
-}
-
-/*
- * 玻璃卡片：低不透明度 + backdrop-blur。
- * 用在文章正文这种「大块、数量少」的地方——模糊把底层背景图抹平，
- * 所以不透明度可以压得比 .surface 更低，背景能透出来而文字仍然清楚。
- * （不要用在列表里几十张卡片上：毛玻璃会让滚动持续重绘、明显掉帧。）
- */
+/* 阅读面板加实，避免大块照片透进正文；只保留少量边缘玻璃感。 */
 .surface-glass {
   @apply rounded-lg border border-border;
-  background-color: rgb(255 255 255 / 0.62);
-  /* iOS Safari 18 之前只认带前缀的写法，漏掉这行毛玻璃在 iPhone 上直接不生效 */
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
-  backdrop-filter: blur(14px) saturate(1.1);
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.06);
+  background-color: var(--reading-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--surface-image-shadow);
 }
 
-.dark .surface-glass {
-  background-color: rgb(22 25 31 / 0.58);
-  box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
-}
-
-/* 触屏 / 低性能设备上关闭毛玻璃，避免滚动掉帧 */
 @media (prefers-reduced-motion: reduce) {
   .surface-glass {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background-color: rgb(255 255 255 / 0.92);
-  }
-
-  .dark .surface-glass {
-    background-color: rgb(24 27 33 / 0.94);
   }
 }
 
-.dark .surface {
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
-}
-
-/*
- * 说说气泡：底色带一点主题色，和文章卡片明显区分。
- * 底色必须是**不透明**的 —— 尾巴是一小块 SVG 三角叠在上面，
- * 半透明底色会在重叠处叠出更深的色块、露出接缝（见 shuoshuo-card.tsx）。
- */
+/* 说说使用清亮的独立纸色；正文与元信息都落在实色底板上。 */
 .bubble {
   background-color: var(--bubble-bg);
+  color: var(--bubble-foreground);
   border: 1px solid var(--bubble-border);
-  border-radius: 0.75rem;
+  border-radius: 0.45rem 1.15rem 1.15rem 1.15rem;
+  box-shadow: var(--bubble-shadow);
+}
+.bubble-avatar {
+  border: 2px solid var(--bubble-bg);
+  box-shadow: 0 0 0 1px var(--bubble-border);
+}
+.bubble-author { color: var(--primary); font-weight: 600; }
+.bubble-meta {
+  color: var(--bubble-muted);
+  border-top: 1px solid color-mix(in srgb, var(--bubble-border) 65%, transparent);
+}
+.bubble-meta .dual-time { font-size: inherit; }
+
+
+/* 本地时间主显；副时间通过 Portal 浮层呈现，不挤占卡片或表格。 */
+.dual-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  max-width: 100%;
+  padding-block: 0.2em;
+  border-radius: 0.2rem;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+.dual-time__main { white-space: nowrap; }
+.dual-time__icon { width: 0.9em; height: 0.9em; opacity: 0.55; flex-shrink: 0; transition: transform 180ms ease, opacity 180ms ease; }
+.dual-time:hover, .dual-time[data-state="open"] { color: var(--primary); }
+.dual-time[data-state="open"] .dual-time__icon { transform: rotate(-20deg); opacity: 1; }
+.dual-time:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.time-popover {
+  z-index: 100;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.18);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+.time-popover[data-state="open"] { animation: time-reveal 180ms ease-out; }
+.time-popover[data-state="closed"] { animation: time-hide 120ms ease-in; }
+.time-popover__zone { display: block; max-width: 16rem; overflow-wrap: anywhere; margin-bottom: 0.4rem; color: var(--muted-foreground); font-size: 0.68rem; }
+.time-popover__row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.time-popover__row > span { color: var(--primary); font-weight: 500; }
+.time-popover__arrow { fill: var(--background); }
+@keyframes time-reveal { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes time-hide { to { opacity: 0; transform: translateY(3px) scale(0.97); } }
+
+/* 顶栏切换：固定尺寸，不占用额外导航宽度。 */
+.switch-control { position: relative; isolation: isolate; }
+.switch-control::before {
+  content: ""; position: absolute; inset: 3px; z-index: -1; border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  opacity: 0; transform: scale(0.6); transition: opacity 200ms ease, transform 200ms ease;
+}
+.switch-control:hover::before, .switch-control:focus-visible::before { opacity: 1; transform: scale(1); }
+.switch-control[data-switching="true"]::before { animation: switch-pulse 420ms ease-out; }
+.theme-sun, .theme-moon { transition: transform 350ms ease, opacity 250ms ease; }
+.theme-sun { transform: rotate(0deg) scale(1); opacity: 1; }
+.theme-moon { position: absolute; transform: rotate(100deg) scale(0); opacity: 0; }
+.dark .theme-sun { transform: rotate(-100deg) scale(0); opacity: 0; }
+.dark .theme-moon { transform: rotate(0deg) scale(1); opacity: 1; }
+.language-glyph { transition: transform 200ms ease; }
+.switch-control:hover .language-glyph { transform: rotate(-12deg); }
+.switch-control[data-switching="true"] .language-glyph { animation: language-turn 650ms ease-in-out infinite; }
+.language-target { position: absolute; bottom: 0; right: 0; padding: 0 0.18rem; border-radius: 0.2rem; background: var(--background); color: var(--primary) !important; font-size: 0.5rem; line-height: 1.3; opacity: 0; transform: translateY(3px); transition: opacity 180ms ease, transform 180ms ease; }
+.switch-control:hover .language-target, .switch-control:focus-visible .language-target, .switch-control[data-switching="true"] .language-target { opacity: 1; transform: none; }
+@keyframes switch-pulse { 0% { opacity: 0; transform: scale(0.5); } 40% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
+@keyframes language-turn { 50% { transform: rotateY(180deg); } 100% { transform: rotateY(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .dual-time, .dual-time__icon, .time-popover, .switch-control::before, .theme-sun, .theme-moon, .language-glyph, .language-target { animation: none !important; transition: none !important; }
 }
 
+/* 关于页：薄荷、杏色与淡紫只点缀光晕、数字和细线，不用彩虹底色拼贴。 */
+.about-hero { border-radius: 1rem; background-image: radial-gradient(ellipse at 90% 15%, color-mix(in srgb, var(--tone-mint) 8%, transparent), transparent 65%), radial-gradient(ellipse at 10% 85%, color-mix(in srgb, var(--tone-lilac) 6%, transparent), transparent 60%); }
+.about-portrait { padding: 0.5rem; border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border)); border-radius: 50%; background: color-mix(in srgb, var(--primary) 8%, var(--background)); box-shadow: 0 0 0 0.55rem color-mix(in srgb, var(--primary) 5%, transparent); }
+.about-hero__orbit { position: absolute; width: 30rem; height: 30rem; right: -9rem; top: -10rem; border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent); border-radius: 50%; box-shadow: 0 0 0 3rem color-mix(in srgb, var(--primary) 3%, transparent), 0 0 0 6rem color-mix(in srgb, var(--primary) 2%, transparent); pointer-events: none; }
+.about-eyebrow { font-size: 0.68rem; letter-spacing: 0.14em; color: var(--primary); font-weight: 500; }
+.about-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem; }
+.about-panel { min-width: 0; padding: 1.65rem; border-radius: 0.8rem; }
+.about-span-4 { grid-column: span 4; } .about-span-5 { grid-column: span 5; } .about-span-7 { grid-column: span 7; } .about-span-8 { grid-column: span 8; } .about-span-12 { grid-column: span 12; }
+.about-chip { display: inline-flex; max-width: 100%; align-items: center; gap: 0.45rem; border: 1px solid var(--border); border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.75rem; line-height: 1.5; overflow-wrap: anywhere; color: var(--muted-foreground); }
+.about-chip--link, .about-text-link, .about-explore, .about-stat { transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease; }
+.about-chip--link:hover { color: var(--primary); border-color: var(--primary); background: color-mix(in srgb, var(--primary) 7%, transparent); }
+/* 每四项依次为薄荷、杏色、淡紫、薄荷；小字始终使用可读的辅助文字色。 */
+.about-stat { --stat-tone: var(--tone-mint); display: block; border-left: 2px solid color-mix(in srgb, var(--stat-tone) 45%, var(--border)); padding-left: 0.85rem; }
+.about-stat:nth-child(4n + 2) { --stat-tone: var(--tone-apricot); }
+.about-stat:nth-child(4n + 3) { --stat-tone: var(--tone-lilac); }
+.about-stat strong { display: block; font-size: 2rem; line-height: 1.15; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--stat-tone); }
+.about-stat span { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; font-size: 0.75rem; color: var(--muted-foreground); }
+.about-stat:hover { border-color: var(--stat-tone); }
+.about-quote { display: flex; flex-direction: column; justify-content: center; background-image: linear-gradient(135deg, color-mix(in srgb, var(--tone-apricot-bg) 70%, transparent), transparent); }
+.about-quote > svg { color: color-mix(in srgb, var(--tone-apricot) 65%, transparent); }
+.about-tech { min-width: 0; display: flex; gap: 0.6rem; align-items: center; padding: 0.8rem 0.7rem; border: 1px solid var(--border); border-radius: 0.5rem; font-size: 0.8rem; overflow-wrap: anywhere; transition: border-color 180ms ease, transform 180ms ease; }
+.about-tech:hover { border-color: var(--primary); transform: translateY(-2px); }
+.about-tech__index { font-size: 0.6rem; color: var(--tone-lilac); font-variant-numeric: tabular-nums; }
+.about-tech:nth-child(even) .about-tech__index { color: var(--tone-apricot); }
+.about-entry { display: flex; gap: 1rem; justify-content: space-between; align-items: center; padding-block: 1rem; overflow-wrap: anywhere; }
+.about-entry:hover strong { color: var(--primary); }
+.about-entry strong { font-weight: 500; }
+.about-text-link { display: inline-flex; align-items: center; gap: 0.5rem; overflow-wrap: anywhere; }
+.about-text-link:hover { color: var(--primary); }
+.about-explore { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0; }
+.about-explore:hover { color: var(--primary); }
+.about-photo-strip { display: flex; gap: 0.75rem; }
+.about-photo { min-width: 0; max-width: 15rem; flex: 1; padding: 0.35rem; background: var(--background); border: 1px solid var(--border); border-radius: 0.3rem; transform: rotate(-3deg); transition: transform 220ms ease; }
+.about-photo:nth-child(2) { transform: rotate(3deg); }
+.about-photo:nth-child(3) { transform: rotate(-1deg); }
+.about-photo:hover { transform: translateY(-4px) rotate(0); }
+.about-photo img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 0.15rem; }
+.about-photo span { display: block; text-align: center; font-size: 0.6rem; color: var(--muted-foreground); padding-top: 0.3rem; }
+.about-page a:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+@media (max-width: 767px) { .about-grid > * { grid-column: span 12; } .about-panel { padding: 1.25rem; } }
+@media (prefers-reduced-motion: reduce) { .about-page *, .about-page *::before { transition: none !important; animation: none !important; } .about-photo:hover, .about-tech:hover { transform: none; } }
+
 /* 区块标题：左侧竖条 + 展示字体，用于侧栏小工具与列表页分区 */
-.section-title {
-  @apply flex items-center gap-2 text-base font-medium;
+.section-title {  @apply flex items-center gap-2 text-base font-medium;
   font-family: var(--font-display);
   color: var(--card-foreground);
 }
@@ -331,14 +460,23 @@
   @apply inline-block h-4 w-1 rounded-full bg-primary;
 }
 
-/* 标签胶囊 */
+/* 标签按薄荷、杏色、淡紫循环点缀边线；保留原有底色和正文对比。 */
+.tag-pill,
+.tag-card { --tag-tone: var(--tone-mint); }
+.tag-pill:nth-child(3n + 2),
+.tag-card:nth-child(3n + 2) { --tag-tone: var(--tone-apricot); }
+.tag-pill:nth-child(3n + 3),
+.tag-card:nth-child(3n + 3) { --tag-tone: var(--tone-lilac); }
+
 .tag-pill {
   @apply inline-flex items-center rounded-md border border-border px-3 py-1 text-xs transition-colors;
+  border-color: color-mix(in oklab, var(--tag-tone) 25%, var(--border));
   color: var(--card-foreground);
 }
 
 .tag-pill:hover {
-  @apply border-primary text-primary;
+  border-color: var(--tag-tone);
+  color: var(--tag-tone);
 }
 
 /* ---------------------------------------------------------------
@@ -372,12 +510,25 @@
   opacity: 1;
 }
 
+/* 登录入口在窄屏仅图标，宽屏附文字；按钮底纹跟随完整可点击区域。 */
+.nav-login-button {
+  width: 2rem;
+  padding-inline: 0;
+}
+
+@media (min-width: 1536px) {
+  .nav-login-button {
+    width: auto;
+    padding-inline: 0.625rem;
+  }
+}
+
 /* ---------------------------------------------------------------
    标签页：贴纸卡片（刻意和「分类」的书签区分开）
 
    分类是"竖长条挂在横杆上"（.bookmark），标签是"一墙小方贴纸"：
    方块 + 内部分割线 + 固定轻微倾角，悬停时抬起并把角度归正。
-   倾角由 id 派生，刷新不会跳；颜色统一走主题色深浅变化，不引入杂色。
+   倾角由 id 派生，刷新不会跳；保留薄荷纸色，边线按薄荷、杏色、淡紫循环。
    --------------------------------------------------------------- */
 .tag-card {
   position: relative;
@@ -385,7 +536,7 @@
   align-items: baseline;
   gap: 0.5rem;
   border-radius: 0.375rem;
-  border: 1px solid color-mix(in oklab, var(--primary) 20%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--tag-tone) 30%, var(--border));
   background-color: color-mix(in oklab, var(--primary) var(--tag-mix), var(--card));
   padding: 0.4rem 0.7rem 0.5rem;
   font-family: var(--font-display);
@@ -401,12 +552,12 @@
   content: "";
   align-self: stretch;
   width: 1px;
-  background: color-mix(in oklab, var(--foreground) 12%, transparent);
+  background: color-mix(in oklab, var(--tag-tone) 30%, transparent);
 }
 
 .tag-card:hover {
   transform: translateY(-3px) rotate(0deg) !important;
-  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  border-color: color-mix(in oklab, var(--tag-tone) 60%, var(--border));
   box-shadow: 0 6px 16px rgb(0 0 0 / 0.12);
 }
 
@@ -1344,8 +1495,8 @@ button:hover .trash-wiggle {
 
 /* ---------------------------------------------------------------
    留言墙：小板子 + 便利贴
-   便利贴的颜色**刻意跟着主题走**（用 primary 与 card 混色，不引入杂色），
-   深浅主题自动切换；每张纸条用不同的 primary 占比，同一色系里彼此分得开。
+   纸色仍按薄荷比例变化并保持不透明，深浅主题自动切换；
+   仅边线与胶带按薄荷、杏色、淡紫循环，不影响翻牌与正文对比。
    --------------------------------------------------------------- */
 .board {
   position: relative;
@@ -1365,10 +1516,10 @@ button:hover .trash-wiggle {
 .sticky-note {
   /* --note-mix 由组件按序号传入（8% / 12% / 16% / 20% / 24%） */
   --note-mix: 12%;
-  /* 混的是 --note-paper（不透明），不是 --card（自带 alpha）—— 见翻牌的说明 */
+  /* 使用独立且不透明的 --note-paper，避免普通卡片调色影响翻牌。 */
   background-color: color-mix(in oklab, var(--primary) var(--note-mix), var(--note-paper));
   /* 便利贴应该是"贴上去的纸"：底色必须不透明，别透出后面的板子 */
-  border: 1px solid color-mix(in oklab, var(--primary) 22%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--note-tone, var(--tone-mint)) 22%, var(--border));
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.08),
     0 8px 18px -8px rgb(0 0 0 / 0.22);
@@ -1406,11 +1557,11 @@ button:hover .trash-wiggle {
   transform: translateX(-50%) rotate(-2.5deg);
   background: linear-gradient(
     100deg,
-    color-mix(in oklab, var(--foreground) 8%, transparent),
-    color-mix(in oklab, var(--foreground) 14%, transparent)
+    color-mix(in oklab, var(--note-tone, var(--tone-mint)) 12%, transparent),
+    color-mix(in oklab, var(--note-tone, var(--tone-mint)) 20%, transparent)
   );
-  border-left: 1px dashed color-mix(in oklab, var(--foreground) 10%, transparent);
-  border-right: 1px dashed color-mix(in oklab, var(--foreground) 10%, transparent);
+  border-left: 1px dashed color-mix(in oklab, var(--note-tone, var(--tone-mint)) 18%, transparent);
+  border-right: 1px dashed color-mix(in oklab, var(--note-tone, var(--tone-mint)) 18%, transparent);
   opacity: 0.85;
   pointer-events: none;
   transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -1429,9 +1580,13 @@ button:hover .trash-wiggle {
  * .sticky-note 上是不起作用的（它自己没有 transform）。
  */
 .flip-card {
+  --note-tone: var(--tone-mint);
   perspective: 1200px;
   cursor: pointer;
 }
+
+.flip-card:nth-child(3n + 2) { --note-tone: var(--tone-apricot); }
+.flip-card:nth-child(3n + 3) { --note-tone: var(--tone-lilac); }
 
 .flip-inner {
   position: relative;
@@ -1553,13 +1708,19 @@ button:hover .trash-wiggle {
    所以阴影必须用 filter: drop-shadow（它跟着裁出来的形状走）。
    --------------------------------------------------------------- */
 .bookmark {
+  --bookmark-tone: var(--tone-mint);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 11px), 50% 100%, 0 calc(100% - 11px));
+  /* 内侧顶线只作点缀，不增加边框尺寸，也不覆盖组件传入的实色底板。 */
+  box-shadow: inset 0 2px 0 color-mix(in oklab, var(--bookmark-tone) 55%, transparent);
   transition:
     transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
     background-color 340ms ease,
     filter 340ms ease;
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.1));
 }
+
+.bookmark:nth-child(3n + 2) { --bookmark-tone: var(--tone-apricot); }
+.bookmark:nth-child(3n + 3) { --bookmark-tone: var(--tone-lilac); }
 
 .dark .bookmark {
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.4));
@@ -1718,6 +1879,291 @@ html.is-loaded .site-preloader {
   box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
 }
 
+/* ---------------------------------------------------------------
+   友链星系：三层 orbit，靠 hover/focus 展开信息；小屏回退成列表
+   --------------------------------------------------------------- */
+.friends-orbit-stage {
+  /*
+   * 5:4 舞台。宽度同时受三方限制：容器、800px 上限、
+   * 以及「视口高度减去页头与页脚」反推出来的宽度（×1.25 保持 5:4）。
+   * 这样在矮屏上舞台会自己收小，不会把页面顶得又高又空；
+   * 因为宽度与高度始终同比例，SVG 轨道环与头像定位仍然对齐。
+   */
+  width: min(100%, 800px, calc((100svh - 22rem) * 1.25));
+  aspect-ratio: 5 / 4;
+  margin-inline: auto;
+}
+
+.friends-orbit {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+
+.friends-orbit__spin,
+.friends-orbit__map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.friends-orbit__spin {
+  transform-origin: 50% 50%;
+  animation: friends-orbit-spin 150s linear infinite;
+}
+
+.friends-orbit__map {
+  overflow: visible;
+}
+
+.friends-orbit__ring {
+  fill: none;
+  stroke: color-mix(in oklab, var(--primary) 18%, var(--border));
+  stroke-width: 1;
+  stroke-dasharray: 2 7;
+  vector-effect: non-scaling-stroke;
+}
+
+.friends-orbit__ring--2 { opacity: 0.7; }
+.friends-orbit__ring--3 { opacity: 0.52; }
+
+.friends-orbit__connection {
+  fill: none;
+  stroke: color-mix(in oklab, var(--primary) 28%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+  vector-effect: non-scaling-stroke;
+}
+
+/*
+ * 定位层：整块铺满舞台，靠 transform 绕中心转到轨道上。
+ * `translateX` 的百分比是「自身宽度」的百分比 —— 层铺满舞台，
+ * 所以 --orbit-radius 直接就是「舞台宽度的比例」，容器缩放时头像跟着走。
+ */
+.friends-orbit__position {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transform: rotate(var(--orbit-angle)) translateX(calc(var(--orbit-radius) * 100%))
+    rotate(var(--orbit-counter-angle));
+}
+
+.friends-orbit__counter {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  animation: friends-orbit-counter 150s linear infinite;
+}
+
+.friends-orbit__link {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: block;
+  width: 3.75rem;
+  height: 3.75rem;
+  transform: translate(-50%, -50%);
+  color: var(--card-foreground);
+  transition: filter 220ms ease, opacity 220ms ease;
+}
+
+.friends-orbit__avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 2px solid color-mix(in oklab, var(--primary) 48%, var(--border));
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 12%, var(--card));
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.16), 0 0 0 5px color-mix(in oklab, var(--primary) 10%, transparent);
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.friends-orbit__tooltip {
+  position: absolute;
+  left: 50%;
+  z-index: 5;
+  width: 14rem;
+  max-width: min(14rem, 75vw);
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, var(--border));
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--popover) 94%, transparent);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -0.25rem) scale(0.96);
+  transition: opacity 180ms ease, transform 180ms ease;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* 下半圈的星球把信息卡弹在下方，上半圈的弹在上方 —— 否则会盖住中心站点卡 */
+.friends-orbit__link[data-side="bottom"] .friends-orbit__tooltip {
+  top: calc(100% + 0.75rem);
+}
+
+.friends-orbit__link[data-side="top"] .friends-orbit__tooltip {
+  bottom: calc(100% + 0.75rem);
+}
+
+.friends-orbit__link[data-side="top"]:hover .friends-orbit__tooltip,
+.friends-orbit__link[data-side="top"]:focus-visible .friends-orbit__tooltip {
+  transform: translate(-50%, 0.25rem) scale(1);
+}
+
+.friends-orbit__link:hover,
+.friends-orbit__link:focus-visible {
+  z-index: 10;
+  outline: none;
+}
+
+.friends-orbit__link:hover .friends-orbit__avatar,
+.friends-orbit__link:focus-visible .friends-orbit__avatar {
+  transform: scale(1.16);
+  border-color: var(--primary);
+  box-shadow: 0 8px 28px color-mix(in oklab, var(--primary) 30%, transparent), 0 0 0 7px color-mix(in oklab, var(--primary) 16%, transparent);
+}
+
+.friends-orbit__link:hover .friends-orbit__tooltip,
+.friends-orbit__link:focus-visible .friends-orbit__tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  pointer-events: auto;
+}
+
+.friends-orbit:has(.friends-orbit__link:hover) .friends-orbit__link:not(:hover),
+.friends-orbit:has(.friends-orbit__link:focus-visible) .friends-orbit__link:not(:focus-visible) {
+  opacity: 0.34;
+  filter: blur(0.5px);
+}
+
+.friends-orbit__center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  width: 7.5rem;
+  height: 7.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, var(--primary) 34%, var(--border));
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--card) 96%, transparent);
+  box-shadow: 0 0 0 10px color-mix(in oklab, var(--primary) 7%, transparent), 0 10px 30px rgb(0 0 0 / 0.18);
+  transform: translate(-50%, -50%);
+  transition: box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.friends-orbit__center-mark {
+  display: flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, var(--border));
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 12%, var(--card));
+  color: var(--primary);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.friends-orbit__center:hover,
+.friends-orbit__center:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 13px color-mix(in oklab, var(--primary) 11%, transparent), 0 12px 34px rgb(0 0 0 / 0.22);
+}
+
+.friends-orbit:focus-within .friends-orbit__spin,
+.friends-orbit:hover .friends-orbit__spin,
+.friends-orbit:focus-within .friends-orbit__counter,
+.friends-orbit:hover .friends-orbit__counter {
+  animation-play-state: paused;
+}
+
+.friends-mobile-list {
+  display: none;
+}
+
+@keyframes friends-orbit-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes friends-orbit-counter {
+  to { transform: rotate(-360deg); }
+}
+
+@media (max-width: 767px) {
+  .friends-orbit-stage {
+    display: none;
+  }
+
+  .friends-mobile-list {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .friends-mobile-card {
+    display: flex;
+    min-height: 5.5rem;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem;
+    text-decoration: none;
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .friends-mobile-card:hover,
+  .friends-mobile-card:focus-visible {
+    border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.12);
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .friends-mobile-card__avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--primary) 36%, var(--border));
+    border-radius: 9999px;
+  }
+
+  .friends-mobile-card__spark {
+    width: 0.45rem;
+    height: 0.45rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 12%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .friends-orbit__spin,
+  .friends-orbit__counter {
+    animation: none;
+  }
+
+  .friends-orbit__link,
+  .friends-orbit__avatar,
+  .friends-orbit__tooltip,
+  .friends-orbit__center,
+  .friends-mobile-card {
+    transition: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
   .skeleton,
@@ -1792,7 +2238,11 @@ html.is-loaded .site-preloader {
 
   .flip-back {
     transform: none;
+    visibility: hidden;
+    pointer-events: none;
   }
+  .flip-card.flipped .flip-back { visibility: visible; pointer-events: auto; }
+  .flip-card.flipped .flip-inner > .flip-face { visibility: hidden; pointer-events: none; }
 }
 
 /* ---------------------------------------------------------------

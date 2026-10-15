@@ -4,6 +4,7 @@ import { ChevronDownIcon, MegaphoneIcon, PinIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { DualTime } from "@/components/site/dual-time";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,17 +39,20 @@ function AnnouncementRow({
 
   const body = (
     <>
-      <span
-        className={cn(
-          "block text-sm leading-6 whitespace-pre-wrap",
-          collapsible && !expanded && "line-clamp-2"
-        )}
-      >
-        {item.content}
-      </span>
+      {collapsible ? (
+        <button type="button" onClick={onToggle} aria-expanded={expanded}
+          className="flex w-full cursor-pointer items-start gap-2 text-left">
+          <span className={cn("min-w-0 flex-1 text-sm leading-6 whitespace-pre-wrap", !expanded && "line-clamp-2")}>
+            {item.content}
+          </span>
+          <ChevronDownIcon className={cn("mt-1 size-4 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-180")} />
+        </button>
+      ) : (
+        <span className="block text-sm leading-6 whitespace-pre-wrap">{item.content}</span>
+      )}
 
       <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-        <time dateTime={item.createdAtIso}>{item.createdAtLabel}</time>
+        <DualTime date={item.createdAtIso} className="text-xs" />
         {item.pinned ? (
           <span className="inline-flex items-center gap-0.5 font-medium text-primary">
             <PinIcon className="size-3" />
@@ -66,24 +70,7 @@ function AnnouncementRow({
         <span aria-hidden className="absolute top-3.5 bottom-3.5 left-0 w-0.5 rounded-full bg-primary" />
       ) : null}
 
-      {collapsible ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          className="flex w-full cursor-pointer items-start gap-2 text-left"
-        >
-          <span className="min-w-0 flex-1">{body}</span>
-          <ChevronDownIcon
-            className={cn(
-              "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
-              expanded && "rotate-180"
-            )}
-          />
-        </button>
-      ) : (
-        body
-      )}
+      {body}
     </li>
   );
 }

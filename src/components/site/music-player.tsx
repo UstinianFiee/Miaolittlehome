@@ -1,416 +1,196 @@
 "use client";
 
 import {
-  ListMusicIcon,
-  MusicIcon,
-  PauseIcon,
-  PlayIcon,
-  Repeat1Icon,
-  RepeatIcon,
-
-  SkipBackIcon,
-  SkipForwardIcon,
-  Volume2Icon,
-  VolumeXIcon,
-  XIcon,
+  GripHorizontalIcon, ListMusicIcon, MusicIcon, PauseIcon, PlayIcon,
+  Repeat1Icon, RepeatIcon, SkipBackIcon, SkipForwardIcon,
+  Volume2Icon, VolumeXIcon, XIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
+import { createPortal } from "react-dom";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { PlaylistTrack } from "@/lib/playlist";
+import { MusicSpectrum } from "./music-spectrum";
+import { useMusicAudio } from "./use-music-audio";
+import { usePlayerPosition } from "./use-player-position";
+import styles from "./music-player.module.css";
 
-/**
- * 全局音乐播放器（docs/SPEC.md 阶段 12）。
- *
- * 「不中断」的关键：组件挂在站点语言布局里，路由切换时布局不会重新挂载，
- * 因此 <audio> 元素与播放状态都得以保留。
- * 注意：import type 引入 PlaylistTrack，避免把服务端的 prisma 带进客户端包。
- */
-
-type RepeatMode = "off" | "all" | "one";
-
-const STORAGE_KEY = "music-player-state";
-
-function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return "0:00";
-  }
-  const total = Math.floor(seconds);
-  const minutes = Math.floor(total / 60);
-  const rest = total % 60;
-  return `${minutes}:${String(rest).padStart(2, "0")}`;
+function formatTime(seconds: number) {
+  const total = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+function Cover({ src }: { src: string | null }) {
+  const [failed, setFailed] = React.useState<string | null>(null);
+  return (
+    <span className={styles.artwork} aria-hidden="true">
+      <span className={styles.artworkFallback}><MusicIcon /></span>
+      {src && failed !== src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={src} src={src} alt="" draggable={false} decoding="async"
+          onError={() => setFailed(src)}
+          ref={(image) => { if (image?.complete && !image.naturalWidth) setFailed(src); }} />
+      ) : null}
+    </span>
+  );
+}
+
+/** 仍由语言布局中的懒加载壳持有；Portal 只移动 UI，不创建第二个播放器。 */
 export function MusicPlayer({ tracks }: { tracks: PlaylistTrack[] }) {
-  const t = useTranslations();
-
-  const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const pendingPlayRef = React.useRef(false);
-
-  const [index, setIndex] = React.useState(0);
-  const [playing, setPlaying] = React.useState(false);
-  const [currentTime, setCurrentTime] = React.useState(0);
-  const [duration, setDuration] = React.useState(0);
-  const [volume, setVolume] = React.useState(0.8);
-  const [muted, setMuted] = React.useState(false);
-  const [repeat, setRepeat] = React.useState<RepeatMode>("all");
+  const t = useTranslations("player");
+  const player = useMusicAudio(tracks);
+  const current = tracks[player.index] ?? null;
+  const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
   const [expanded, setExpanded] = React.useState(false);
   const [showList, setShowList] = React.useState(false);
-  const [restored, setRestored] = React.useState(false);
+  const toggleRef = React.useRef<HTMLButtonElement>(null);
+  const closeRef = React.useRef<HTMLButtonElement>(null);
+  const panelId = React.useId();
+  const listId = React.useId();
+  const hintId = React.useId();
+  const statusId = React.useId();
+  const status = player.error ? t(player.error) : player.waiting ? t("loading") : player.notice ? t(player.notice) : "";
+  const { rootRef, panelRef, statusRef, safeAreaRef, dragging, dragHandlers } = usePlayerPosition(Boolean(current && portalTarget), expanded, Boolean(!expanded && status));
 
-  const current = tracks[index] ?? null;
+  React.useEffect(() => { setPortalTarget(document.body); }, []);
 
-  // 恢复上次的音量/曲目/循环模式
+  const closePanel = React.useCallback((restoreFocus = true) => {
+    setExpanded(false);
+    setShowList(false);
+    if (restoreFocus) toggleRef.current?.focus({ preventScroll: true });
+  }, []);
+
   React.useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as Partial<{
-          index: number;
-          volume: number;
-          repeat: RepeatMode;
-        }>;
-
-        if (typeof saved.index === "number" && saved.index >= 0 && saved.index < tracks.length) {
-          setIndex(saved.index);
-        }
-        if (typeof saved.volume === "number") {
-          setVolume(Math.min(1, Math.max(0, saved.volume)));
-        }
-        if (saved.repeat === "off" || saved.repeat === "all" || saved.repeat === "one") {
-          setRepeat(saved.repeat);
-        }
+    if (!expanded) return;
+    closeRef.current?.focus({ preventScroll: true });
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) {
+        closePanel(Boolean(panelRef.current?.contains(document.activeElement)));
       }
-    } catch {
-      // 忽略损坏的本地状态
-    }
-    setRestored(true);
-  }, [tracks.length]);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); closePanel(); }
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [expanded, closePanel, rootRef, panelRef]);
 
-  React.useEffect(() => {
-    if (!restored) {
-      return;
-    }
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ index, volume, repeat }));
-    } catch {
-      // 忽略写入失败
-    }
-  }, [restored, index, volume, repeat]);
+  if (!current || !portalTarget) return null;
 
-  // 音量/静音同步到 audio 元素
-  React.useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = volume;
-      audio.muted = muted;
-    }
-  }, [volume, muted, index]);
+  const repeatLabel = t(player.repeat === "one" ? "repeatOne" : player.repeat === "all" ? "repeatAll" : "repeatOff");
+  const playLabel = t(player.requested ? "pause" : "play");
+  const PlayPause = player.requested ? PauseIcon : PlayIcon;
 
-  // 切换曲目后按需自动播放
-  React.useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
-    }
+  return createPortal(
+    <div ref={rootRef} data-testid="music-player" className={styles.player}
+      data-dragging={dragging} data-playing={player.playing} {...dragHandlers}>
+      <span ref={safeAreaRef} className={styles.safeArea} aria-hidden="true" />
+      <span id={hintId} className={styles.srOnly}>{t("dragHint")}</span>
+      <div className={styles.orb} data-player-drag="">
+        <div className={styles.glass} aria-hidden="true" />
+        <MusicSpectrum analyser={player.analyser} playing={player.playing} className={styles.spectrum} />
+        <button type="button" className={styles.coverButton} data-player-drag=""
+          aria-label={`${playLabel} · ${current.title}`} aria-describedby={hintId}
+          title={`${current.title}${current.artist ? ` · ${current.artist}` : ""}`}
+          data-testid="player-orb-play" onClick={player.toggle}>
+          <Cover src={current.cover} />
+          <span className={styles.playGlyph}><PlayPause aria-hidden="true" /></span>
+        </button>
+        <button type="button" data-player-drag="" className={styles.dragHandle}
+          aria-label={t("move")} aria-describedby={hintId} title={t("dragHint")}>
+          <GripHorizontalIcon aria-hidden="true" />
+        </button>
+        <button type="button" ref={toggleRef} className={styles.panelToggle}
+          aria-label={t(expanded ? "close" : "open")} aria-expanded={expanded} aria-controls={panelId}
+          aria-describedby={status ? statusId : undefined}
+          data-testid="player-expand" onClick={() => expanded ? closePanel() : setExpanded(true)}>
+          <ListMusicIcon aria-hidden="true" />
+          {player.error || player.notice ? <span className={styles.statusDot} aria-hidden="true" /> : null}
+        </button>
+      </div>
 
-    audio.load();
-    if (pendingPlayRef.current) {
-      pendingPlayRef.current = false;
-      void audio.play().catch(() => setPlaying(false));
-    }
-  }, [index]);
+      <div ref={statusRef} id={statusId} role="status" aria-live="polite" aria-atomic="true"
+        className={!expanded && status ? styles.bubble : styles.srOnly} data-error={Boolean(player.error)}>
+        {status}
+      </div>
 
-  function togglePlay() {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
-    }
+      {expanded ? (
+        <section ref={panelRef} id={panelId} role="dialog" aria-modal="false"
+          aria-label={t("title")} className={styles.panel} data-testid="player-panel">
+          <div className={styles.heading}>
+            <div className={styles.thumbnail}><Cover src={current.cover} /></div>
+            <div className={styles.trackInfo}>
+              <p className={styles.eyebrow}>{t("nowPlaying")}</p>
+              <p className={styles.title} title={current.title}>{current.title}</p>
+              {current.artist ? <p className={styles.artist} title={current.artist}>{current.artist}</p> : null}
+            </div>
+            <button ref={closeRef} type="button" className={styles.iconButton} aria-label={t("close")}
+              onClick={() => closePanel()}><XIcon aria-hidden="true" /></button>
+          </div>
 
-    if (audio.paused) {
-      pendingPlayRef.current = true;
-      void audio.play().catch(() => setPlaying(false));
-    } else {
-      audio.pause();
-    }
-  }
+          {status ? <p className={styles.notice} data-error={Boolean(player.error)}>{status}</p> : null}
 
-  function selectTrack(next: number) {
-    if (tracks.length === 0) {
-      return;
-    }
-    const normalized = ((next % tracks.length) + tracks.length) % tracks.length;
-    pendingPlayRef.current = true;
-    setIndex(normalized);
-  }
+          <div className={styles.progress}>
+            <input type="range" min={0} max={Math.max(0, player.duration)} step={0.1}
+              value={Math.min(player.currentTime, player.duration || 0)} disabled={player.duration <= 0}
+              onChange={(event) => player.seek(Number(event.target.value))}
+              aria-label={t("progress")} aria-valuetext={`${formatTime(player.currentTime)} / ${formatTime(player.duration)}`}
+              data-testid="player-progress" />
+            <div className={styles.times}><span>{formatTime(player.currentTime)}</span><span>{formatTime(player.duration)}</span></div>
+          </div>
 
-  function handleEnded() {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
-    }
+          <div className={styles.transport}>
+            <button type="button" className={styles.iconButton} aria-label={repeatLabel} title={repeatLabel}
+              data-active={player.repeat !== "off"} onClick={player.cycleRepeat}>
+              {player.repeat === "one" ? <Repeat1Icon aria-hidden="true" /> : <RepeatIcon aria-hidden="true" />}
+            </button>
+            <button type="button" className={styles.iconButton} aria-label={t("prev")}
+              disabled={tracks.length < 2} onClick={() => player.select(player.index - 1)}><SkipBackIcon aria-hidden="true" /></button>
+            <button type="button" className={styles.transportPlay} aria-label={playLabel}
+              onClick={player.toggle}><PlayPause aria-hidden="true" /></button>
+            <button type="button" className={styles.iconButton} aria-label={t("next")}
+              disabled={tracks.length < 2} onClick={() => player.select(player.index + 1)}><SkipForwardIcon aria-hidden="true" /></button>
+            <button type="button" className={styles.iconButton} aria-label={t("playlist")} aria-controls={listId}
+              aria-expanded={showList} data-active={showList} onClick={() => setShowList((value) => !value)}>
+              <ListMusicIcon aria-hidden="true" />
+            </button>
+          </div>
 
-    if (repeat === "one") {
-      audio.currentTime = 0;
-      void audio.play().catch(() => setPlaying(false));
-      return;
-    }
+          <div className={styles.volume}>
+            <button type="button" className={styles.iconButton} aria-label={t(player.muted ? "unmute" : "mute")}
+              aria-pressed={player.muted} onClick={player.toggleMute}>
+              {player.muted || player.volume === 0 ? <VolumeXIcon aria-hidden="true" /> : <Volume2Icon aria-hidden="true" />}
+            </button>
+            <input type="range" min={0} max={1} step={0.01} value={player.muted ? 0 : player.volume}
+              onChange={(event) => player.setVolume(Number(event.target.value))}
+              aria-label={t("volume")} aria-valuetext={`${Math.round((player.muted ? 0 : player.volume) * 100)}%`} data-testid="player-volume" />
+            <span className={styles.volumeValue} aria-hidden="true">{Math.round((player.muted ? 0 : player.volume) * 100)}%</span>
+          </div>
 
-    if (repeat === "off" && index === tracks.length - 1) {
-      setPlaying(false);
-      return;
-    }
-
-    selectTrack(index + 1);
-  }
-
-  function handleSeek(event: React.ChangeEvent<HTMLInputElement>) {
-    const audio = audioRef.current;
-    const value = Number(event.target.value);
-    if (audio) {
-      audio.currentTime = value;
-    }
-    setCurrentTime(value);
-  }
-
-  function cycleRepeat() {
-    setRepeat((mode) => (mode === "off" ? "all" : mode === "all" ? "one" : "off"));
-  }
-
-  if (tracks.length === 0 || !current) {
-    return null;
-  }
-
-  const repeatLabel =
-    repeat === "one" ? t("player.repeatOne") : repeat === "all" ? t("player.repeatAll") : t("player.repeatOff");
-
-  return (
-    <>
-      <audio
-        ref={audioRef}
-        src={current.src}
-        preload="metadata"
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-        onLoadedMetadata={(event) => {
-          setDuration(event.currentTarget.duration || 0);
-          event.currentTarget.volume = volume;
-          event.currentTarget.muted = muted;
-        }}
-        onEnded={handleEnded}
-      />
-
-      <div
-        data-testid="music-player"
-        className="fixed right-3 bottom-3 z-40 flex flex-col items-end gap-2 sm:right-5 sm:bottom-5"
-      >
-        {expanded && showList ? (
-          <div className="max-h-72 w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto rounded-lg border border-border/60 bg-background/95 p-2 shadow-lg backdrop-blur">
-            <p className="px-2 py-1 text-xs text-muted-foreground">
-              {t("player.trackCount", { count: tracks.length })}
-            </p>
-            <ul>
+          <div id={listId} hidden={!showList} className={styles.playlist}>
+            <p className={styles.listHeading}>{t("trackCount", { count: tracks.length })}</p>
+            <ul aria-label={t("playlist")}>
               {tracks.map((track, position) => (
                 <li key={`${track.id}-${position}`}>
-                  <button
-                    type="button"
-                    onClick={() => selectTrack(position)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
-                      position === index && "text-primary"
-                    )}
-                  >
-                    <span className="w-5 shrink-0 text-xs text-muted-foreground tabular-nums">
-                      {position + 1}
+                  <button type="button" onClick={() => player.select(position)}
+                    className={styles.track} aria-current={position === player.index ? "true" : undefined}>
+                    <span className={styles.trackNumber} aria-hidden="true">{position + 1}</span>
+                    <span className={styles.listTrackInfo}>
+                      <span>{track.title}</span>
+                      {track.artist ? <small>{track.artist}</small> : null}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{track.title}</span>
-                    {track.artist ? (
-                      <span className="shrink-0 text-xs text-muted-foreground">{track.artist}</span>
-                    ) : null}
+                    {position === player.index ? <MusicIcon aria-hidden="true" /> : null}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
-        ) : null}
-
-        <div
-          className={cn(
-            "rounded-lg border border-border/60 bg-background/95 shadow-lg backdrop-blur",
-            expanded ? "w-[min(20rem,calc(100vw-1.5rem))] p-3" : "p-1.5"
-          )}
-        >
-          {expanded ? (
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                {current.cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={current.cover}
-                    alt=""
-                    className="size-12 shrink-0 rounded border border-border/60 object-cover"
-                  />
-                ) : (
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded border border-border/60 bg-muted/40">
-                    <MusicIcon className="size-5 text-muted-foreground" />
-                  </div>
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium" title={current.title}>
-                    {current.title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {current.artist || t("player.nowPlaying")}
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("player.close")}
-                  onClick={() => {
-                    setExpanded(false);
-                    setShowList(false);
-                  }}
-                >
-                  <XIcon className="size-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-1">
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.max(duration, 0)}
-                  step={0.1}
-                  value={Math.min(currentTime, duration || 0)}
-                  onChange={handleSeek}
-                  aria-label={t("player.progress")}
-                  data-testid="player-progress"
-                  className="h-1.5 w-full cursor-pointer accent-primary"
-                />
-                <div className="flex justify-between text-[11px] text-muted-foreground tabular-nums">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={repeatLabel}
-                  title={repeatLabel}
-                  onClick={cycleRepeat}
-                  className={cn(repeat !== "off" && "text-primary")}
-                >
-                  {repeat === "one" ? <Repeat1Icon className="size-4" /> : <RepeatIcon className="size-4" />}
-                </Button>
-
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={t("player.prev")}
-                    disabled={tracks.length < 2}
-                    onClick={() => selectTrack(index - 1)}
-                  >
-                    <SkipBackIcon className="size-4" />
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    aria-label={playing ? t("player.pause") : t("player.play")}
-                    onClick={togglePlay}
-                  >
-                    {playing ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4" />}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={t("player.next")}
-                    disabled={tracks.length < 2}
-                    onClick={() => selectTrack(index + 1)}
-                  >
-                    <SkipForwardIcon className="size-4" />
-                  </Button>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("player.playlist")}
-                  onClick={() => setShowList((value) => !value)}
-                  className={cn(showList && "text-primary")}
-                >
-                  <ListMusicIcon className="size-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={muted ? t("player.unmute") : t("player.mute")}
-                  onClick={() => setMuted((value) => !value)}
-                >
-                  {muted || volume === 0 ? (
-                    <VolumeXIcon className="size-4" />
-                  ) : (
-                    <Volume2Icon className="size-4" />
-                  )}
-                </Button>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={muted ? 0 : volume}
-                  onChange={(event) => {
-                    setVolume(Number(event.target.value));
-                    setMuted(false);
-                  }}
-                  aria-label={t("player.volume")}
-                  data-testid="player-volume"
-                  className="h-1.5 flex-1 cursor-pointer accent-primary"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                size="icon-sm"
-                aria-label={playing ? t("player.pause") : t("player.play")}
-                onClick={togglePlay}
-              >
-                {playing ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4" />}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t("player.open")}
-                onClick={() => setExpanded(true)}
-              >
-                <MusicIcon className="size-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+        </section>
+      ) : null}
+    </div>, portalTarget
   );
 }

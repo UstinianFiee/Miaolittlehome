@@ -1,9 +1,23 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import "vditor/dist/index.css";
 
 import type Vditor from "vditor";
+
+let vditorPromise: Promise<typeof import("vditor")> | null = null;
+
+function loadVditor() {
+  vditorPromise ??= import("vditor");
+  return vditorPromise;
+}
+
+// This module is only used by the post editor. Start fetching Vditor as soon as
+// the browser evaluates the route chunk instead of waiting for React effects.
+if (typeof window !== "undefined") {
+  void loadVditor();
+}
 
 type MarkdownEditorProps = {
   value: string;
@@ -25,8 +39,11 @@ export function MarkdownEditor({
   placeholder,
   height = 560,
 }: MarkdownEditorProps) {
+  const t = useTranslations();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const instanceRef = React.useRef<Vditor | null>(null);
+  const [ready, setReady] = React.useState(false);
+  const [loadFailed, setLoadFailed] = React.useState(false);
   const onChangeRef = React.useRef(onChange);
   const lastEmittedRef = React.useRef<string | null>(null);
   const initialValueRef = React.useRef(value);
@@ -37,50 +54,62 @@ export function MarkdownEditor({
     let cancelled = false;
 
     void (async () => {
-      const { default: VditorClass } = await import("vditor");
-      if (cancelled || !containerRef.current) {
-        return;
-      }
+      try {
+        const { default: VditorClass } = await loadVditor();
+        if (cancelled || !containerRef.current) {
+          return;
+        }
 
-      instanceRef.current = new VditorClass(containerRef.current, {
-        cdn: "/vditor",
-        height,
-        mode: "ir",
-        value: initialValueRef.current,
-        placeholder,
-        cache: { enable: false },
-        toolbar: [
-          "headings",
-          "bold",
-          "italic",
-          "strike",
-          "|",
-          "list",
-          "ordered-list",
-          "check",
-          "outdent",
-          "indent",
-          "|",
-          "quote",
-          "line",
-          "code",
-          "inline-code",
-          "link",
-          "table",
-          "|",
-          "undo",
-          "redo",
-          "|",
-          "edit-mode",
-          "both",
-          "fullscreen",
-          "preview",
-        ],
-        input: (next: string) => {
-          lastEmittedRef.current = next;
-          onChangeRef.current(next);
-        },
-      });
+        instanceRef.current = new VditorClass(containerRef.current, {
+          cdn: "/vditor",
+          height,
+          mode: "ir",
+          value: initialValueRef.current,
+          placeholder,
+          cache: { enable: false },
+          toolbar: [
+            "headings",
+            "bold",
+            "italic",
+            "strike",
+            "|",
+            "list",
+            "ordered-list",
+            "check",
+            "outdent",
+            "indent",
+            "|",
+            "quote",
+            "line",
+            "code",
+            "inline-code",
+            "link",
+            "table",
+            "|",
+            "undo",
+            "redo",
+            "|",
+            "edit-mode",
+            "both",
+            "fullscreen",
+            "preview",
+          ],
+          after: () => {
+            if (!cancelled) {
+              setReady(true);
+            }
+          },
+          input: (next: string) => {
+            lastEmittedRef.current = next;
+            onChangeRef.current(next);
+          },
+        });
+      } catch (error) {
+        console.error("[markdown-editor] Vditor 初始化失败：", error);
+        if (!cancelled) {
+          setLoadFailed(true);
+        }
+      }
     })();
 
     return () => {
@@ -106,5 +135,25 @@ export function MarkdownEditor({
     }
   }, [value]);
 
-  return <div ref={containerRef} className="vditor-host" />;
+  return (
+    <div className="relative min-h-[560px]">
+      <div ref={containerRef} className="vditor-host" />
+      {!ready && !loadFailed ? (
+        <div
+          role="status"
+          className="absolute inset-0 z-10 flex min-h-[560px] items-center justify-center rounded-md border border-dashed border-border/70 bg-background/90 text-sm text-muted-foreground"
+        >
+          {t("posts.editorLoading")}
+        </div>
+      ) : null}
+      {loadFailed ? (
+        <div
+          role="alert"
+          className="absolute inset-0 z-10 flex min-h-[560px] items-center justify-center rounded-md border border-destructive/40 bg-background/95 p-6 text-center text-sm text-destructive"
+        >
+          {t("posts.editorLoadFailed")}
+        </div>
+      ) : null}
+    </div>
+  );
 }

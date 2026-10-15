@@ -67,6 +67,12 @@ export const ALLOWED_EXTENSIONS: Record<MediaKind, string[]> = {
  * 用扩展名而不是 `image/*,audio/*,video/*`：后者在部分系统上会让
  * 一些冷门格式（flac / mkv）在选择器里变灰选不中。
  */
+export const MEDIA_ACCEPT_BY_KIND: Record<MediaKind, string> = {
+  image: ALLOWED_EXTENSIONS.image.join(","),
+  audio: ALLOWED_EXTENSIONS.audio.join(","),
+  video: ALLOWED_EXTENSIONS.video.join(","),
+};
+
 export const MEDIA_ACCEPT = Object.values(ALLOWED_EXTENSIONS).flat().join(",");
 
 /** 便于在提示文案里列出可用格式 */

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, LinkIcon, QrCodeIcon, ShareIcon } from "lucide-react";
+import { CheckIcon, LinkIcon, QrCodeIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -15,20 +15,18 @@ import {
 } from "@/components/ui/dialog";
 
 /**
- * 文章分享（docs/SPEC.md：Web Share / 二维码 / 复制链接）。
+ * 文章分享：二维码 / 复制链接（按用户要求移除系统分享）。
  * 二维码库按需加载，不进入文章页的首屏包。
  */
-export function ShareButton({ path, title }: { path: string; title: string }) {
+export function ShareButton({ path }: { path: string }) {
   const t = useTranslations();
 
   const [url, setUrl] = React.useState("");
   const [copied, setCopied] = React.useState(false);
-  const [canShare, setCanShare] = React.useState(false);
   const [qrDataUrl, setQrDataUrl] = React.useState("");
 
   React.useEffect(() => {
     setUrl(`${window.location.origin}${path}`);
-    setCanShare(typeof navigator.share === "function");
   }, [path]);
 
   async function copyLink() {
@@ -38,14 +36,6 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
       // 剪贴板不可用（非 HTTPS 等）时保持静默
-    }
-  }
-
-  async function webShare() {
-    try {
-      await navigator.share({ title, url });
-    } catch {
-      // 用户取消分享
     }
   }
 
@@ -69,13 +59,6 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
         {copied ? <CheckIcon className="size-4 text-primary" /> : <LinkIcon className="size-4" />}
         {copied ? t("share.copied") : t("share.copy")}
       </Button>
-
-      {canShare ? (
-        <Button type="button" variant="outline" size="sm" onClick={() => void webShare()}>
-          <ShareIcon className="size-4" />
-          {t("share.system")}
-        </Button>
-      ) : null}
 
       <Dialog>
         <DialogTrigger asChild>

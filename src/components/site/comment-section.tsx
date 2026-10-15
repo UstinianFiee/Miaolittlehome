@@ -4,6 +4,7 @@ import { MessageSquareIcon, ReplyIcon, ShieldCheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { DualTime } from "@/components/site/dual-time";
 import { EmojiPicker } from "@/components/site/emoji-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tick } from "@/components/ui/tick";
 import type { CommentView } from "@/lib/comment-view";
-import { formatDual } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 
 type CommentSectionProps = {
@@ -171,12 +171,10 @@ function CommentBody({
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <AuthorLine comment={comment} />
             {isPending ? <Badge variant="outline">{t("comments.pendingBadge")}</Badge> : null}
-            <time
-              dateTime={comment.createdAtIso}
-              className="ml-auto min-w-0 text-xs text-muted-foreground max-sm:ml-0 max-sm:w-full"
-            >
-              {comment.createdAtLabel}
-            </time>
+            <DualTime
+              date={comment.createdAtIso}
+              className="ml-auto text-xs text-muted-foreground max-sm:ml-0"
+            />
           </div>
 
           <p className="mt-1.5 text-sm leading-6 break-words whitespace-pre-wrap">
@@ -211,12 +209,10 @@ function CommentBody({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <AuthorLine comment={reply} />
-                        <time
-                          dateTime={reply.createdAtIso}
-                          className="ml-auto min-w-0 text-xs text-muted-foreground max-sm:ml-0 max-sm:w-full"
-                        >
-                          {reply.createdAtLabel}
-                        </time>
+                        <DualTime
+                          date={reply.createdAtIso}
+                          className="ml-auto text-xs text-muted-foreground max-sm:ml-0"
+                        />
                       </div>
                       <p className="mt-1 text-sm leading-6 break-words whitespace-pre-wrap">
                         {reply.content}
@@ -359,7 +355,6 @@ export function CommentSection({
           approved: payload.data.approved,
           parentId: payload.data.parentId,
           createdAtIso: payload.data.createdAt,
-          createdAtLabel: formatDual(new Date(payload.data.createdAt)),
           scope,
           refId,
         };

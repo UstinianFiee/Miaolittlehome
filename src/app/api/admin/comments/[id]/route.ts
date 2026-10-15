@@ -32,7 +32,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     await logOperation({
       action: approved ? "comment_approve" : "comment_reject",
       target: `#${updated.id}`,
-      detail: updated.author,
+      // 通过回复时上级会被连带通过，一并记进日志，便于回溯
+      detail:
+        updated.cascaded.length > 0
+          ? `${updated.author}（连带通过 #${updated.cascaded.join("、#")}）`
+          : updated.author,
     });
 
     return NextResponse.json({ ok: true, data: updated });

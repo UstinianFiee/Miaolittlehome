@@ -25,7 +25,7 @@ export function NavLinks({ className, onNavigate }: NavLinksProps) {
   const pathname = usePathname();
 
   return (
-    <ul className={cn("flex items-center gap-0.5", className)}>
+    <ul className={cn("flex items-center gap-0 2xl:gap-0.5", className)}>
       {navItems.map((item) => {
         const active = isActive(pathname, item.href);
         return (
@@ -36,7 +36,15 @@ export function NavLinks({ className, onNavigate }: NavLinksProps) {
               aria-current={active ? "page" : undefined}
               data-active={active ? "true" : "false"}
               className={cn(
-                "font-display nav-item press rounded-md px-2.5 py-2 text-base whitespace-nowrap transition-colors",
+                /*
+                 * 12 个导航项（英文 Home / Categories / Guestbook…）在 1280~1536px 这一段
+                 * 挤得非常紧，实测只剩 9px 余量 —— 换个字体或换个系统就直接顶出去、
+                 * 最后两项被裁掉。所以这一档刻意收小：字号 0.9rem、内边距 1.5、
+                 * 项间不留空隙；到 2xl 空间够了再放大回接近全尺寸。
+                 * 改这几个值前先用 `.verify/probe-nav-width.mjs` 量一遍余量。
+                 */
+                "font-display nav-item press rounded-md px-1.5 py-1.5 text-[0.9rem] whitespace-nowrap transition-colors",
+                "2xl:px-2 2xl:text-[0.95rem]",
                 /*
                  * 不用 bg-accent：--accent 是 10% 的蓝（浅色）/ 45% 的灰（深色），
                  * 当底色会让文字发糊、对比度掉得厉害。改成「选中=主题色+下划线，

@@ -19,11 +19,11 @@ export async function generateMetadata({ params }: ArchivePageProps): Promise<Me
  *
  * 原来是「月份小标题 + 竖线 + 小圆点」，信息层级太平，一屏扫下来抓不住重点。
  * 改造思路：
- * - **年份升成大字号标题**（站点展示字体 + 主题色微透明），右侧配该年的篇数 ——
+ * - **年份升成大字号标题**（站点展示字体 + 实色主题色），右侧配该年的篇数 ——
  *   扫一眼就知道哪年写得多；
  * - 月份降级成小胶囊，年份之间用一条渐隐横线分隔；
  * - 每行改成「日期 | 标题」两列，日期用等宽数字，纵向能对齐；
- * - 悬停时节点放大转主题色、标题右移并浮出箭头 —— 给静态列表一点可交互的反馈。
+ * - 整体放在实色面板中，节点与日期保持可读，悬停/键盘聚焦用主题浅底反馈。
  */
 export default async function ArchivePage({ params }: ArchivePageProps) {
   const { locale } = await params;
@@ -43,8 +43,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   const totalPosts = groups.reduce((sum, group) => sum + group.posts.length, 0);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+    <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6">
+      <div className="surface archive-panel p-5 sm:p-9">
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-6">
         <div className="space-y-2">
           <h1 className="font-display text-2xl">{t("site.archiveTitle")}</h1>
           <p className="text-sm text-muted-foreground">{t("site.archiveHint")}</p>
@@ -68,7 +69,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
                 {/* 年份标题 + 渐隐分隔线 */}
                 <div className="flex items-center gap-4">
                   <h2
-                    className="font-display text-4xl leading-none text-primary/85 sm:text-5xl"
+                    className="font-display text-4xl leading-none text-primary sm:text-5xl"
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {year}
@@ -85,31 +86,31 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
                 <div className="mt-6 space-y-8">
                   {monthGroups.map((group) => (
                     <div key={group.key}>
-                      <h3 className="mb-3 inline-flex items-center rounded-full border border-border/60 px-2.5 py-0.5 text-xs text-muted-foreground">
+                      <h3 className="mb-3 inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
                         {t("site.yearMonth", { year: group.year, month: group.month })}
                       </h3>
 
-                      <ol className="relative ml-1 space-y-1 border-l border-border/70 pl-6">
+                      <ol className="relative ml-1 space-y-1 border-l border-primary/30 pl-4 sm:pl-6">
                         {group.posts.map((post) => (
                           <li key={post.id} className="group relative">
                             <span
                               aria-hidden
-                              className="absolute top-4 -left-[1.6rem] size-2 rounded-full bg-border ring-4 ring-primary/0 transition-all duration-300 group-hover:scale-125 group-hover:bg-primary group-hover:ring-primary/15"
+                              className="absolute top-5 -left-[1.275rem] size-2 rounded-full bg-primary ring-4 ring-card transition-shadow duration-200 group-hover:ring-primary/15 sm:-left-[1.775rem]"
                             />
                             <Link
                               href={`/posts/${post.slug}`}
-                              className="flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-md px-2 py-2 transition-colors hover:bg-primary/[0.06]"
+                              className="archive-entry flex items-baseline gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:gap-4"
                             >
                               <time
                                 dateTime={post.createdAt.toISOString()}
-                                className="w-11 shrink-0 text-xs text-muted-foreground tabular-nums"
+                                className="w-6 shrink-0 text-sm font-medium text-muted-foreground tabular-nums sm:w-9"
                               >
                                 {String(post.createdAt.getUTCDate()).padStart(2, "0")}
                               </time>
-                              <span className="min-w-0 flex-1 font-medium underline-offset-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-primary group-hover:underline">
+                              <span className="min-w-0 flex-1 break-words font-medium text-card-foreground underline-offset-4 group-hover:text-primary group-hover:underline">
                                 {pickLocalized(locale, post.title, post.titleEn)}
                               </span>
-                              <ArrowRightIcon className="size-4 shrink-0 text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                              <ArrowRightIcon className="size-4 shrink-0 self-center text-muted-foreground transition-colors group-hover:text-primary" />
                             </Link>
                           </li>
                         ))}
@@ -122,6 +123,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

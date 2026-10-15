@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useLocale } from "next-intl";
 import * as React from "react";
 
 /**
@@ -11,13 +12,18 @@ import * as React from "react";
  *   2. pathname 变化 → 冲到 100% 后淡出。
  * 进度按「越接近 90% 越慢」的曲线逼近，避免长时间停在某个数字上显得卡住。
  */
+const NAVIGATION_FAILSAFE_MS = 12_000;
+
 export function RouteProgress() {
   const pathname = usePathname();
+  const locale = useLocale();
+  const routeKey = `${locale}:${pathname}`;
   const [visible, setVisible] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
 
   const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const failsafeRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stop = React.useCallback(() => {
     if (intervalRef.current) {
@@ -30,24 +36,32 @@ export function RouteProgress() {
     }
   }, []);
 
-  const start = React.useCallback(() => {
-    stop();
-    setVisible(true);
-    setProgress(8);
-
-    intervalRef.current = setInterval(() => {
-      setProgress((prev) => (prev >= 90 ? 90 : prev + (90 - prev) * 0.14));
-    }, 220);
-  }, [stop]);
-
   const finish = React.useCallback(() => {
     stop();
+    if (failsafeRef.current) {
+      clearTimeout(failsafeRef.current);
+      failsafeRef.current = null;
+    }
     setProgress(100);
     timeoutRef.current = setTimeout(() => {
       setVisible(false);
       timeoutRef.current = setTimeout(() => setProgress(0), 260);
     }, 300);
   }, [stop]);
+
+  const start = React.useCallback(() => {
+    stop();
+    if (failsafeRef.current) clearTimeout(failsafeRef.current);
+    setVisible(true);
+    setProgress(8);
+
+    intervalRef.current = setInterval(() => {
+      setProgress((prev) => (prev >= 90 ? 90 : prev + (90 - prev) * 0.14));
+    }, 220);
+    // Some locale transitions/errors do not produce a pathname event. Never
+    // leave the progress bar spinning until a manual page refresh.
+    failsafeRef.current = setTimeout(finish, NAVIGATION_FAILSAFE_MS);
+  }, [finish, stop]);
 
   // 点击内部链接 → 启动
   React.useEffect(() => {
@@ -97,9 +111,15 @@ export function RouteProgress() {
       return;
     }
     finish();
-  }, [pathname, finish]);
+  }, [routeKey, finish]);
 
-  React.useEffect(() => stop, [stop]);
+  React.useEffect(
+    () => () => {
+      stop();
+      if (failsafeRef.current) clearTimeout(failsafeRef.current);
+    },
+    [stop]
+  );
 
   return (
     <div

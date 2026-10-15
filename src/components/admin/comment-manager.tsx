@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { DualTime } from "@/components/site/dual-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDual } from "@/lib/datetime";
 
 export type AdminCommentItem = {
   id: number;
@@ -28,6 +28,10 @@ export type AdminCommentItem = {
   ipRegion: string;
   approved: boolean;
   parentId: number | null;
+  /** 父留言是否已通过审核；顶层留言为 null。 */
+  parentApproved: boolean | null;
+  /** 该条下面的回复数量。 */
+  replyCount: number;
   createdAt: string;
   refType: string;
   post: { id: number; title: string; slug: string } | null;
@@ -57,6 +61,7 @@ export function CommentManager({
 
   const [pendingId, setPendingId] = React.useState<number | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
 
   const filterLabels: Record<(typeof FILTERS)[number], string> = {
     pending: `${t("comments.filterPending")} (${counts.pending})`,
@@ -64,9 +69,10 @@ export function CommentManager({
     all: `${t("comments.filterAll")} (${counts.total})`,
   };
 
-  async function mutate(id: number, run: () => Promise<Response>) {
+  async function mutate(id: number, run: () => Promise<Response>, onDone?: (data: unknown) => void) {
     setPendingId(id);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await run();
@@ -75,6 +81,9 @@ export function CommentManager({
         setError(t("comments.approveFailed", { message: payload?.error ?? "" }));
         return;
       }
+
+      const payload = (await response.json().catch(() => null)) as { data?: unknown } | null;
+      onDone?.(payload?.data);
       router.refresh();
     } catch {
       setError(t("comments.approveFailed", { message: "" }));
@@ -84,20 +93,46 @@ export function CommentManager({
   }
 
   function setApproved(id: number, approved: boolean) {
-    return mutate(id, () =>
-      fetch(`/api/admin/comments/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approved }),
-      })
+    return mutate(
+      id,
+      () =>
+        fetch(`/api/admin/comments/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approved }),
+        }),
+      (data) => {
+        // 通过回复时后端会把上级一并通过，这里明确告诉管理员，
+        // 否则「我明明只点了一条，怎么别处也变了」会让人困惑。
+        const cascaded = (data as { cascaded?: number[] } | null)?.cascaded ?? [];
+        if (approved && cascaded.length > 0) {
+          setNotice(t("comments.cascaded", { count: cascaded.length }));
+        }
+      }
     );
   }
 
   function remove(item: AdminCommentItem) {
-    if (!window.confirm(t("comments.deleteConfirm"))) {
+    const message =
+      item.replyCount > 0
+        ? t("comments.deleteWithReplies", { count: item.replyCount })
+        : t("comments.deleteConfirm");
+
+    if (!window.confirm(message)) {
       return;
     }
     return mutate(item.id, () => fetch(`/api/admin/comments/${item.id}`, { method: "DELETE" }));
+  }
+
+  function reject(item: AdminCommentItem) {
+    // 退回顶层留言会让它下面的回复在前台一起消失，先说清楚
+    if (item.replyCount > 0) {
+      const message = t("comments.rejectWithReplies", { count: item.replyCount });
+      if (!window.confirm(message)) {
+        return;
+      }
+    }
+    return setApproved(item.id, false);
   }
 
   return (
@@ -126,6 +161,12 @@ export function CommentManager({
         </p>
       ) : null}
 
+      {notice ? (
+        <p role="status" className="text-sm text-primary">
+          {notice}
+        </p>
+      ) : null}
+
       <div className="surface">
         <Table>
           <TableHeader>
@@ -133,8 +174,8 @@ export function CommentManager({
               <TableHead className="w-48">{t("comments.colAuthor")}</TableHead>
               <TableHead>{t("comments.colContent")}</TableHead>
               <TableHead className="w-40">{t("comments.colTarget")}</TableHead>
-              <TableHead className="w-24">{t("comments.colStatus")}</TableHead>
-              <TableHead className="w-56">{t("comments.colTime")}</TableHead>
+              <TableHead className="w-28">{t("comments.colStatus")}</TableHead>
+              <TableHead className="w-44">{t("comments.colTime")}</TableHead>
               <TableHead className="w-56 text-right">{t("comments.colActions")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -146,90 +187,107 @@ export function CommentManager({
                 </TableCell>
               </TableRow>
             ) : (
-              items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <span className="font-medium">{item.author}</span>
-                    {item.parentId !== null ? (
-                      <Badge variant="outline" className="ml-2">
-                        {t("comments.reply")}
-                      </Badge>
-                    ) : null}
-                    {item.email ? (
+              items.map((item) => {
+                const parentPending = item.parentId !== null && item.parentApproved === false;
+
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <span className="font-medium">{item.author}</span>
+                      {item.parentId !== null ? (
+                        <Badge variant="outline" className="ml-2">
+                          {t("comments.reply")}
+                        </Badge>
+                      ) : null}
+                      {item.email ? (
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {item.email}
+                        </span>
+                      ) : null}
                       <span className="block truncate text-xs text-muted-foreground">
-                        {item.email}
+                        {item.ipRegion || "—"}
                       </span>
-                    ) : null}
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {item.ipRegion || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="max-w-0">
-                    <p className="truncate text-sm" title={item.content}>
-                      {item.content}
-                    </p>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {[item.browser, item.os].filter(Boolean).join(" · ") || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {item.post ? (
-                      <a
-                        href={`/zh/posts/${item.post.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline-offset-4 hover:underline"
-                      >
-                        {item.post.title}
-                      </a>
-                    ) : (
-                      t("comments.wallSource")
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={item.approved ? "default" : "outline"}>
-                      {item.approved ? t("comments.statusApproved") : t("comments.statusPending")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground tabular-nums">
-                    {formatDual(new Date(item.createdAt))}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      {item.approved ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={pendingId === item.id}
-                          onClick={() => void setApproved(item.id, false)}
+                    </TableCell>
+                    <TableCell className="max-w-0">
+                      <p className="truncate text-sm" title={item.content}>
+                        {item.content}
+                      </p>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {[item.browser, item.os].filter(Boolean).join(" · ") || "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {item.post ? (
+                        <a
+                          href={`/zh/posts/${item.post.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline-offset-4 hover:underline"
                         >
-                          <UndoIcon className="size-4" />
-                          {t("comments.reject")}
-                        </Button>
+                          {item.post.title}
+                        </a>
                       ) : (
+                        t("comments.wallSource")
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.approved ? "default" : "outline"}>
+                        {item.approved ? t("comments.statusApproved") : t("comments.statusPending")}
+                      </Badge>
+                      {/*
+                        关键提示：回复只有在整条上级链都通过后才在前台可见。
+                        以前这里不提示，管理员只通过回复就会以为已经发布，实际看不到。
+                      */}
+                      {parentPending ? (
+                        <Badge
+                          variant="outline"
+                          className="mt-1 block w-fit border-destructive/50 text-destructive"
+                          title={t("comments.parentPendingHint")}
+                        >
+                          {t("comments.parentPending")}
+                        </Badge>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      <DualTime date={item.createdAt} variant="stacked" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {item.approved ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={pendingId === item.id}
+                            onClick={() => void reject(item)}
+                          >
+                            <UndoIcon className="size-4" />
+                            {t("comments.reject")}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={pendingId === item.id}
+                            onClick={() => void setApproved(item.id, true)}
+                          >
+                            <CheckIcon className="size-4" />
+                            {t("comments.approve")}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon-sm"
+                          aria-label={t("comments.delete")}
                           disabled={pendingId === item.id}
-                          onClick={() => void setApproved(item.id, true)}
+                          onClick={() => void remove(item)}
                         >
-                          <CheckIcon className="size-4" />
-                          {t("comments.approve")}
+                          <Trash2Icon className="trash-wiggle size-4 text-destructive" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t("comments.delete")}
-                        disabled={pendingId === item.id}
-                        onClick={() => void remove(item)}
-                      >
-                        <Trash2Icon className="trash-wiggle size-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

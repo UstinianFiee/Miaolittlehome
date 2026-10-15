@@ -3,6 +3,7 @@
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -10,18 +11,29 @@ import { Button } from "@/components/ui/button";
 export function ThemeToggle() {
   const t = useTranslations();
   const { resolvedTheme, setTheme } = useTheme();
+  const [switching, setSwitching] = React.useState(false);
+  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  function toggle() {
+    if (switching) return;
+    setSwitching(true);
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+    timer.current = setTimeout(() => setSwitching(false), 420);
+  }
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      onClick={toggle}
       aria-label={t("actions.toggleTheme")}
-      className="press"
+      data-switching={switching}
+      data-testid="theme-switch"
+      className="press switch-control"
     >
       {/* 图标用 CSS 的 dark: 变体切换，避免读取 resolvedTheme 造成水合不一致 */}
-      <SunIcon className="size-[1.05rem] scale-100 rotate-0 transition-all duration-300 dark:scale-0 dark:-rotate-90" />
-      <MoonIcon className="absolute size-[1.05rem] scale-0 rotate-90 transition-all duration-300 dark:scale-100 dark:rotate-0" />
+      <SunIcon aria-hidden className="theme-sun size-[1.05rem]" />
+      <MoonIcon aria-hidden className="theme-moon size-[1.05rem]" />
     </Button>
   );
 }

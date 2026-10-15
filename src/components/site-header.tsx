@@ -59,7 +59,7 @@ export async function SiteHeader() {
             后台入口：窄屏只显示图标（英文 "Sign in" 会挤占导航空间），
             2xl 起空间充裕再补上文字；两者都带 aria-label，无障碍不受影响。
           */}
-          <Button asChild variant="ghost" size="icon-sm" className="hidden sm:inline-flex">
+          <Button asChild variant="ghost" size="sm" className="nav-login-button hidden sm:inline-flex">
             {/* 后台不参与语言路由，这里必须用 next/link，不能用 next-intl 的 Link */}
             <NextLink href={adminEntry.href} aria-label={t(adminEntry.labelKey)} title={t(adminEntry.labelKey)}>
               <LogInIcon className="size-4" />

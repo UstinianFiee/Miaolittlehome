@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { MediaManager, type MediaItem } from "@/components/admin/media-manager";
 import { listAlbums } from "@/lib/albums";
-import { formatDual } from "@/lib/datetime";
 import { catalogs } from "@/lib/messages";
 import { listMedia, type MediaKind } from "@/lib/media";
 
@@ -31,7 +30,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: S
     title: item.title,
     // BigInt → string，避免序列化问题
     size: item.size.toString(),
-    createdAtLabel: formatDual(item.createdAt),
+    createdAt: item.createdAt.toISOString(),
     albumId: item.albumId,
     albumName: item.album?.name ?? null,
   }));

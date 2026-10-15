@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { FileUploader } from "@/components/admin/file-uploader";
+import { DualTime } from "@/components/site/dual-time";
 import { VideoThumb } from "@/components/video-thumb";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +33,7 @@ export type MediaItem = {
   thumb: string | null;
   title: string | null;
   size: string;
-  createdAtLabel: string;
+  createdAt: string;
   albumId: number | null;
   albumName: string | null;
 };
@@ -299,10 +300,10 @@ export function MediaManager({
                   disabled={pendingId === item.id}
                   onRename={rename}
                 />
-                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <TypeIcon type={item.type} />
                   {formatBytes(item.size)}
-                  <span className="truncate">{item.createdAtLabel}</span>
+                  <DualTime date={item.createdAt} className="min-w-0" />
                 </p>
 
                 <Select

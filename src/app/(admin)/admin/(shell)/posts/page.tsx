@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { PostList, type PostListItem } from "@/components/admin/post-list";
-import { formatDual } from "@/lib/datetime";
 import { catalogs } from "@/lib/messages";
 import { listPosts, POST_LIST_PAGE_SIZE, type PostStatusFilter } from "@/lib/posts";
 import { listCategories } from "@/lib/taxonomy";
@@ -45,7 +44,7 @@ export default async function AdminPostsPage({
     views: item.views,
     categoryName: item.category?.name ?? null,
     tagNames: item.tags.map((entry) => entry.tag.name),
-    updatedAtLabel: formatDual(item.updatedAt),
+    updatedAt: item.updatedAt.toISOString(),
   }));
 
   return (

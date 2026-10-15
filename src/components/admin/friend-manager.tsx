@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +28,7 @@ export type FriendRow = {
 
 const EMPTY = { name: "", url: "", avatar: "", description: "", sort: "0" };
 
-export function FriendManager({ items }: { items: FriendRow[] }) {
+export function FriendManager({ items, images }: { items: FriendRow[]; images: MediaOption[] }) {
   const t = useTranslations();
   const router = useRouter();
 
@@ -139,12 +140,12 @@ export function FriendManager({ items }: { items: FriendRow[] }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="friend-avatar">{t("adminFriends.fieldAvatar")}</Label>
-          <Input
+          <MediaField
             id="friend-avatar"
+            label={t("adminFriends.fieldAvatar")}
             value={form.avatar}
-            onChange={(event) => setForm({ ...form, avatar: event.target.value })}
-            maxLength={500}
+            onChange={(next) => setForm({ ...form, avatar: next })}
+            options={images}
           />
         </div>
 

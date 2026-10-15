@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { DualTime } from "@/components/site/dual-time";
+
 export type DashboardStat = {
   labelKey: string;
   value: number;
@@ -69,9 +71,7 @@ export function AdminDashboard({
                     <span className="ml-2 text-muted-foreground">{item.target}</span>
                   ) : null}
                 </span>
-                <time className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {item.createdAt}
-                </time>
+                <DualTime date={item.createdAt} className="shrink-0 text-xs text-muted-foreground" />
               </li>
             ))}
           </ul>

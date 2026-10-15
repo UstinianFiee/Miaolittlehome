@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { SuccessNote } from "@/components/admin/success-note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,9 +33,11 @@ const PICK = "none";
 export function PlaylistManager({
   initialTracks,
   audioMedia,
+  images,
 }: {
   initialTracks: PlaylistRow[];
   audioMedia: AudioMediaOption[];
+  images: MediaOption[];
 }) {
   const t = useTranslations();
   const router = useRouter();
@@ -140,7 +143,7 @@ export function PlaylistManager({
             {tracks.map((track, position) => (
               <li
                 key={`${track.id}-${position}`}
-                className="grid gap-3 rounded-md border border-border/60 p-3 lg:grid-cols-[1fr_1fr_1.4fr_auto]"
+                className="grid gap-3 rounded-md border border-border/60 p-3 lg:grid-cols-[1fr_1fr_1.4fr_1.2fr_auto]"
               >
                 <div className="space-y-1">
                   <Label htmlFor={`track-title-${position}`}>{t("playlistAdmin.trackTitle")}</Label>
@@ -199,6 +202,16 @@ export function PlaylistManager({
                   ) : (
                     <p className="text-xs text-muted-foreground">{t("playlistAdmin.noAudio")}</p>
                   )}
+                </div>
+
+                <div className="space-y-1">
+                  <MediaField
+                    id={`track-cover-${position}`}
+                    label={t("playlistAdmin.cover")}
+                    value={track.cover}
+                    onChange={(next) => update(position, { cover: next })}
+                    options={images}
+                  />
                 </div>
 
                 <div className="flex items-end gap-1">

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 import { SoftwareManager, type SoftwareRow } from "@/components/admin/software-manager";
+import type { MediaOption } from "@/components/admin/media-field";
 import { catalogs } from "@/lib/messages";
+import { listMedia } from "@/lib/media";
 import { listSoftwareForAdmin } from "@/lib/software";
 
 export const metadata: Metadata = {
@@ -9,7 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminSoftwarePage() {
-  const software = await listSoftwareForAdmin();
+  const [software, images] = await Promise.all([
+    listSoftwareForAdmin(),
+    listMedia({ type: "image", limit: 200 }),
+  ]);
 
   const items: SoftwareRow[] = software.map((item) => ({
     id: item.id,
@@ -30,5 +35,11 @@ export default async function AdminSoftwarePage() {
     })),
   }));
 
-  return <SoftwareManager items={items} />;
+  const imageOptions: MediaOption[] = images.map((image) => ({
+    id: image.id,
+    path: image.path,
+    title: image.title ?? image.path,
+  }));
+
+  return <SoftwareManager items={items} images={imageOptions} />;
 }
