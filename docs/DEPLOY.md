@@ -129,7 +129,7 @@ HTTP 登录异常时检查 `SESSION_COOKIE_SECURE`：纯 HTTP 不应强制为 `t
 
 SQLite 的 WAL 可能含已提交但尚未写回主文件的数据。关闭所有写入者后复制**完整真实数据目录**；存在的 WAL / SHM / journal 都保留，不手工删除、不排除。在线逐个复制数据库与 WAL 也不保证同一时点一致性。确需不停机备份时须另行验证 SQLite 一致性备份方案，并协调媒体、软件文件的一致性，不套用本流程。
 
-按照 [更新手册第 1、2 步](./更新手册.md) 核对 Mounts、关 seed、停 app 与 Nginx、验证停止状态，再冷备份。日常备份做到第 2 步即可；不拉代码，确认配置无变化、备份检查通过后重新启动并验收原版本。需同时暂停宿主定时任务、自动部署和其他写库进程，不能只停一个容器却留下其他写入者。
+按照本页 [完整操作第 1、2 步](#safe-update) 核对 Mounts、关 seed、停 app 与 Nginx、验证停止状态，再冷备份。日常备份做到第 2 步即可；不拉代码，确认配置无变化、备份检查通过后重新启动并验收原版本。需同时暂停宿主定时任务、自动部署和其他写库进程，不能只停一个容器却留下其他写入者。
 
 完整检查点包括：
 
@@ -145,11 +145,112 @@ SQLite 的 WAL 可能含已提交但尚未写回主文件的数据。关闭所�
 
 备份应另有受控、加密的异机副本；定期在隔离目录做恢复演练，再决定保留和清理策略。不要把唯一可用检查点自动删除，也不要在升级验收前清理旧镜像。
 
-### 保留数据升级
+<a id="safe-update"></a>
 
-完整可执行流程见 [更新手册](./更新手册.md)，顺序为：核对旧容器实际挂载 → 保留原路径和配置并关闭 seed → 停机冷备份 → `git pull --ff-only` → 再核对挂载与生产配置 → 构建、迁移并验收。
+### 保留数据升级：完整操作
 
-遇到冲突、分支分叉或文件覆盖提示就停止，手工合并确认；不使用 `git reset`、`git stash` 隐藏问题，不删除项目重新部署。**绝不使用 `down` 的 `-v` 选项，也不删除真实数据目录。**
+简短入口见 [更新手册](./更新手册.md)。以下在**同一个 Linux Bash 会话、原项目根目录**顺序执行；需 Docker Compose v2（支持 `--wait`）、Python 3、GNU tar、realpath、sudo。任一步失败就停止。先安排停机，暂停自动部署、定时写入及其他访问该数据库的进程。
+
+#### 1. 核对旧容器与原配置
+
+```bash
+set -euo pipefail
+umask 077
+test -f .env.production
+PROJECT="$(pwd -P)"
+APP_ID="$(docker compose --env-file .env.production ps -a -q app)"
+test -n "$APP_ID"
+docker inspect --format '{{json .Mounts}}' "$APP_ID"
+TYPE="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}{{end}}{{end}}' "$APP_ID")"
+SOURCE="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Source}}{{end}}{{end}}' "$APP_ID")"
+test "$TYPE" = bind
+DATA="$(sudo realpath -e -- "$SOURCE")"
+test "$DATA" != /
+sudo test -f "$DATA/db/blog.db"
+OLD_PROJECT="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' "$APP_ID")"
+test "$(realpath -e -- "$OLD_PROJECT")" = "$PROJECT"
+git status --short
+```
+
+找不到旧 app、不是 bind mount、来源不明或项目目录不符就停止。命名卷、容器内数据、外部 Nginx、额外挂载、数据子目录外链以及额外 `-f` / `-p` 参数不适用此流程。核对 Nginx 仍使用同一数据源及 `deploy/nginx/` 中的配置和证书；未跟踪部署文件或未提交业务代码先人工整理。
+
+只编辑原 `.env.production`，确保唯一的 `RUN_SEED=false`；**不用模板覆盖，不更改原 DATA_DIR、密钥、账号、站点地址或 Compose 项目身份**。不要 `source` 或打印完整配置。下列函数仅提取挂载源并检查 seed，不输出密钥：
+
+```bash
+check_config() {
+  local expected
+  expected="$(docker compose --env-file .env.production config --format json | python3 -c '
+import json, sys
+s = json.load(sys.stdin)["services"]["app"]
+assert s["environment"].get("RUN_SEED") == "false", "停止：RUN_SEED 必须为 false"
+assert s["environment"].get("DATA_DIR") == "/data", "停止：容器内 DATA_DIR 必须为 /data"
+v = [v for v in s["volumes"] if v["target"] == "/data"]
+assert len(v) == 1 and v[0]["type"] == "bind", "停止：需要原绑定目录"
+print(v[0]["source"])')"
+  test "$(sudo realpath -e -- "$expected")" = "$DATA"
+}
+check_config
+```
+
+路径不一致就停止，不创建空目录或改路径绕过检查。若旧 Compose 尚无容器内 `DATA_DIR: /data` 覆盖，先备份并人工核对该差异，不能把宿主自定义路径当作容器路径。
+
+#### 2. 停机并完整冷备份
+
+备份目录在数据目录和项目目录**之外**，有足够空间，仅管理员可访问。以下保存整个数据目录（不排除 WAL / SHM / journal）、配置和证书、旧代码与镜像。数据子目录存在外链或子挂载时先另定完整备份范围。
+
+```bash
+BACKUP_ROOT="$(sudo realpath -m /var/backups/miaolittlehome)"
+case "$BACKUP_ROOT/" in "$DATA/"*|"$PROJECT/"*) exit 1 ;; esac
+sudo install -d -m 700 -o root -g root "$BACKUP_ROOT"
+BACKUP="$BACKUP_ROOT/$(date -u +%Y%m%dT%H%M%SZ)"
+sudo mkdir -m 700 "$BACKUP"
+
+docker compose --env-file .env.production stop app nginx
+test "$(docker inspect --format '{{.State.Running}} {{.State.Restarting}}' "$APP_ID")" = 'false false'
+sudo tar -czf "$BACKUP/data.tar.gz" -C "$DATA" .
+# -h 将证书链接的目标内容一起备份；不可读或缺失即停止
+sudo tar -chzf "$BACKUP/config.tar.gz" .env.production docker-compose.yml deploy/nginx
+git rev-parse HEAD | sudo tee "$BACKUP/REVISION" >/dev/null
+git archive --format=tar HEAD | sudo tee "$BACKUP/code.tar" >/dev/null
+git diff --binary HEAD | sudo tee "$BACKUP/local.patch" >/dev/null
+APP_IMAGE="$(docker inspect --format '{{.Image}}' "$APP_ID")"
+NGINX_ID="$(docker compose --env-file .env.production ps -a -q nginx)"
+test -n "$NGINX_ID"
+NGINX_IMAGE="$(docker inspect --format '{{.Image}}' "$NGINX_ID")"
+printf '%s\n' "$APP_IMAGE" | sudo tee "$BACKUP/app-image-id" >/dev/null
+printf '%s\n' "$NGINX_IMAGE" | sudo tee "$BACKUP/nginx-image-id" >/dev/null
+docker image save "$APP_IMAGE" "$NGINX_IMAGE" | sudo tee "$BACKUP/images.tar" >/dev/null
+printf '%s\n' "$PROJECT" "$DATA" | sudo tee "$BACKUP/paths" >/dev/null
+sudo chmod 600 "$BACKUP"/{data.tar.gz,config.tar.gz,REVISION,code.tar,local.patch,app-image-id,nginx-image-id,images.tar,paths}
+sudo tar -tzf "$BACKUP/data.tar.gz" >/dev/null
+sudo tar -tzf "$BACKUP/config.tar.gz" >/dev/null
+sudo tar -tf "$BACKUP/code.tar" >/dev/null
+sudo tar -tf "$BACKUP/images.tar" >/dev/null
+printf '本次备份目录：%s\n' "$BACKUP"
+```
+
+记录备份路径。任何复制、空间、权限或归档检查失败，都不继续；归档可列出不等于恢复演练通过。不要使用旧 `scripts/backup.sh` 代替，不清理旧镜像或备份。日常冷备份做到这里即可；确认配置未变化后启动原版本并验收，不拉代码。
+
+#### 3. 更新、复核并启动
+
+```bash
+git pull --ff-only
+check_config
+```
+
+**启动前必须对照备份核对原配置、Nginx 定制、证书和挂载没有意外变化。** 发现差异先处理；验收期间在服务器入口限制公网访问，仅允许管理员测试。
+
+```bash
+docker compose --env-file .env.production up -d --build --wait app
+docker compose --env-file .env.production up -d --no-deps --force-recreate nginx
+docker compose --env-file .env.production exec nginx nginx -t
+docker compose --env-file .env.production ps
+docker compose --env-file .env.production logs --tail=80 app nginx
+```
+
+`--wait` 等待 app 健康，失败不启动 Nginx。Compose 不支持此选项时先处理工具兼容，不能直接删掉等待检查。确认迁移无错误、前台与后台可用，旧文章、评论、媒体、软件、设置与管理员登录正常，再恢复对外写入和定时任务。
+
+遇到冲突、分支分叉或文件覆盖提示就停止，手工合并确认；不使用 `git reset`、`git stash` 隐藏问题，不删除项目重新部署。非 Git 安装先核对同样的挂载与冷备份，再另定文件更新方案，不能直接覆盖上传。**绝不使用 `down` 的 `-v` 选项，也不删除真实数据目录。** 失败时保存现场，按下节配套回滚，不只回退代码。
 
 <a id="rollback"></a>
 

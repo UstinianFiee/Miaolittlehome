@@ -12,14 +12,13 @@ import { parseImages, type ShuoshuoRecord } from "@/lib/shuoshuo";
  *
  * ## 尾巴为什么长这样
  *
- * 尾巴在 DOM 上排在气泡**前面**（不是气泡的子元素），气泡的不透明底色会盖住它的根部。
- * 这样有两个好处：
+ * 尾巴是 .bubble 内的绝对定位 SVG，不占布局空间；.bubble-tail 叠在气泡边框上。
  *
- * 1. 路径**不闭合**（`M14 1 C10 5 6 7 2 8 C6 9 10 12 14 17`，没有 `Z`），
- *    所以只有两段外沿被描边 —— 不会像「旋转 45° 的方块」那样在接缝处留下一条竖线。
- * 2. 尾巴向右多伸进气泡 2px，被气泡底色盖住，填充与气泡之间不会出现发丝缝。
+ * 1. viewBox 为 0 0 17 20，根部 x=13.5；left=-14.5px 计入父级 1px 边框，
+ *    使根部与气泡左边框对齐。闭合填充延至 x=17，覆盖连接段并伸入气泡内部。
+ * 2. 描边使用另一条不闭合的路径，只画两段外沿曲线，不画根部竖线。
  *
- * 所以 `--bubble-bg` **必须是不透明的**，否则根部会透出来叠成深色块。
+ * `--bubble-bg` 必须不透明且与气泡底色一致，防止被覆盖的边框透出或重叠处变暗。
  */
 export function ShuoshuoCard({
   item,
@@ -59,23 +58,12 @@ export function ShuoshuoCard({
 
       <div className="min-w-0 flex-1">
         <div className="relative">
-          {/* 尾巴：指向左侧头像。排在气泡前面，根部被气泡底色盖住 */}
-          <svg
-            aria-hidden
-            viewBox="0 0 14 18"
-            className="absolute top-3 -left-3 h-[18px] w-[14px]"
-          >
-            <path
-              d="M14 1 C10 5 6 7 2 8 C6 9 10 12 14 17"
-              fill="var(--bubble-bg)"
-              stroke="var(--bubble-border)"
-              strokeWidth="1"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </svg>
-
           <div className="bubble relative px-4 py-4 sm:px-5">
+            {/* 覆盖气泡左边框的连接段，只描两条曲线，不能描闭合根部。 */}
+            <svg aria-hidden viewBox="0 0 17 20" className="bubble-tail">
+              <path d="M13.5 1 C11 5 6 8 2 10 C6 12 11 15 13.5 19 L17 19 L17 1 Z" fill="var(--bubble-bg)" />
+              <path d="M13.5 1 C11 5 6 8 2 10 C6 12 11 15 13.5 19" fill="none" stroke="var(--bubble-border)" strokeWidth="1" strokeLinecap="round" />
+            </svg>
             <p className="bubble-author mb-2 text-sm break-words">{siteName}</p>
             <p className="text-sm leading-7 break-words whitespace-pre-wrap">{content}</p>
 

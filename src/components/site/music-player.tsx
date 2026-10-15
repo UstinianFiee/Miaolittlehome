@@ -2,7 +2,7 @@
 
 import {
   GripHorizontalIcon, ListMusicIcon, MusicIcon, PauseIcon, PlayIcon,
-  Repeat1Icon, RepeatIcon, SkipBackIcon, SkipForwardIcon,
+  Repeat1Icon, RepeatIcon, ShuffleIcon, SkipBackIcon, SkipForwardIcon,
   Volume2Icon, VolumeXIcon, XIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -149,11 +149,15 @@ export function MusicPlayer({ tracks }: { tracks: PlaylistTrack[] }) {
               {player.repeat === "one" ? <Repeat1Icon aria-hidden="true" /> : <RepeatIcon aria-hidden="true" />}
             </button>
             <button type="button" className={styles.iconButton} aria-label={t("prev")}
-              disabled={tracks.length < 2} onClick={() => player.select(player.index - 1)}><SkipBackIcon aria-hidden="true" /></button>
+              disabled={tracks.length < 2} onClick={player.previous}><SkipBackIcon aria-hidden="true" /></button>
             <button type="button" className={styles.transportPlay} aria-label={playLabel}
               onClick={player.toggle}><PlayPause aria-hidden="true" /></button>
             <button type="button" className={styles.iconButton} aria-label={t("next")}
-              disabled={tracks.length < 2} onClick={() => player.select(player.index + 1)}><SkipForwardIcon aria-hidden="true" /></button>
+              disabled={tracks.length < 2} onClick={player.next}><SkipForwardIcon aria-hidden="true" /></button>
+            <button type="button" className={styles.iconButton} aria-label={t("shuffle")}
+              title={t(player.shuffle ? "shuffleOn" : "shuffleOff")}
+              aria-pressed={player.shuffle} data-active={player.shuffle}
+              disabled={tracks.length < 2} onClick={player.toggleShuffle}><ShuffleIcon aria-hidden="true" /></button>
             <button type="button" className={styles.iconButton} aria-label={t("playlist")} aria-controls={listId}
               aria-expanded={showList} data-active={showList} onClick={() => setShowList((value) => !value)}>
               <ListMusicIcon aria-hidden="true" />

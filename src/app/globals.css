@@ -53,39 +53,41 @@
 
 /* ---------------------------------------------------------------
    浅色主题
-   浅灰底 + 暖白内容面板 + 深绿灰文字 + 薄荷主色，杏色与淡紫少量点缀
+   浅灰底 + 青白内容面板 + 深青灰文字 + 青碧主色，杏色与淡紫少量点缀
    --------------------------------------------------------------- */
 :root {
   --radius: 0.375rem;
 
   --background: #eef0f3;
-  --foreground: #34473f;
-  --card: #fffefb;
-  --card-foreground: #1c3027;
-  --popover: #fffefb;
-  --popover-foreground: #1c3027;
+  --foreground: #30474b;
+  --card: #fbfefd;
+  --card-foreground: #153a3e;
+  --popover: #fbfefd;
+  --popover-foreground: #153a3e;
 
-  --primary: #146c57;
+  --primary: #087780;
   --primary-foreground: #ffffff;
-  --secondary: #edf5ef;
-  --secondary-foreground: #34473f;
-  --muted: #edf3ef;
+  --player-ring: #3bbfb9;
+  --player-ring-soft: #a8ece6;
+  --secondary: #e8f5f4;
+  --secondary-foreground: #30474b;
+  --muted: #edf5f4;
   /* 辅助文字保持可读；颜色只做少量点缀，正文不使用淡色字。 */
-  --muted-foreground: #52675e;
-  --accent: rgb(20 108 87 / 0.09);
-  --accent-foreground: #145d4a;
-  --tone-mint: #146c57;
-  --tone-mint-bg: #eaf7f0;
+  --muted-foreground: #506b70;
+  --accent: rgb(8 127 140 / 0.09);
+  --accent-foreground: #086b75;
+  --tone-mint: var(--primary);
+  --tone-mint-bg: #e8f5f4;
   --tone-apricot: #995126;
   --tone-apricot-bg: #fff3e6;
   --tone-lilac: #71529b;
   --tone-lilac-bg: #f5effb;
 
-  --nav-bg: rgb(255 254 251 / 0.96);
-  --surface-raised: rgb(255 254 251 / 0.98);
-  --reading-bg: rgb(255 254 251 / 0.97);
-  --surface-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 5px 18px rgb(15 23 42 / 0.05);
-  --surface-image-shadow: 0 2px 4px rgb(15 23 42 / 0.06), 0 8px 24px rgb(15 23 42 / 0.1);
+  --nav-bg: rgb(251 254 253 / 0.96);
+  --surface-raised: rgb(251 254 253 / 0.98);
+  --reading-bg: rgb(251 254 253 / 0.97);
+  --surface-shadow: 0 1px 2px rgb(21 58 62 / 0.04), 0 5px 18px rgb(21 58 62 / 0.05);
+  --surface-image-shadow: 0 2px 4px rgb(21 58 62 / 0.06), 0 8px 24px rgb(21 58 62 / 0.1);
   --scrim-top: 48%;
   --scrim-middle: 30%;
   --scrim-bottom: 22%;
@@ -93,17 +95,17 @@
   --destructive: #d9534f;
   --destructive-foreground: #ffffff;
 
-  --border: #d6e3d9;
-  --input: #a3bbaa;
+  --border: #cce3e1;
+  --input: #97bdbb;
   --ring: var(--primary);
 
   --chart-1: var(--tone-mint);
   --chart-2: var(--tone-apricot);
   --chart-3: var(--tone-lilac);
-  --chart-4: #698469;
+  --chart-4: #69878a;
   --chart-5: #a4636d;
 
-  --sidebar: #f6f8f4;
+  --sidebar: #f3f9f8;
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -114,83 +116,85 @@
 
   /*
    * 说说气泡：比普通卡片多一点主题色，一眼就能和文章卡片区分开。
-   * 刻意用**不透明**色 —— 气泡尾巴是用 SVG 三角叠在气泡上的，
-   * 半透明底色会在重叠处叠出更深的色块，露出接缝。
+   * 刻意用**不透明**色 —— 气泡尾巴的 SVG 填充覆盖气泡边框连接段，
+   * 半透明底色会透出边框，或在重叠处叠出更深的色块。
    */
-  --bubble-bg: #effaf4;
-  --bubble-border: #acd6be;
-  --bubble-foreground: #284638;
-  --bubble-muted: #4b6b59;
-  --bubble-shadow: 0 2px 3px rgb(35 48 41 / 0.04), 0 8px 22px rgb(35 48 41 / 0.08);
+  --bubble-bg: #effaf9;
+  --bubble-border: #a3d5d1;
+  --bubble-foreground: #24474b;
+  --bubble-muted: #486c70;
+  --bubble-shadow: 0 2px 3px rgb(21 58 62 / 0.04), 0 8px 22px rgb(21 58 62 / 0.08);
 
   /*
    * 便利贴的"纸"。同样**必须不透明**：
    * 留言墙的便利贴是 3D 翻牌（正反两面），半透明底色会让背面透出来，
    * 翻牌就废了。纸色独立于普通卡片，避免未来调整透明度时互相影响。
    */
-  --note-paper: #fdfdfe;
+  --note-paper: #f7fcfb;
 }
 
 /* ---------------------------------------------------------------
    深色主题
-   保留 #090909 底与波浪 + 深绿灰内容面板 + 高对比文字
+   保留 #090909 底与波浪 + 深青灰内容面板 + 高对比文字
    --------------------------------------------------------------- */
 .dark {
   --background: #090909;
-  --foreground: #d8e6de;
-  --card: #192923;
-  --card-foreground: #f0f8f3;
-  --popover: #1f332a;
-  --popover-foreground: #f0f8f3;
+  --foreground: #d4e8e7;
+  --card: #142a2d;
+  --card-foreground: #eef9f8;
+  --popover: #1a3336;
+  --popover-foreground: #eef9f8;
 
-  --primary: #86d9b7;
-  --primary-foreground: #102c20;
-  --secondary: #283c32;
-  --secondary-foreground: #e0eee6;
-  --muted: #23382d;
-  --muted-foreground: #adc4b6;
-  --accent: rgb(134 217 183 / 0.12);
-  --accent-foreground: #b9ecd5;
-  --tone-mint: #86d9b7;
-  --tone-mint-bg: #1b382c;
+  --primary: #6cddd5;
+  --primary-foreground: #082f34;
+  --player-ring: #75eee0;
+  --player-ring-soft: #b9fff2;
+  --secondary: #243d40;
+  --secondary-foreground: #d4e8e7;
+  --muted: #20373a;
+  --muted-foreground: #abc7c7;
+  --accent: rgb(108 221 213 / 0.12);
+  --accent-foreground: #b9eee9;
+  --tone-mint: var(--primary);
+  --tone-mint-bg: #15383b;
   --tone-apricot: #efbd8d;
   --tone-apricot-bg: #392d22;
   --tone-lilac: #c9b0ed;
   --tone-lilac-bg: #2e283e;
 
-  --nav-bg: rgb(20 34 27 / 0.97);
-  --surface-raised: rgb(25 41 35 / 0.98);
-  --reading-bg: rgb(23 36 30 / 0.97);
-  --surface-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 6px 20px rgb(0 0 0 / 0.16);
-  --surface-image-shadow: 0 2px 4px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.26);
+  --nav-bg: rgb(20 42 45 / 0.97);
+  --surface-raised: rgb(20 42 45 / 0.98);
+  --reading-bg: rgb(20 42 45 / 0.97);
+  --surface-shadow: 0 1px 2px rgb(8 22 24 / 0.18), 0 6px 20px rgb(8 22 24 / 0.16);
+  --surface-image-shadow: 0 2px 4px rgb(8 22 24 / 0.2), 0 8px 24px rgb(8 22 24 / 0.26);
   --scrim-top: 58%;
   --scrim-middle: 42%;
   --scrim-bottom: 34%;
 
   /* 说说气泡（见浅色主题里的说明，必须不透明） */
-  --bubble-bg: #15392c;
-  --bubble-border: #417961;
-  --bubble-foreground: #e5f7ed;
-  --bubble-muted: #b1d4c1;
-  --bubble-shadow: 0 2px 4px rgb(0 0 0 / 0.12), 0 8px 22px rgb(0 0 0 / 0.2);
+  --bubble-bg: #15383b;
+  --bubble-border: #3e797b;
+  --bubble-foreground: #e3f8f5;
+  --bubble-muted: #acd2d1;
+  --bubble-shadow: 0 2px 4px rgb(8 22 24 / 0.12), 0 8px 22px rgb(8 22 24 / 0.2);
 
   /* 便利贴的纸（同样必须不透明，翻牌才不会透出背面） */
-  --note-paper: #242d28;
+  --note-paper: #203639;
 
   --destructive: #e06c75;
   --destructive-foreground: #ffffff;
 
-  --border: #375246;
-  --input: #587865;
+  --border: #34575a;
+  --input: #52797b;
   --ring: var(--primary);
 
   --chart-1: var(--tone-mint);
   --chart-2: var(--tone-apricot);
   --chart-3: var(--tone-lilac);
-  --chart-4: #b3c7a1;
+  --chart-4: #a1c7c5;
   --chart-5: #dfaab5;
 
-  --sidebar: #18211c;
+  --sidebar: #142528;
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -327,11 +331,21 @@
   border-radius: 0.45rem 1.15rem 1.15rem 1.15rem;
   box-shadow: var(--bubble-shadow);
 }
+/* 尾巴覆盖左边框连接段；不透明填充延入气泡，根部不描边。 */
+.bubble-tail {
+  position: absolute;
+  left: -14.5px;
+  top: 12px;
+  width: 17px;
+  height: 20px;
+  z-index: 1;
+  pointer-events: none;
+}
 .bubble-avatar {
   border: 2px solid var(--bubble-bg);
   box-shadow: 0 0 0 1px var(--bubble-border);
 }
-.bubble-author { color: var(--primary); font-weight: 600; }
+.bubble-author { color: var(--accent-foreground); font-weight: 600; }
 .bubble-meta {
   color: var(--bubble-muted);
   border-top: 1px solid color-mix(in srgb, var(--bubble-border) 65%, transparent);

@@ -1,12 +1,13 @@
 .player {
-  --orb-size: 156px;
+  --orb-size: 120px;
+  --cover-size: 54px;
   position: fixed;
   right: max(16px, env(safe-area-inset-right, 0px));
   bottom: max(16px, env(safe-area-inset-bottom, 0px));
   z-index: 40;
   width: var(--orb-size);
   height: var(--orb-size);
-  color: #f1f5ff;
+  color: var(--foreground);
   isolation: isolate;
   font-family: inherit;
 }
@@ -15,7 +16,8 @@
 .player button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .player button:disabled { opacity: 0.4; cursor: not-allowed; }
 .player button:focus-visible, .player input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-.orb button:focus-visible { outline-color: #a5f3fc; }
+.orb button:focus-visible { outline-color: var(--primary); }
+.dragHandle:focus-visible, .panelToggle:focus-visible { outline-offset: -3px; }
 
 .safeArea {
   position: absolute;
@@ -37,43 +39,53 @@
   cursor: grab;
 }
 
-.glass {
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  pointer-events: none;
-  border: 1px solid rgb(199 223 255 / 0.18);
-  background:
-    radial-gradient(ellipse at 30% 16%, rgb(215 235 255 / 0.17), transparent 42%),
-    radial-gradient(ellipse at 84% 86%, rgb(152 59 181 / 0.13), transparent 55%),
-    linear-gradient(145deg, rgb(20 30 47 / 0.89), rgb(6 10 20 / 0.95));
-  box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.22), inset 0 -9px 20px rgb(0 0 0 / 0.4),
-    0 12px 28px rgb(0 0 0 / 0.24), -4px -2px 16px rgb(34 211 238 / 0.09), 5px 5px 17px rgb(217 70 239 / 0.09);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-}
-
-.glass::before {
+.orb::before, .orb::after {
   content: "";
   position: absolute;
-  inset: 5% 12% 58% 12%;
-  border-top: 1px solid rgb(238 250 255 / 0.29);
+  left: 50%;
+  top: 50%;
+  width: 88%;
+  height: 38%;
+  border: 1px solid var(--player-ring);
   border-radius: 50%;
-  background: linear-gradient(rgb(226 241 255 / 0.05), transparent);
+  transform: translate(-50%, -50%) rotate(-26deg);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.orb::after {
+  width: 80%;
+  height: 44%;
+  border-color: var(--player-ring-soft);
+  transform: translate(-50%, -50%) rotate(24deg);
+  opacity: 0.6;
+}
+
+.glass {
+  position: absolute;
+  inset: calc((100% - var(--cover-size) - 12px) / 2);
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--player-ring) 35%, transparent);
+  background: color-mix(in srgb, var(--card) 18%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--player-ring-soft) 30%, transparent);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
 }
 
 .spectrum { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 .coverButton {
   position: absolute;
-  inset: 24%;
+  z-index: 1;
+  inset: calc((100% - var(--cover-size)) / 2);
+  width: var(--cover-size);
+  height: var(--cover-size);
   padding: 0;
   overflow: hidden;
   border-radius: 50%;
-  border: 1px solid rgb(220 240 255 / 0.42);
-  background: #142235;
-  color: #ffffff;
-  box-shadow: 0 0 0 3px rgb(8 15 27 / 0.75), 0 0 0 4px rgb(149 209 232 / 0.16), 0 4px 12px rgb(0 0 0 / 0.32);
+  border: 1px solid color-mix(in srgb, var(--player-ring) 65%, transparent);
+  background: var(--card);
+  color: var(--card-foreground);
   touch-action: none;
 }
 
@@ -84,53 +96,50 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  color: #b9d8ed;
-  background:
-    repeating-radial-gradient(circle, transparent 0 8px, rgb(171 213 237 / 0.08) 8px 9px, transparent 9px 13px),
-    linear-gradient(140deg, #24485a, #152034 55%, #482e53);
+  color: var(--card-foreground);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--player-ring-soft) 30%, var(--card)), var(--card));
 }
 .artworkFallback svg { width: 25%; height: 25%; }
-.coverButton .artworkFallback svg { transform: translateY(-15px); opacity: 0.8; }
+.coverButton .artworkFallback svg { visibility: hidden; }
 
 .playGlyph {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: linear-gradient(transparent, rgb(2 6 14 / 0.14));
+  color: var(--card-foreground);
   pointer-events: none;
 }
 .playGlyph::before {
   content: "";
   position: absolute;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1px solid rgb(255 255 255 / 0.2);
-  background: rgb(5 12 24 / 0.76);
-  box-shadow: 0 2px 12px rgb(0 0 0 / 0.2);
+  border: 1px solid color-mix(in srgb, var(--player-ring) 45%, transparent);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
 }
 .playGlyph svg { position: relative; width: 17px; height: 17px; fill: currentColor; stroke-width: 1.4; }
 
 .dragHandle, .panelToggle {
   position: absolute;
-  left: calc(50% - 21px);
+  z-index: 2;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border: 1px solid rgb(168 201 231 / 0.19);
-  border-radius: 20px;
-  background: rgb(11 19 32 / 0.94);
-  color: #dcecf9;
-  box-shadow: 0 3px 8px rgb(0 0 0 / 0.18);
+  border: 1px solid color-mix(in srgb, var(--player-ring) 50%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  color: var(--card-foreground);
 }
-.dragHandle { top: 0; touch-action: none; cursor: grab !important; }
+/* 上下错位，手机端的触摸目标也不遮住中心封面。 */
+.dragHandle { top: 0; left: calc(50% + 4px); touch-action: none; cursor: grab !important; }
 .dragHandle svg { width: 18px; height: 18px; }
-.panelToggle { bottom: 0; }
+.panelToggle { bottom: 0; left: calc(50% - 36px); }
 .panelToggle svg { width: 16px; height: 16px; }
-.statusDot { position: absolute; top: 3px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #f9c782; }
+.statusDot { position: absolute; top: 3px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
 .player[data-dragging="true"] .orb, .player[data-dragging="true"] .orb button { cursor: grabbing !important; }
 
 .panel {
@@ -178,7 +187,8 @@
 .panel input[type="range"] { display: block; min-width: 0; width: 100%; height: 24px; margin: 0; accent-color: var(--primary); cursor: pointer; }
 .panel input:disabled { cursor: not-allowed; opacity: 0.45; }
 .times { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
-.transport { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 10px; }
+.transport { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px; margin-top: 10px; }
+.transport > button { min-width: 36px; min-height: 36px; }
 .volume { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .volume input { flex: 1; }
 .volumeValue { width: 32px; flex-shrink: 0; text-align: right; color: var(--muted-foreground); font-size: 10px; font-variant-numeric: tabular-nums; }
@@ -190,20 +200,20 @@
   z-index: 1;
   overflow: auto;
   padding: 10px 12px;
-  border: 1px solid rgb(168 201 231 / 0.25);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  color: #e6edf7;
-  background: rgb(11 19 32 / 0.97);
+  color: var(--card-foreground);
+  background: var(--card);
   box-shadow: 0 6px 22px rgb(0 0 0 / 0.18);
   font-size: 11px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
-.bubble[data-error="true"] { color: #ffe0b6; }
+.bubble[data-error="true"] { border-style: dashed; }
 .playlist { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
 .listHeading { margin: 0 0 6px; font-size: 11px; color: var(--muted-foreground); }
 .playlist ul { list-style: none; padding: 0; margin: 0; max-height: 216px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-.track { display: flex; width: 100%; align-items: center; gap: 8px; padding: 9px 8px; border: 0; border-radius: 8px; color: inherit; background: transparent; text-align: left; }
+.track { display: flex; width: 100%; min-height: 36px; align-items: center; gap: 8px; padding: 9px 8px; border: 0; border-radius: 8px; color: inherit; background: transparent; text-align: left; }
 .track[aria-current="true"] { color: var(--primary); background: var(--muted); }
 .trackNumber { width: 18px; flex-shrink: 0; font-size: 10px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .listTrackInfo { flex: 1; min-width: 0; }
@@ -213,12 +223,12 @@
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
 @media (hover: hover) {
-  .coverButton:hover { border-color: #d3f5ff; }
-  .dragHandle:hover, .panelToggle:hover { background: #203145; color: #ffffff; }
+  .coverButton:hover { border-color: var(--primary); }
+  .dragHandle:hover, .panelToggle:hover { background: var(--card); color: var(--primary); }
   .iconButton:hover:not(:disabled), .track:hover { background: var(--muted); }
   .transportPlay:hover { filter: brightness(1.1); }
 }
-@media (max-width: 639px) { .player { --orb-size: 132px; } }
+@media (max-width: 639px) { .player { --orb-size: 104px; --cover-size: 48px; } }
 @media (prefers-reduced-motion: reduce) {
   .player *, .player *::before, .player *::after { animation: none !important; transition: none !important; }
   .glass { -webkit-backdrop-filter: none; backdrop-filter: none; }

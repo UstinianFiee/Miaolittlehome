@@ -30,13 +30,26 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
     let size = 0;
     let ratio = 1;
     let gradient: CanvasGradient;
+    let ringColor: string;
+
+    function refreshTheme() {
+      if (!canvas || !ctx) return;
+      const theme = getComputedStyle(canvas);
+      ringColor = theme.getPropertyValue("--player-ring").trim();
+      const ringSoft = theme.getPropertyValue("--player-ring-soft").trim();
+      gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, ringSoft);
+      gradient.addColorStop(0.5, ringColor);
+      gradient.addColorStop(1, ringSoft);
+      sync();
+    }
 
     function draw(active: boolean) {
       if (!canvas || !ctx || !size) return;
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.clearRect(0, 0, size, size);
       const center = size / 2;
-      const radius = size * 0.335;
+      const radius = size * 0.32;
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 0.5;
       ctx.strokeStyle = gradient;
@@ -63,11 +76,10 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
         const length = levels[i] * size * 0.125;
         const x = Math.cos(angle);
         const y = Math.sin(angle);
-        const color = `hsl(${185 + 125 * (x + 1) / 2} 90% 72%)`;
         ctx.globalAlpha = 0.35 + levels[i] * 0.65;
-        ctx.strokeStyle = color;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 4;
+        ctx.strokeStyle = gradient;
+        ctx.shadowColor = ringColor;
+        ctx.shadowBlur = 2;
         ctx.beginPath();
         ctx.moveTo(center + x * (radius + 2), center + y * (radius + 2));
         ctx.lineTo(center + x * (radius + 2 + length), center + y * (radius + 2 + length));
@@ -104,14 +116,12 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
       canvas.width = Math.round(size * ratio);
       canvas.height = Math.round(size * ratio);
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      gradient = ctx.createLinearGradient(0, 0, size, size);
-      gradient.addColorStop(0, "#67e8f9");
-      gradient.addColorStop(0.5, "#a5b4fc");
-      gradient.addColorStop(1, "#f0abfc");
-      sync();
+      refreshTheme();
     }
     const observer = new ResizeObserver(resize);
+    const themeObserver = new MutationObserver(refreshTheme);
     observer.observe(canvas);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", sync);
     motion.addEventListener("change", sync);
@@ -120,6 +130,7 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      themeObserver.disconnect();
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", sync);
       motion.removeEventListener("change", sync);

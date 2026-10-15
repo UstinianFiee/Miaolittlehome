@@ -6,7 +6,7 @@ import type { PlaylistTrack } from "@/lib/playlist";
 type RepeatMode = "off" | "all" | "one";
 type AudioError = "loadFailed" | "networkError" | "decodeError" | "unsupportedAudio" | "playBlocked" | "seekFailed";
 type Notice = "nativePlayback" | "spectrumUnavailable" | null;
-type Settings = { index: number; volume: number; muted: boolean; repeat: RepeatMode };
+type Settings = { index: number; volume: number; muted: boolean; repeat: RepeatMode; shuffle: boolean };
 type Playback = Settings & {
   playing: boolean; requested: boolean; waiting: boolean; currentTime: number; duration: number;
   error: AudioError | null; notice: Notice; analyser: AnalyserNode | null;
@@ -14,9 +14,10 @@ type Playback = Settings & {
 type Controls = {
   toggle: () => void; select: (index: number) => void; seek: (time: number) => void;
   volume: (value: number) => void; mute: () => void; repeat: () => void; reconcile: () => void;
+  next: () => void; previous: () => void; shuffle: () => void;
 };
 const STORAGE_KEY = "music-player-state";
-const defaults: Settings = { index: 0, volume: 0.8, muted: false, repeat: "all" };
+const defaults: Settings = { index: 0, volume: 0.8, muted: false, repeat: "all", shuffle: false };
 const initial: Playback = { ...defaults, playing: false, requested: false, waiting: false, currentTime: 0, duration: 0, error: null, notice: null, analyser: null };
 
 /** 每次挂载独占音频元素与 context；路由内重渲染不重建，StrictMode 清理后不复用。 */
@@ -35,6 +36,7 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
         if (typeof saved.volume === "number" && Number.isFinite(saved.volume)) settings.volume = Math.min(1, Math.max(0, saved.volume));
         if (["off", "all", "one"].includes(saved.repeat)) settings.repeat = saved.repeat;
         if (typeof saved.muted === "boolean") settings.muted = saved.muted;
+        if (typeof saved.shuffle === "boolean") settings.shuffle = saved.shuffle;
       }
     } catch { /* 本地存储被禁用或损坏不影响播放。 */ }
 
@@ -49,6 +51,15 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
     let detach = () => {};
     let analysisFailed = false;
     const nativeSources = new Set<string>();
+    let remaining: number[] = [];
+    let history: number[] = [];
+    let forward: number[] = [];
+    let playlistSignature = "";
+    function resetSequence() {
+      remaining = tracksRef.current.map((_, index) => index).filter((index) => index !== settings.index);
+      history = [];
+      forward = [];
+    }
     const patch = (value: Partial<Playback>) => { if (live) setState((old) => ({ ...old, ...value })); };
     const persist = () => {
       patch(settings);
@@ -106,12 +117,8 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
       const onError = () => { if (audio === element) mediaError(element.error?.code || 4); };
       const onEnded = () => {
         if (audio !== element) return;
-        if (settings.repeat === "off" && settings.index === tracksRef.current.length - 1) {
-          wantsPlay = false;
-          patch({ playing: false, requested: false, waiting: false });
-        } else {
-          select(settings.repeat === "one" ? settings.index : settings.index + 1, false);
-        }
+        if (settings.repeat === "one") select(settings.index, false);
+        else advance(false, true);
       };
       element.addEventListener("loadedmetadata", onMetadata);
       element.addEventListener("durationchange", onMetadata);
@@ -224,6 +231,34 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
       play(gesture);
     }
 
+    function advance(gesture: boolean, automatic = false) {
+      const count = tracksRef.current.length;
+      if (!count) return;
+      const stopAtEnd = () => {
+        wantsPlay = false;
+        audio?.pause();
+        patch({ playing: false, requested: false, waiting: false });
+      };
+      if (!settings.shuffle) {
+        if (automatic && settings.repeat === "off" && settings.index === count - 1) stopAtEnd();
+        else select(settings.index + 1, gesture);
+        return;
+      }
+      let next = forward.pop();
+      if (next === undefined) {
+        if (!remaining.length) {
+          if (automatic && settings.repeat === "off") { stopAtEnd(); return; }
+          remaining = tracksRef.current.map((_, index) => index).filter((index) => index !== settings.index);
+        }
+        next = remaining.length ? remaining.splice(Math.floor(Math.random() * remaining.length), 1)[0] : settings.index;
+      }
+      if (next !== settings.index) {
+        history.push(settings.index);
+        if (history.length > 100) history.shift();
+      }
+      select(next, gesture);
+    }
+
     const api: Controls = {
       toggle: () => {
         if (wantsPlay) {
@@ -233,7 +268,20 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
           patch({ playing: false, requested: false, waiting: false });
         } else play(true);
       },
-      select: (next) => select(next, true),
+      select: (next) => { select(next, true); resetSequence(); },
+      next: () => advance(true),
+      previous: () => {
+        if (!settings.shuffle) { select(settings.index - 1, true); return; }
+        const previous = history.pop();
+        if (previous === undefined) { select(settings.index, true); return; }
+        forward.push(settings.index);
+        select(previous, true);
+      },
+      shuffle: () => {
+        settings.shuffle = !settings.shuffle;
+        resetSequence();
+        persist();
+      },
       seek: (time) => {
         if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0 || !Number.isFinite(time)) return;
         try {
@@ -258,7 +306,11 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
       },
       reconcile: () => {
         const list = tracksRef.current;
+        const signature = JSON.stringify(list.map(({ id, src }) => [id, src]));
+        const changed = signature !== playlistSignature;
+        playlistSignature = signature;
         if (!list.length) {
+          resetSequence();
           wantsPlay = false;
           stopAudio();
           track = null;
@@ -267,8 +319,14 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
           return;
         }
         const retained = list.findIndex((item) => item.id === track?.id && item.src === track.src);
-        if (retained >= 0) { settings.index = retained; persist(); return; }
+        if (retained >= 0) {
+          settings.index = retained;
+          if (changed) resetSequence();
+          persist();
+          return;
+        }
         settings.index = Math.min(settings.index, list.length - 1);
+        resetSequence();
         persist();
         const next = list[settings.index];
         install(next, nativeSources.has(next.src));
@@ -306,5 +364,8 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
     setVolume: (value: number) => controls.current?.volume(value),
     toggleMute: () => controls.current?.mute(),
     cycleRepeat: () => controls.current?.repeat(),
+    next: () => controls.current?.next(),
+    previous: () => controls.current?.previous(),
+    toggleShuffle: () => controls.current?.shuffle(),
   };
 }
