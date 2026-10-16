@@ -110,7 +110,8 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   if (video) {
     return (
       <>
-        <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden">
+        {/* isolate：把视频和遮罩关在自己的层叠上下文里，别和外层内容混层 */}
+        <div aria-hidden className="absolute inset-0 -z-20 isolate overflow-hidden">
           <video
             ref={videoRef}
             className="hero-video"

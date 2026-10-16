@@ -88,7 +88,15 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
       // 不能在已绑定 source 的元素上移除 crossorigin：原生回退必须更换元素。
       const element = new Audio();
       audio = element;
-      element.preload = "metadata";
+      /*
+       * ⚠️ 必须是 "none"，不能是 "metadata"。
+       *
+       * Chrome 对 `preload="metadata"` 的处理是发 `Range: bytes=0-`；nginx 会老老实实
+       * 把**整个文件**发回来。对 MP3 也就几十 KB，但歌单里一旦有无损（FLAC 动辄 30MB+），
+       * 首屏就会平白拉走几十 MB —— 实测首页 `load` 事件被拖到 22 秒，占全部流量的 94%。
+       * 设成 "none" 后不点播放就完全不联网；真要播时在 `play()` 里改回 "auto"。
+       */
+      element.preload = "none";
       if (!native) element.crossOrigin = "anonymous";
       element.volume = settings.volume;
       element.muted = settings.muted;
@@ -160,6 +168,8 @@ export function useMusicAudio(tracks: PlaylistTrack[]) {
       wantsPlay = true;
       patch({ requested: true, waiting: true, error: null });
       if (audio.error) install(track, nativeSources.has(track.src), audio.currentTime || 0);
+      // 真要点播了才允许联网（默认 preload="none"，见 install() 的注释）
+      audio.preload = "auto";
       if (!native && !analysisFailed) {
         try {
           if (context?.state === "closed") {

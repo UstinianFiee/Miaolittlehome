@@ -64,7 +64,7 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
 
         <a
           href="#home-content"
-          className="absolute bottom-24 flex flex-col items-center gap-1.5 text-white/70 transition-colors hover:text-white sm:bottom-40"
+          className="absolute bottom-24 z-10 flex flex-col items-center gap-1.5 text-white/70 transition-colors hover:text-white sm:bottom-40"
         >
           <span className="text-[0.7rem] tracking-[0.25em] uppercase">{t("home.scroll")}</span>
           <ChevronDownIcon className="size-4 animate-bounce" />

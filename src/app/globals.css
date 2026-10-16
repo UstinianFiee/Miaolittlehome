@@ -935,13 +935,24 @@
    */
   max-width: none;
   max-height: none;
-  transform: translate(-50%, -50%);
+  /*
+   * translateZ(0) + will-change：强制视频走**普通合成层**。
+   *
+   * 安卓的 WebView / 部分国产浏览器会把 <video> 提升成独立的硬件叠加层（SurfaceView），
+   * 那一层**不受 z-index 约束**，会盖住同容器里的标题和遮罩 ——
+   * 表现就是「电脑正常，手机上只看到视频、文字全没了」。
+   * 给它一个自己的合成层就不会走那条路径。
+   */
+  transform: translate(-50%, -50%) translateZ(0);
+  will-change: transform;
   object-fit: cover;
 }
 
 /* 封面标题：日夜主题统一白字（封面是图片，白字最通用，深字在图上显脏） */
 .hero-title {
   position: relative;
+  /* 同 .hero-subtitle：封面视频可能是硬件叠加层，显式给标题一层 z-index 更稳。 */
+  z-index: 1;
   display: inline-block;
   color: #ffffff;
   /*
@@ -964,6 +975,9 @@
 }
 
 .hero-subtitle {
+  /* 显式抬到视频之上：封面视频可能是硬件叠加层，靠 DOM 顺序不够稳。 */
+  position: relative;
+  z-index: 1;
   color: rgb(255 255 255 / 0.9);
   text-shadow:
     0 1px 0 rgb(0 0 0 / 0.28),
