@@ -779,6 +779,13 @@
     "backHome": "Back home",
     "browsePosts": "Browse posts"
   },
+  "errorPage": {
+    "title": "This page failed to load",
+    "description": "The page hit a temporary problem while loading — usually a stale cache after a deploy. Retrying or reloading fixes it.",
+    "retry": "Try again",
+    "reload": "Reload page",
+    "backHome": "Back home"
+  },
   "sidebar": {
     "profile": "About me",
     "recent": "Recent",

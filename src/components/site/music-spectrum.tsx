@@ -35,12 +35,22 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
     function refreshTheme() {
       if (!canvas || !ctx) return;
       const theme = getComputedStyle(canvas);
-      ringColor = theme.getPropertyValue("--player-ring").trim();
-      const ringSoft = theme.getPropertyValue("--player-ring-soft").trim();
-      gradient = ctx.createLinearGradient(0, 0, size, size);
-      gradient.addColorStop(0, ringSoft);
-      gradient.addColorStop(0.5, ringColor);
-      gradient.addColorStop(1, ringSoft);
+      // 兜底色：主题变量万一取不到（样式表还没到 / 被覆盖），
+      // addColorStop 会直接抛 SyntaxError —— 那是在 effect 里抛的，
+      // 会把整个页面带进错误边界。这里做一次最便宜的防御。
+      ringColor = theme.getPropertyValue("--player-ring").trim() || "#3bbfb9";
+      const ringSoft = theme.getPropertyValue("--player-ring-soft").trim() || "#a8ece6";
+      try {
+        gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, ringSoft);
+        gradient.addColorStop(0.5, ringColor);
+        gradient.addColorStop(1, ringSoft);
+      } catch {
+        // 颜色确实无法解析时退化成单色，频谱照常绘制。
+        gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, "#3bbfb9");
+        gradient.addColorStop(1, "#a8ece6");
+      }
       sync();
     }
 

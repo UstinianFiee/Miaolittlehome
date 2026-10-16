@@ -48,7 +48,7 @@ export default async function TagPage({ params }: TagPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <header className="mb-4 flex items-baseline justify-between gap-4">
+      <header className="page-heading mb-4 flex items-baseline justify-between gap-4">
         <h1 className="font-display text-2xl">#{tag.name}</h1>
         <span className="text-sm text-muted-foreground">
           {t("site.postsCount", { count: total })}

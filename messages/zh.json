@@ -798,6 +798,13 @@
     "backHome": "回到首页",
     "browsePosts": "浏览文章"
   },
+  "errorPage": {
+    "title": "页面加载出错了",
+    "description": "页面加载时遇到了一个临时问题，通常是版本更新后浏览器还留着旧的缓存。重试或刷新一下就能恢复。",
+    "retry": "重试",
+    "reload": "刷新页面",
+    "backHome": "回到首页"
+  },
   "sidebar": {
     "profile": "关于我",
     "recent": "最新文章",

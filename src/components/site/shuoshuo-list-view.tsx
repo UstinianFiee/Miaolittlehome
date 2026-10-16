@@ -24,7 +24,7 @@ export async function ShuoshuoListView({ locale, page }: { locale: string; page:
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <header className="mb-8 flex items-baseline justify-between gap-4">
+      <header className="page-heading mb-8 flex items-baseline justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl">{t("shuoshuo.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("shuoshuo.subtitle")}</p>

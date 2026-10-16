@@ -307,6 +307,34 @@
   box-shadow: var(--surface-image-shadow);
 }
 
+/* ---------------------------------------------------------------
+   页面标题区（`.page-heading`）
+   ---------------------------------------------------------------
+   内容区背景图打开后，页面标题、副标题和计数是**直接压在照片上**的，
+   照片一亮就整片看不清（尤其是 text-muted-foreground 的辅助文字）。
+   这里给标题区一层和站内面板同材质的薄底 —— 不是新样式，是复用现有语言，
+   所以不会出现"拼贴感"。
+
+   **只在有背景图时生效**（`.has-page-bg` 由布局在 `site.pageBackground` 存在时挂上）：
+   没有背景图的站点完全不受影响，仍是原来的通透排版。
+   --------------------------------------------------------------- */
+.page-heading {
+  min-width: 0;
+  border-radius: 0.75rem;
+}
+
+.has-page-bg .page-heading {
+  /* 90% 卡片色 + 10px 模糊：模糊会把照片的明暗极值抹平，所以即使背景很暗，
+     正文（--foreground）和辅助文字（--muted-foreground）都能保持可读对比度，
+     同时边缘还能透出一点背景，不至于变成一块实心卡片。 */
+  background-color: color-mix(in srgb, var(--card) 90%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.06);
+  backdrop-filter: blur(10px) saturate(1.06);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  box-shadow: var(--surface-image-shadow);
+  padding: 0.95rem 1.2rem;
+}
+
 /* 阅读面板加实，避免大块照片透进正文；只保留少量边缘玻璃感。 */
 .surface-glass {
   @apply rounded-lg border border-border;
@@ -317,7 +345,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .surface-glass {
+  .surface-glass,
+  .has-page-bg .page-heading {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -1757,6 +1786,8 @@ button:hover .trash-wiggle {
    --------------------------------------------------------------- */
 .site-preloader {
   opacity: 1;
+  /* 纯视觉过渡：出现期间不应该把点击全部吞掉（见 site-preloader.tsx 注释）。 */
+  pointer-events: none;
   transition:
     opacity 320ms ease,
     visibility 320ms ease;

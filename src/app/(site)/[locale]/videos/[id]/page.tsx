@@ -58,7 +58,7 @@ export default async function VideoDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6">
-      <header className="mb-6 space-y-3">
+      <header className="page-heading mb-6 space-y-3">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/videos">
             <ArrowLeftIcon className="size-4" />

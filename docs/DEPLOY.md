@@ -1,12 +1,12 @@
 # 部署手册（详细）
 
-面向 Linux 服务器：Docker 双容器（Next.js 应用 + Nginx 反代）。首次部署见 [极简部署手册](./部署手册.md)，保留文章、评论、媒体和设置升级见 [更新手册](./更新手册.md)。
+面向 Linux 服务器：Docker 双容器（Next.js 应用 + Nginx 反代）。首次部署见 [极简部署手册](./部署手册.md)。已有站点按原安装方式选择：**压缩包 + Docker Compose 用 [压缩包更新手册](./压缩包更新手册.md)**；Git 克隆安装用 [Git 更新手册](./更新手册.md)。两种方式都保留原文章、评论、媒体与设置，不重新初始化。
 
 > 验证边界：文档与仓库实现已作静态核对，不代表已经在生产服务器构建、迁移或恢复成功。本次文档修订未执行服务器命令、访问生产密钥或数据库。上线前须在自己的环境验收；归档命令成功不等于备份具备可恢复性。
 
 ## 一、前置要求与数据位置
 
-- Linux 服务器，已安装 Git、Docker 与 Docker Compose v2；升级检查还需 Bash、Python 3、GNU tar、realpath 和 sudo。
+- Linux 服务器，已安装 Docker 与 Docker Compose v2；升级检查还需 Bash、Python 3、GNU tar、realpath 和 sudo。只有 Git 安装/更新路线需要 Git，压缩包更新不需要。
 - 80 / 443 端口按访问方式开放；HTTPS 域名需解析并准备有效证书。
 - 留足镜像、完整数据备份及隔离恢复副本的空间，不在数据目录里生成升级备份。
 
@@ -129,7 +129,7 @@ HTTP 登录异常时检查 `SESSION_COOKIE_SECURE`：纯 HTTP 不应强制为 `t
 
 SQLite 的 WAL 可能含已提交但尚未写回主文件的数据。关闭所有写入者后复制**完整真实数据目录**；存在的 WAL / SHM / journal 都保留，不手工删除、不排除。在线逐个复制数据库与 WAL 也不保证同一时点一致性。确需不停机备份时须另行验证 SQLite 一致性备份方案，并协调媒体、软件文件的一致性，不套用本流程。
 
-按照本页 [完整操作第 1、2 步](#safe-update) 核对 Mounts、关 seed、停 app 与 Nginx、验证停止状态，再冷备份。日常备份做到第 2 步即可；不拉代码，确认配置无变化、备份检查通过后重新启动并验收原版本。需同时暂停宿主定时任务、自动部署和其他写库进程，不能只停一个容器却留下其他写入者。
+按原安装方式选择备份流程：**压缩包安装使用 [无 Git 核对与冷备份](#archive-update)**；Git 安装使用 [完整操作第 1、2 步](#safe-update)。两者均核对 Mounts、关闭 seed、停 app 与 Nginx、验证停止状态后再冷备份。仅做日常备份时，不更新代码，确认配置无变化、备份检查通过后重新启动并验收原版本。需同时暂停宿主定时任务、自动部署和其他写库进程，不能只停一个容器却留下其他写入者。
 
 完整检查点包括：
 
@@ -251,6 +251,114 @@ docker compose --env-file .env.production logs --tail=80 app nginx
 `--wait` 等待 app 健康，失败不启动 Nginx。Compose 不支持此选项时先处理工具兼容，不能直接删掉等待检查。确认迁移无错误、前台与后台可用，旧文章、评论、媒体、软件、设置与管理员登录正常，再恢复对外写入和定时任务。
 
 遇到冲突、分支分叉或文件覆盖提示就停止，手工合并确认；不使用 `git reset`、`git stash` 隐藏问题，不删除项目重新部署。非 Git 安装先核对同样的挂载与冷备份，再另定文件更新方案，不能直接覆盖上传。**绝不使用 `down` 的 `-v` 选项，也不删除真实数据目录。** 失败时保存现场，按下节配套回滚，不只回退代码。
+
+<a id="archive-update"></a>
+
+### 压缩包部署：无 Git 核对与冷备份
+
+**这是 ZIP + Docker Compose 旧站的更新准备流程，不需要 Git。** 完成后回到 [压缩包更新手册](./压缩包更新手册.md) 第 3、4 步替换程序并启动。新包先解压在原项目与数据目录之外，不在新目录启动。
+
+适用范围：Linux Bash、Docker Compose v2（支持 `--wait` 和 JSON 配置输出）、Python 3、GNU tar、realpath、sudo；使用原 `docker-compose.yml` 和 `.env.production` 的标准 app/nginx 双服务、宿主绑定目录。若旧部署使用额外 `-f` / `-p`、命名卷、额外服务、外部 Nginx、其他环境文件或额外挂载，先停止并按原实际配置调整，不能套用默认命令。全程保持同一个终端，报错立即停止。
+
+#### A. 确认旧项目和实际数据位置
+
+先暂停自动部署、定时写入和其他访问同一数据库的进程，安排维护窗口。进入**原项目根目录**执行：
+
+```bash
+set -euo pipefail
+umask 077
+test -f .env.production
+PROJECT="$(pwd -P)"
+APP_ID="$(docker compose --env-file .env.production ps -a -q app)"
+NGINX_ID="$(docker compose --env-file .env.production ps -a -q nginx)"
+test -n "$APP_ID"
+test -n "$NGINX_ID"
+docker inspect --format '{{.Name}} {{json .Mounts}}' "$APP_ID" "$NGINX_ID"
+TYPE="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}{{end}}{{end}}' "$APP_ID")"
+SOURCE="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Source}}{{end}}{{end}}' "$APP_ID")"
+test "$TYPE" = bind
+DATA="$(sudo realpath -e -- "$SOURCE")"
+test "$DATA" != /
+test "$PROJECT" != /
+sudo test -f "$DATA/db/blog.db"
+OLD_PROJECT="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' "$APP_ID")"
+OLD_NAME="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$APP_ID")"
+test "$(realpath -e -- "$OLD_PROJECT")" = "$PROJECT"
+test -n "$OLD_NAME"
+test "$OLD_NAME" != '<no value>'
+printf '原项目：%s\n真实数据目录：%s\n项目名：%s\n' "$PROJECT" "$DATA" "$OLD_NAME"
+```
+
+人工对照两个容器的 Mounts：nginx 媒体与软件目录应分别来自真实 `$DATA/media`、`$DATA/software`，配置和证书应来自原项目的 `deploy/nginx/`。任何额外或不明挂载、数据目录外链、子挂载均先停止，补齐实际备份范围。不要根据默认 `/data` 猜宿主位置，不打印整份环境配置或密钥。
+
+只在原 `.env.production` 中确认唯一的 `RUN_SEED=false`，其他密钥、路径、账号和站点地址不改。定义后续复查函数：
+
+```bash
+check_archive_config() {
+  local expected
+  expected="$(docker compose --env-file .env.production config --format json | python3 -c '
+import json, os, sys
+c = json.load(sys.stdin)
+phase, old_name = sys.argv[1:]
+assert c.get("name") == old_name, "停止：Compose 项目名变化"
+assert set(c["services"]) == {"app", "nginx"}, "停止：存在非标准服务，需补齐备份范围"
+a = c["services"]["app"]
+e = a["environment"]
+assert e.get("RUN_SEED") == "false", "停止：RUN_SEED 必须为 false"
+def bind(service, target):
+    items = [v for v in service.get("volumes", []) if v["target"] == target]
+    assert len(items) == 1 and items[0]["type"] == "bind", "停止：挂载必须为原绑定目录"
+    return os.path.realpath(items[0]["source"])
+source = bind(a, "/data")
+n = c["services"]["nginx"]
+for folder in ("media", "software"):
+    assert bind(n, "/data/" + folder) == os.path.realpath(os.path.join(source, folder)), "停止：nginx 数据源不一致"
+if phase == "ready":
+    for key, value in {"DATA_DIR": "/data", "DATABASE_URL": "file:/data/db/blog.db", "MEDIA_DIR": "/data/media", "SOFTWARE_DIR": "/data/software", "BACKUP_DIR": "/data/backups"}.items():
+        assert e.get(key) == value, "停止：容器内存储路径不符：" + key
+print(source)
+' "${1:-ready}" "$OLD_NAME")"
+  test "$(sudo realpath -e -- "$expected")" = "$DATA"
+}
+check_archive_config backup
+```
+
+`backup` 阶段只检查原挂载、项目名与 seed，不强制较旧 Compose 已包含新版容器路径覆盖；先完成备份，再对照新版合并必要差异。启动前必须执行无参数的 `check_archive_config`，会进一步检查容器内路径。两阶段都不能通过更改宿主 `DATA_DIR` 绕过检查。
+
+#### B. 停机并保存完整检查点
+
+下面保存真实数据和**整个旧项目**（包括隐藏配置及本地定制，不依赖 Git），同时保存证书目标文件和旧镜像。若数据在项目内会重复备份，先确认空间足够；不为了缩短时间排除数据库附属文件。备份目录必须在项目和数据目录之外。
+
+```bash
+BACKUP_ROOT="$(sudo realpath -m /var/backups/miaolittlehome)"
+case "$BACKUP_ROOT/" in "$DATA/"*|"$PROJECT/"*) exit 1 ;; esac
+sudo install -d -m 700 -o root -g root "$BACKUP_ROOT"
+BACKUP="$(sudo mktemp -d "$BACKUP_ROOT/archive-XXXXXXXX")"
+APP_IMAGE="$(docker inspect --format '{{.Image}}' "$APP_ID")"
+NGINX_IMAGE="$(docker inspect --format '{{.Image}}' "$NGINX_ID")"
+docker compose --env-file .env.production stop app nginx
+for id in "$APP_ID" "$NGINX_ID"; do
+  test "$(docker inspect --format '{{.State.Running}} {{.State.Restarting}}' "$id")" = 'false false'
+done
+sudo tar -czf "$BACKUP/data.tar.gz" -C "$DATA" .
+sudo tar -cf "$BACKUP/code.tar" -C "$PROJECT" .
+sudo tar -chzf "$BACKUP/config.tar.gz" -C "$PROJECT" .env.production docker-compose.yml deploy/nginx
+docker image save "$APP_IMAGE" "$NGINX_IMAGE" | sudo tee "$BACKUP/images.tar" >/dev/null
+printf '%s\n' "$APP_IMAGE" | sudo tee "$BACKUP/app-image-id" >/dev/null
+printf '%s\n' "$NGINX_IMAGE" | sudo tee "$BACKUP/nginx-image-id" >/dev/null
+printf '%s\n' "$PROJECT" "$DATA" "$OLD_NAME" | sudo tee "$BACKUP/paths" >/dev/null
+printf '%s\n' 'archive-install; original project captured in code.tar; no Git revision assumed' | sudo tee "$BACKUP/REVISION" >/dev/null
+sudo chmod 600 "$BACKUP"/{data.tar.gz,code.tar,config.tar.gz,images.tar,app-image-id,nginx-image-id,paths,REVISION}
+sudo tar -tzf "$BACKUP/data.tar.gz" >/dev/null
+sudo tar -tf "$BACKUP/code.tar" >/dev/null
+sudo tar -tzf "$BACKUP/config.tar.gz" >/dev/null
+sudo tar -tf "$BACKUP/images.tar" >/dev/null
+printf '备份完成，记录此路径：%s\n' "$BACKUP"
+```
+
+任何命令失败都停止，保留现场；归档可读取不等于恢复演练已通过。证书软链接目标不可读或缺失时必须处理，不能跳过。记录并保管备份，另做受控异机副本。现在回到 [压缩包更新手册第 3 步](./压缩包更新手册.md) 更新程序；不恢复自动写入、不清理旧镜像，直到新版本验收完成。
+
+**压缩包回滚对应关系：**下节的 `code.tar` 就是上述完整旧项目快照，`REVISION` 标识为 archive-install，不是 Git 提交；不需要 `git checkout`、`.git` 或 `local.patch`。只在全新的隔离目录解包验证，原项目与真实数据位置按 `paths` 恢复，同样不能覆盖活库。
 
 <a id="rollback"></a>
 

@@ -25,7 +25,7 @@ export default async function FriendsPage({ params }: Props) {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pt-8 pb-4 sm:px-6 sm:pt-10">
-      <header className="space-y-2 text-center">
+      <header className="page-heading space-y-2 text-center">
         <h1 className="font-display text-3xl text-[color:var(--card-foreground)] sm:text-4xl">
           {t("friends.title")}
         </h1>

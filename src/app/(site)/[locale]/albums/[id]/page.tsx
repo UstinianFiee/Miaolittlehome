@@ -47,7 +47,7 @@ export default async function AlbumPage({ params }: AlbumPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
-      <header className="mb-6 space-y-2">
+      <header className="page-heading mb-6 space-y-2">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/albums">
             <ArrowLeftIcon className="size-4" />

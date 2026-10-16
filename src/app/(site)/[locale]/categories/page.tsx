@@ -25,8 +25,10 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <h1 className="font-display text-2xl">{t("site.categoriesTitle")}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{t("site.categoriesHint")}</p>
+      <div className="page-heading">
+        <h1 className="font-display text-2xl">{t("site.categoriesTitle")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("site.categoriesHint")}</p>
+      </div>
 
       {categories.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">{t("site.categoriesEmpty")}</p>

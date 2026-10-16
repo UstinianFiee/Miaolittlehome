@@ -68,7 +68,7 @@ export default async function SoftwareDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <header className="mb-8 space-y-4">
+      <header className="page-heading mb-8 space-y-4">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/software">
             <ArrowLeftIcon className="size-4" />

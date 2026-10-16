@@ -114,7 +114,9 @@ messages/               中英文文案
 生产用 Docker 双容器（应用 + Nginx），数据与媒体都落在 `/data` 卷。
 
 - 首次部署：[docs/部署手册.md](docs/部署手册.md)
-- **已部署旧版，保留文章和上传文件更新**：[docs/更新手册.md](docs/更新手册.md)
+- **已经部署好，要换成 HTTPS 域名**：[docs/HTTPS部署.md](docs/HTTPS部署.md)（关掉 HTTP 与 IP 直连）
+- **原来用压缩包 + Docker Compose 部署**：[压缩包更新手册](docs/压缩包更新手册.md)（不用 Git，保留数据）
+- 原来用 Git 部署：[Git 更新手册](docs/更新手册.md)
 - 完整版（含核对清单、备份与回滚）：[docs/DEPLOY.md](docs/DEPLOY.md)
 
 升级必须核对原数据挂载、关闭 `RUN_SEED`、停机冷备份并保留生产配置；不要使用初始化模板覆盖旧配置。
@@ -126,6 +128,7 @@ messages/               中英文文案
 | [docs/SPEC.md](docs/SPEC.md) | 需求唯一来源 |
 | [docs/技术说明.md](docs/技术说明.md) | 实现细节与踩过的坑（改代码前建议先看） |
 | [docs/部署手册.md](docs/部署手册.md) | 部署三步走 |
+| [docs/HTTPS部署.md](docs/HTTPS部署.md) | 域名 + 证书切 HTTPS，关闭 HTTP 与 IP 直连 |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | 部署细节与排障 |
 | [CLAUDE.md](CLAUDE.md) | 协作规则与阶段进度 |
 

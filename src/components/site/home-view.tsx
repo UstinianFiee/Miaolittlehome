@@ -74,20 +74,28 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
         <HeroWave pageBackground={pageBackground} />
       </section>
 
-      {/* 内容区：左文章列表（分页）+ 右侧栏 */}
-      <div id="home-content" className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
+      {/*
+        内容区：左文章列表（分页）+ 右侧栏。
+        `scroll-mt-*` 与 main 的顶部占位一致：封面那个下滑箭头是跳到 #home-content，
+        没有它的话滚过去之后标题区会被悬浮导航胶囊盖住。
+      */}
+      <div id="home-content" className="mx-auto w-full max-w-6xl scroll-mt-[5.25rem] px-4 py-14 sm:scroll-mt-[5.75rem] sm:px-6">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-8">
           <div className="min-w-0">
-            {/* 北京时间问候语：早上好呀 / 中午好呀 / 下午好呀 …（客户端实时计算） */}
-            <div className="mb-6">
+            {/*
+              标题区：问候语 + 列表标题合成一块。
+              有内容区背景图时 `.page-heading` 会给它一层薄底，避免文字直接压在照片上看不清。
+            */}
+            <div className="page-heading mb-6">
+              {/* 北京时间问候语：早上好呀 / 中午好呀 / 下午好呀 …（客户端实时计算） */}
               <Greeting locale={locale} />
-            </div>
 
-            <div className="mb-6 flex items-baseline justify-between gap-4">
-              <h2 className="section-title font-display text-lg">{t("home.latest")}</h2>
-              <span className="text-sm text-muted-foreground">
-                {t("home.feedCount", { count: total })}
-              </span>
+              <div className="mt-4 flex items-baseline justify-between gap-4">
+                <h2 className="section-title font-display text-lg">{t("home.latest")}</h2>
+                <span className="text-sm text-muted-foreground">
+                  {t("home.feedCount", { count: total })}
+                </span>
+              </div>
             </div>
 
             {entries.length === 0 ? (

@@ -22,8 +22,10 @@ export default async function AlbumsPage({ params }: AlbumsPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
-      <h1 className="font-display text-2xl">{t("site.albumsTitle")}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{t("site.albumsHint")}</p>
+      <div className="page-heading">
+        <h1 className="font-display text-2xl">{t("site.albumsTitle")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("site.albumsHint")}</p>
+      </div>
 
       {albums.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">{t("site.albumsEmpty")}</p>

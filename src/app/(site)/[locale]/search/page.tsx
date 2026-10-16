@@ -42,7 +42,9 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <h1 className="font-display text-2xl">{t("search.title")}</h1>
+      <div className="page-heading">
+        <h1 className="font-display text-2xl">{t("search.title")}</h1>
+      </div>
 
       {/* 原生 GET 表单：不依赖 JS 也能提交 */}
       <form action={`/${locale}/search`} method="get" className="mt-6 flex gap-2">

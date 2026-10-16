@@ -43,7 +43,7 @@ export function WallView({
 
   return (
     <>
-      <header className="space-y-2">
+      <header className="page-heading space-y-2">
         <h1 className="font-display text-2xl">{t("site.wallTitle")}</h1>
         <p className="text-muted-foreground">{t("site.wallDescription")}</p>
         <p className="text-sm text-muted-foreground">
