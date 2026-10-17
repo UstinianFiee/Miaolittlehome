@@ -1,16 +1,16 @@
-import { ChevronDownIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import ReactDOM from "react-dom";
 
 import { Greeting } from "@/components/site/greeting";
 import { HeroBackground } from "@/components/site/hero-background";
-import { HeroTitle } from "@/components/site/hero-title";
+import { HeroIntro } from "@/components/site/hero-intro";
 import { HeroWave } from "@/components/site/hero-wave";
 import { SitePagination } from "@/components/site/pagination";
 import { PostCardView } from "@/components/site/post-card";
 import { Reveal } from "@/components/site/reveal";
 import { ShuoshuoCard } from "@/components/site/shuoshuo-card";
 import { SiteSidebar } from "@/components/site/site-sidebar";
-import { Typewriter } from "@/components/site/typewriter";
+import { resizedImageUrl } from "@/lib/image-url";
 import { listPublishedFeed } from "@/lib/query";
 import { getProfile, getSiteInfo } from "@/lib/settings";
 
@@ -29,6 +29,16 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
   const t = await getTranslations();
   const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
   const { name, subtitle, backgrounds, backgroundVideo, pageBackground } = site;
+
+  /*
+   * 封面背景图走 `/img/1920/...`：上传原图常有 600KB+，1920 宽的 webp 只要几十 KB。
+   * 再显式 preload 一次 —— 背景图是 CSS `background-image`，浏览器要等 CSSOM 建好
+   * 才发现它，preload 能把它提到最前面开始下载（首屏最明显的一处延迟）。
+   */
+  const heroImages = backgrounds.map((src) => resizedImageUrl(src, 1920));
+  if (!backgroundVideo && heroImages[0]) {
+    ReactDOM.preload(heroImages[0], { as: "image", fetchPriority: "high" });
+  }
 
   // 说说气泡的头像用「关于」页设置的那个，没设再回退到站点 Logo
   const avatar = profile.avatar || site.logo;
@@ -49,29 +59,12 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
         结果内容区那层半透明遮罩会盖在封面图上面，整屏发灰。
       */}
       <section className="hero-shell relative isolate -mt-[5.25rem] flex flex-col items-center justify-center overflow-hidden px-4 text-center sm:-mt-[5.75rem]">
-        <HeroBackground images={backgrounds} video={backgroundVideo} />
+        <HeroBackground images={heroImages} video={backgroundVideo} />
 
-        <HeroTitle
-          text={name}
-          className="max-w-4xl text-4xl leading-tight text-balance sm:text-6xl"
-        />
+        <HeroIntro name={name} subtitle={subtitle} scrollLabel={t("home.scroll")} />
 
-        {subtitle ? (
-          <p className="hero-subtitle font-display mt-6 text-lg sm:text-2xl">
-            <Typewriter text={subtitle} />
-          </p>
-        ) : null}
-
-        <a
-          href="#home-content"
-          className="absolute bottom-24 z-10 flex flex-col items-center gap-1.5 text-white/70 transition-colors hover:text-white sm:bottom-40"
-        >
-          <span className="text-[0.7rem] tracking-[0.25em] uppercase">{t("home.scroll")}</span>
-          <ChevronDownIcon className="size-4 animate-bounce" />
-        </a>
-
-        {/* 底部波浪：填的是内容区背景，与下方无缝衔接 */}
-        <HeroWave pageBackground={pageBackground} />
+        {/* 底部波浪：填的是内容区背景，与下方无缝衔接（同样走缩放后的图，别拉原图） */}
+        <HeroWave pageBackground={resizedImageUrl(pageBackground, 1920)} />
       </section>
 
       {/*

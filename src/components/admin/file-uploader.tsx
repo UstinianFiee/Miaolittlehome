@@ -6,6 +6,7 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { MEDIA_ACCEPT } from "@/lib/media-extensions";
+import { attachVideoThumbnail } from "@/lib/video-thumb-client";
 
 type InitResponse = {
   ok: boolean;
@@ -37,7 +38,7 @@ export function FileUploader({
     return payload?.error ?? fallback;
   }
 
-  async function uploadOne(file: File): Promise<void> {
+  async function uploadOne(file: File): Promise<number | undefined> {
     const initResponse = await fetch("/api/admin/media/upload/init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -87,6 +88,11 @@ export function FileUploader({
     if (!completeResponse.ok) {
       throw new Error(await readError(completeResponse, "complete"));
     }
+
+    const payload = (await completeResponse.json().catch(() => null)) as
+      | { data?: { id?: number } }
+      | null;
+    return payload?.data?.id;
   }
 
   async function handleFiles(files: FileList | null) {
@@ -100,7 +106,9 @@ export function FileUploader({
     try {
       for (const file of Array.from(files)) {
         setProgress(0);
-        await uploadOne(file);
+        const mediaId = await uploadOne(file);
+        // 视频在上传完成后补一张真封面（失败不影响主文件，见 video-thumb-client.ts）
+        await attachVideoThumbnail(file, mediaId);
       }
       onUploaded();
     } catch (uploadError) {

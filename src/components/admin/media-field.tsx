@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uploadFileInChunks } from "@/lib/client-upload";
+import { attachVideoThumbnail } from "@/lib/video-thumb-client";
 
 export type MediaOption = { id: number; path: string; title: string };
 
@@ -72,9 +73,12 @@ export function MediaField({
       return;
     }
 
-    const path = (outcome.data as { path?: string } | null)?.path;
-    if (path) {
-      onChange(path);
+    const data = outcome.data as { id?: number; path?: string } | null;
+    // 视频补一张真封面（失败不影响主文件，见 video-thumb-client.ts）
+    await attachVideoThumbnail(file, data?.id);
+
+    if (data?.path) {
+      onChange(data.path);
     }
   }
 

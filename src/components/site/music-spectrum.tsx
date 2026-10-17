@@ -83,13 +83,15 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
         const target = weight ? Math.sqrt(energy / weight) : 0;
         levels[i] += (target - levels[i]) * (target > levels[i] ? 0.52 : 0.22);
         if (levels[i] < 0.008) continue;
-        const length = levels[i] * size * 0.125;
+        // 振幅收紧：早先是 size * 0.125（光柱向外甩出老远，像放射光环），
+        // 现在收到 0.055 —— 频谱是封面的"呼吸描边"，不是主体，别抢封面的注意力。
+        const length = levels[i] * size * 0.055;
         const x = Math.cos(angle);
         const y = Math.sin(angle);
         ctx.globalAlpha = 0.35 + levels[i] * 0.65;
         ctx.strokeStyle = gradient;
         ctx.shadowColor = ringColor;
-        ctx.shadowBlur = 2;
+        ctx.shadowBlur = 1;
         ctx.beginPath();
         ctx.moveTo(center + x * (radius + 2), center + y * (radius + 2));
         ctx.lineTo(center + x * (radius + 2 + length), center + y * (radius + 2 + length));

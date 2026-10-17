@@ -78,3 +78,5 @@ coverage/
 
 # 编辑器 / AI 工具的本地工作数据（含本机路径与工作记录，不入库）
 .workbuddy-ai/
+# 图片缩放缓存（生产落在 DATA_DIR/.imgcache）
+.imgcache/

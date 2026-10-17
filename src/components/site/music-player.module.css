@@ -17,8 +17,6 @@
 .player button:disabled { opacity: 0.4; cursor: not-allowed; }
 .player button:focus-visible, .player input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .orb button:focus-visible { outline-color: var(--primary); }
-.dragHandle:focus-visible, .panelToggle:focus-visible { outline-offset: -3px; }
-
 .safeArea {
   position: absolute;
   width: 0;
@@ -28,6 +26,13 @@
   pointer-events: none;
 }
 
+/*
+ * 播放器主体：一个干净的圆形封面 + 播放时绕封面的细频谱环。
+ *
+ * 早先还有两条交叉的椭圆"星环"装饰（.orb::before/::after），
+ * 但它和频谱环视觉上重复，而且播放时两层叠在一起就是用户说的"太杂" —— 已删。
+ * 现在球体上只有：封面（中心）+ 频谱（外圈）+ 拖动把手。
+ */
 .orb {
   position: relative;
   width: 100%;
@@ -36,40 +41,23 @@
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  cursor: grab;
+  /* 点星环外圈 = 展开面板；拖动用下面那个把手，所以这里是 pointer 不是 grab */
+  cursor: pointer;
 }
 
-.orb::before, .orb::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 88%;
-  height: 38%;
-  border: 1px solid var(--player-ring);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) rotate(-26deg);
-  opacity: 0.8;
-  pointer-events: none;
-}
-.orb::after {
-  width: 80%;
-  height: 44%;
-  border-color: var(--player-ring-soft);
-  transform: translate(-50%, -50%) rotate(24deg);
-  opacity: 0.6;
-}
-
+/*
+ * 玻璃底衬：只在封面外那一圈，给频谱一个柔和的背板。
+ * 保持轻薄 —— 它是背衬不是主体，别让它和封面抢注意力。
+ */
 .glass {
   position: absolute;
-  inset: calc((100% - var(--cover-size) - 12px) / 2);
+  inset: calc((100% - var(--cover-size) - 14px) / 2);
   border-radius: 50%;
   pointer-events: none;
-  border: 1px solid color-mix(in srgb, var(--player-ring) 35%, transparent);
-  background: color-mix(in srgb, var(--card) 18%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--player-ring-soft) 30%, transparent);
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
+  border: 1px solid color-mix(in srgb, var(--player-ring) 22%, transparent);
+  background: color-mix(in srgb, var(--card) 14%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
 .spectrum { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -110,37 +98,26 @@
   color: var(--card-foreground);
   pointer-events: none;
 }
+/*
+ * 暂停时的轻提示。**不要加大圆底** —— 32px 的圆底在 54px 的封面上占了 59%，
+ * 把专辑封面遮得只剩一圈边（用户反馈"播放按钮把整张图都遮住了"）。
+ * 播放中整个图标不渲染（见 music-player.tsx），所以常态下封面是干净的。
+ */
 .playGlyph::before {
   content: "";
   position: absolute;
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--player-ring) 45%, transparent);
-  background: color-mix(in srgb, var(--card) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--player-ring) 40%, transparent);
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
-.playGlyph svg { position: relative; width: 17px; height: 17px; fill: currentColor; stroke-width: 1.4; }
+.playGlyph svg { position: relative; width: 13px; height: 13px; fill: currentColor; stroke-width: 1.4; }
 
-.dragHandle, .panelToggle {
-  position: absolute;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--player-ring) 50%, transparent);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--card) 94%, transparent);
-  color: var(--card-foreground);
-}
-/* 上下错位，手机端的触摸目标也不遮住中心封面。 */
-.dragHandle { top: 0; left: calc(50% + 4px); touch-action: none; cursor: grab !important; }
-.dragHandle svg { width: 18px; height: 18px; }
-.panelToggle { bottom: 0; left: calc(50% - 36px); }
-.panelToggle svg { width: 16px; height: 16px; }
-.statusDot { position: absolute; top: 3px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
-.player[data-dragging="true"] .orb, .player[data-dragging="true"] .orb button { cursor: grabbing !important; }
+/* 拖动中：整个球体显示抓取光标（拖动绑定在 .player 根上，见 use-player-position） */
+.player[data-dragging="true"] .orb { cursor: grabbing !important; }
 
 .panel {
   position: fixed;
@@ -224,7 +201,6 @@
 
 @media (hover: hover) {
   .coverButton:hover { border-color: var(--primary); }
-  .dragHandle:hover, .panelToggle:hover { background: var(--card); color: var(--primary); }
   .iconButton:hover:not(:disabled), .track:hover { background: var(--muted); }
   .transportPlay:hover { filter: brightness(1.1); }
 }

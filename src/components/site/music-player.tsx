@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  GripHorizontalIcon, ListMusicIcon, MusicIcon, PauseIcon, PlayIcon,
+  ListMusicIcon, MusicIcon, PauseIcon, PlayIcon,
   Repeat1Icon, RepeatIcon, ShuffleIcon, SkipBackIcon, SkipForwardIcon,
   Volume2Icon, VolumeXIcon, XIcon,
 } from "lucide-react";
@@ -43,7 +43,6 @@ export function MusicPlayer({ tracks }: { tracks: PlaylistTrack[] }) {
   const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
   const [expanded, setExpanded] = React.useState(false);
   const [showList, setShowList] = React.useState(false);
-  const toggleRef = React.useRef<HTMLButtonElement>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
   const panelId = React.useId();
   const listId = React.useId();
@@ -54,10 +53,9 @@ export function MusicPlayer({ tracks }: { tracks: PlaylistTrack[] }) {
 
   React.useEffect(() => { setPortalTarget(document.body); }, []);
 
-  const closePanel = React.useCallback((restoreFocus = true) => {
+  const closePanel = React.useCallback(() => {
     setExpanded(false);
     setShowList(false);
-    if (restoreFocus) toggleRef.current?.focus({ preventScroll: true });
   }, []);
 
   React.useEffect(() => {
@@ -65,7 +63,7 @@ export function MusicPlayer({ tracks }: { tracks: PlaylistTrack[] }) {
     closeRef.current?.focus({ preventScroll: true });
     const outside = (event: PointerEvent) => {
       if (event.target instanceof Node && !rootRef.current?.contains(event.target)) {
-        closePanel(Boolean(panelRef.current?.contains(document.activeElement)));
+        closePanel();
       }
     };
     const escape = (event: KeyboardEvent) => {
@@ -90,26 +88,29 @@ export function MusicPlayer({ tracks }: { tracks: PlaylistTrack[] }) {
       data-dragging={dragging} data-playing={player.playing} {...dragHandlers}>
       <span ref={safeAreaRef} className={styles.safeArea} aria-hidden="true" />
       <span id={hintId} className={styles.srOnly}>{t("dragHint")}</span>
-      <div className={styles.orb} data-player-drag="">
+      <div className={styles.orb} data-player-drag=""
+        onClick={(event) => {
+          if (dragging) return;
+          // 点星环外圈 = 展开/收起面板；点封面（播放/暂停）和拖动把手不触发。
+          // glass 与 spectrum 都是 pointer-events:none，所以点中心区域时 target 就是 orb 本身。
+          if (event.target === event.currentTarget) {
+            if (expanded) closePanel();
+            else setExpanded(true);
+          }
+        }}>
         <div className={styles.glass} aria-hidden="true" />
         <MusicSpectrum analyser={player.analyser} playing={player.playing} className={styles.spectrum} />
         <button type="button" className={styles.coverButton} data-player-drag=""
           aria-label={`${playLabel} · ${current.title}`} aria-describedby={hintId}
-          title={`${current.title}${current.artist ? ` · ${current.artist}` : ""}`}
-          data-testid="player-orb-play" onClick={player.toggle}>
+          title={`${current.title}${current.artist ? ` · ${current.artist}` : ""} · ${t("dragHint")}`}
+          data-testid="player-orb-play"
+          onClick={player.toggle}
+          onDoubleClick={() => setExpanded(true)}>
           <Cover src={current.cover} />
-          <span className={styles.playGlyph}><PlayPause aria-hidden="true" /></span>
-        </button>
-        <button type="button" data-player-drag="" className={styles.dragHandle}
-          aria-label={t("move")} aria-describedby={hintId} title={t("dragHint")}>
-          <GripHorizontalIcon aria-hidden="true" />
-        </button>
-        <button type="button" ref={toggleRef} className={styles.panelToggle}
-          aria-label={t(expanded ? "close" : "open")} aria-expanded={expanded} aria-controls={panelId}
-          aria-describedby={status ? statusId : undefined}
-          data-testid="player-expand" onClick={() => expanded ? closePanel() : setExpanded(true)}>
-          <ListMusicIcon aria-hidden="true" />
-          {player.error || player.notice ? <span className={styles.statusDot} aria-hidden="true" /> : null}
+          {/* 播放中不显示图标（音乐在响，图标反而遮住封面）；暂停时才给一个轻提示 */}
+          {player.playing ? null : (
+            <span className={styles.playGlyph}><PlayPause aria-hidden="true" /></span>
+          )}
         </button>
       </div>
 

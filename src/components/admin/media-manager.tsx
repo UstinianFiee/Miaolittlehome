@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { backfillVideoThumbnail } from "@/lib/video-thumb-client";
 
 export type MediaItem = {
   id: number;
@@ -147,7 +148,27 @@ export function MediaManager({
 
   const [pendingId, setPendingId] = React.useState<number | null>(null);
   const [copiedId, setCopiedId] = React.useState<number | null>(null);
+  const [thumbPendingId, setThumbPendingId] = React.useState<number | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  /**
+   * 给已有的视频补一张封面（上传时还没有自动抽帧功能的那些）。
+   * 抽帧在浏览器里做，一次只处理一个，不会同时拉很多视频。
+   */
+  async function makeThumb(item: MediaItem) {
+    setThumbPendingId(item.id);
+    setError(null);
+    try {
+      const ok = await backfillVideoThumbnail(item.id, item.path);
+      if (ok) {
+        router.refresh();
+      } else {
+        setError(t("media.thumbFailed"));
+      }
+    } finally {
+      setThumbPendingId(null);
+    }
+  }
 
   const filterLabels: Record<(typeof FILTERS)[number], string> = {
     all: t("media.filterAll"),
@@ -284,11 +305,22 @@ export function MediaManager({
                     className="h-full w-full object-contain"
                   />
                 ) : item.type === "video" ? (
-                  <VideoThumb
-                    src={item.path}
-                    className="h-full w-full object-cover"
-                    fallback={<TypeIcon type={item.type} />}
-                  />
+                  // 有真封面就显示小图（上传时抽帧生成），只有老视频才回退到 <video> 现抽
+                  item.thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.thumb}
+                      alt={item.title ?? ""}
+                      loading="lazy"
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <VideoThumb
+                      src={item.path}
+                      className="h-full w-full object-cover"
+                      fallback={<TypeIcon type={item.type} />}
+                    />
+                  )
                 ) : (
                   <TypeIcon type={item.type} />
                 )}
@@ -324,6 +356,18 @@ export function MediaManager({
                 </Select>
 
                 <div className="mt-auto flex gap-1">
+                  {item.type === "video" && !item.thumb ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      disabled={thumbPendingId === item.id}
+                      onClick={() => void makeThumb(item)}
+                    >
+                      <ImageIcon className="size-4" />
+                      {thumbPendingId === item.id ? t("media.thumbWorking") : t("media.makeThumb")}
+                    </Button>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="sm"

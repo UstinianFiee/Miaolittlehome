@@ -1,6 +1,7 @@
 import { MapPinIcon } from "lucide-react";
 
 import { DualTime } from "@/components/site/dual-time";
+import { resizedImageUrl } from "@/lib/image-url";
 import { pickLocalized } from "@/lib/localized";
 import { parseImages, type ShuoshuoRecord } from "@/lib/shuoshuo";
 
@@ -83,7 +84,7 @@ export function ShuoshuoCard({
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={src}
+                      src={resizedImageUrl(src, 640)}
                       alt=""
                       loading="lazy"
                       className={

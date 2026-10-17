@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 
 import { ConfigSync } from "@/components/site/config-sync";
 import { MusicPlayerLazy } from "@/components/site/music-player-lazy";
+import { PageTransition } from "@/components/site/page-transition";
 import { RippleLayer } from "@/components/site/ripple-layer";
 import { RouteProgress } from "@/components/site/route-progress";
 import { SiteFooter } from "@/components/site-footer";
@@ -14,6 +15,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SitePreloader } from "@/components/site/site-preloader";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getSiteInfo, getSiteVersion } from "@/lib/settings";
+import { resizedImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 import { routing } from "@/i18n/routing";
 import { buildAlternates } from "@/lib/metadata";
@@ -113,7 +115,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                   <div
                     aria-hidden
                     className="fixed inset-0 -z-20 bg-cover bg-center"
-                    style={{ backgroundImage: `url("${site.pageBackground}")` }}
+                    style={{ backgroundImage: `url("${resizedImageUrl(site.pageBackground, 1920)}")` }}
                   />
                   {/*
                     背景图遮罩保持轻薄：上方稍微压暗/提亮，向下快速淡出，避免整页蒙一层灰白。
@@ -130,7 +132,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               <RippleLayer />
               <SiteHeader />
               {/* 顶部导航为 fixed 悬浮胶囊，这里补出占位高度（胶囊 4rem/4.25rem + 上边距） */}
-              <main className="flex-1 pt-[5.25rem] sm:pt-[5.75rem]">{children}</main>
+              <main className="flex-1 pt-[5.25rem] sm:pt-[5.75rem]">
+                <PageTransition>{children}</PageTransition>
+              </main>
               <SiteFooter />
               {/* 播放器延迟加载：它的代码不属于首屏关键路径（见 music-player-lazy.tsx） */}
               <MusicPlayerLazy tracks={tracks} />

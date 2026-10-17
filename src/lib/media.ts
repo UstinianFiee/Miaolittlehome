@@ -280,6 +280,52 @@ async function createThumbnail(
   }
 }
 
+/**
+ * 视频封面：浏览器在上传时抽一帧传过来，这里统一压成 640 宽的 webp 并挂到记录上。
+ *
+ * 为什么要这么做：媒体库此前靠 `<video preload>` 现抽帧，每个缩略图都要真的读一段
+ * 视频数据（实测约 64–200KB）。一页几十个视频就会把带宽占满 ——
+ * 实测 62 个视频缩略图一次拉走 12.6MB，在慢机器上表现成「媒体库点啥都没反应」。
+ * 有了真缩略图之后，媒体库只加载一张小图，**完全不碰视频文件**。
+ *
+ * 与 createThumbnail 一样走内存，绕开 sharp 的文件句柄缓存（Windows 上会锁文件）。
+ */
+export async function saveVideoThumbnail(id: number, source: Buffer): Promise<string | null> {
+  const media = await prisma.media.findUnique({
+    where: { id },
+    select: { id: true, path: true, type: true },
+  });
+  if (!media || media.type !== "video") {
+    return null;
+  }
+
+  // path 是我们自己写进去的 /media/xxx，仍做一次防御性检查
+  const relative = media.path.replace(/^\/media\//, "").replaceAll("\\", "/");
+  if (!relative || relative.split("/").some((segment) => segment.startsWith("."))) {
+    return null;
+  }
+
+  try {
+    const thumbRelative = `${relative.replace(/\.[^.]+$/, "")}.thumb.webp`;
+    const target = path.join(MEDIA_DIR, thumbRelative);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+
+    const output = await sharp(source, { animated: false, failOn: "none" })
+      .resize({ width: 640, height: 640, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 78 })
+      .toBuffer();
+
+    await fs.writeFile(target, output);
+
+    const publicThumb = toPublicPath(thumbRelative);
+    await prisma.media.update({ where: { id }, data: { thumb: publicThumb } });
+    return publicThumb;
+  } catch (error) {
+    console.error("[media] 保存视频封面失败：", id, error);
+    return null;
+  }
+}
+
 export type CompletedUpload = {
   id: number;
   path: string;

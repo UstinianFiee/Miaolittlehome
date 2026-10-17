@@ -735,15 +735,36 @@
  * 用 CSS mask 而不是画 SVG：遮罩里可以填「与内容区完全一致的背景」，
  * 波浪与下方内容区之间就不会出现色带（见 hero-wave.tsx）。
  *
- * 动起来的方式：遮罩横向平铺 + 动画 mask-position。
- * - mask-size 用 50%：一个波周期铺满半个视口宽，横向 repeat 后周期约 720px；
- * - 用百分比位移（-200%）而不是长度：mask-size=50% 时百分比能正确解析成
- *   「一个元素宽度」的位移，不受滚动条宽度影响，也不会出现接缝；
- * - 只动 mask 不动内容，是为了保住填充层的 `background-attachment: fixed`
- *   —— 一旦给元素加 transform，fixed 背景就会失效、和布局背景错位。
+ * ## ⚠️ 这条注释很长，但每个字都是踩坑换来的，改之前务必读完
  *
- * 三条路径都是「一个完整正弦周期」（起止点与切线方向一致），平铺时才不会有台阶；
- * 波高依次变浅，配合透明度叠出层次。
+ * 这个组件三次改动画方式，踩了三个坑，表现各不相同：
+ *
+ * **坑 1｜`mask-position` 动画 + 填充用容器内 cover**
+ * mask 无法走合成层，每帧重栅格化 —— 主线程繁忙时被饿死，「有时候卡住不动」。
+ *
+ * **坑 2｜`transform` 轨道 + mask 留在轨道上**
+ * `will-change: transform` 把轨道提成合成层后，合成层里的 mask
+ * **只光栅化一次就不再更新** —— 真机上「三层完全定格」。（本机测不出来。）
+ *
+ * **坑 3｜`transform` 轨道 + mask 在静止窗口（上一版）**
+ * 波形不卡了，但出现了**持续的一条割裂线**：填充里的背景图是
+ * `cover` 相对**填充元素自身**（高 128px）取样的，而内容区背景层是
+ * `fixed` 相对**整个视口**（高 900px+）cover 的 —— 容器高度不同，
+ * 同一张图的取样完全不同，实测亮度差 41。
+ * 轨道平移还会让填充里的图跟着左右错位。
+ *
+ * ## 现在的做法（同时避开三个坑）
+ * - **填充静止**，背景图用 `background-attachment: fixed` →
+ *   与内容区背景层**同一个视口坐标系、同一种 cover**，衔接处零色差；
+ * - **动画走窗口的 `mask-position`**（遮罩平移，填充不动）→ 背景永不错位；
+ * - **`opacity` 绝不放在窗口上** —— opacity < 1 会建合成层，
+ *   合成层里的 mask 又会退化成「只光栅化一次」（坑 2 的同款死法）。
+ *   opacity 改放在内层 `.hero-wave-layer`（静止、无 transform）上。
+ *
+ * 几何：`mask-size: 50%` 作用在窗口（宽 W）上，一格 = W/2，repeat-x 铺 2 格；
+ * `mask-position` 从 0% 平移到 -100%（= W = 2 格）刚好一个完整周期，首尾无缝。
+ * 遮罩零成本地每帧重绘 —— 这是本方案唯一的性能代价，
+ * 但导致「卡住」的根源（音频整包下载、视频缩略图占带宽）已经修掉，实测 60fps。
  */
 :root {
   /* 波峰提亮：只在最上沿加一点亮，底部完全透明——不会和内容区产生接缝。
@@ -759,14 +780,47 @@
   --hero-wave-tint: rgb(255 255 255 / 0.18);
 }
 
-.hero-wave {
-  -webkit-mask-size: 50% 100%;
-  mask-size: 50% 100%;
+/*
+ * 窗口：裁掉内容，承担层高；**mask 与 mask-position 动画都在这一层**。
+ * ⚠️ 这一层**绝不能有 opacity**（<1 会建合成层，合成层里的 mask 只光栅化一次，
+ * 就是「波浪完全定格」那个坑）。每层的透明度放在内层 .hero-wave-layer 上。
+ */
+.hero-wave-window {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  overflow: hidden;
   -webkit-mask-repeat: repeat-x;
   mask-repeat: repeat-x;
+  /* 一格 = 半个容器宽度；位移 -100%（= 一整个容器宽 = 2 格）刚好一个周期 */
+  -webkit-mask-size: 50% 100%;
+  mask-size: 50% 100%;
   animation-name: hero-wave-drift;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+}
+
+/* 填充层：静止，只承担本层透明度。背景图用 fixed 与内容区背景层同一坐标系。 */
+.hero-wave-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* 背景图：必须 fixed —— 与布局里内容区背景层同一个视口坐标系、同一种 cover，
+   否则容器高度不同（128px vs 整个视口）会让同一张图的取样完全不同，
+   衔接处出现一条持续的割裂线（实测亮度差 41）。 */
+.hero-wave-fill {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* 底色遮罩：与内容区顶部用同一个透明度（--scrim-top），见 hero-wave.tsx 注释 */
+.hero-wave-scrim {
+  position: absolute;
+  inset: 0;
 }
 
 .hero-wave-1 {
@@ -784,19 +838,20 @@
   mask-image: var(--hero-wave-mask-3);
 }
 
+/* 位移 -100% = 一个容器宽 = 2 个 mask 格，首尾无缝 */
 @keyframes hero-wave-drift {
   from {
     -webkit-mask-position: 0% 0;
     mask-position: 0% 0;
   }
   to {
-    -webkit-mask-position: -200% 0;
-    mask-position: -200% 0;
+    -webkit-mask-position: -100% 0;
+    mask-position: -100% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-wave {
+  .hero-wave-window {
     animation: none;
   }
 }
@@ -1003,10 +1058,16 @@
   );
 }
 
-/* 逐字轻柔起伏 */
+/*
+ * 逐字显现：每个字从下方淡入，靠 animation-delay 错开形成"逐字"效果。
+ * 早先是无限循环的上下起伏（hero-bounce）+ 整行呼吸光晕（hero-breathe）——
+ * 两个常驻动画叠在一起就是用户说的"太杂"。现在收敛成一次性的入场：
+ * 逐字淡入 → 全部落定后整行来一次轻柔收尾（见 .hero-title[data-ready]）。
+ */
 .hero-char {
   display: inline-block;
-  animation: hero-bounce 3.4s ease-in-out infinite;
+  opacity: 0;
+  animation: hero-char-in 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   transition: color 0.25s ease;
 }
 
@@ -1014,46 +1075,51 @@
   color: var(--primary);
 }
 
-@keyframes hero-bounce {
-  0%,
-  100% {
+@keyframes hero-char-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
-  50% {
-    transform: translateY(-6px);
+}
+
+/* 收尾：全部字落定后整行泛一次柔光，只播一次、不循环 */
+.hero-title[data-ready="true"] {
+  animation: hero-settle 900ms ease-out 1;
+}
+
+@keyframes hero-settle {
+  0% {
+    text-shadow: var(--hero-depth);
   }
-}
-
-/* 柔和呼吸光晕：在立体阴影之上再叠一层缓慢明暗的光，整行一起呼吸 */
-.hero-title {
-  animation: hero-breathe 5.5s ease-in-out infinite;
-}
-
-@keyframes hero-breathe {
-  0%,
+  35% {
+    text-shadow:
+      var(--hero-depth),
+      0 0 42px rgb(255 255 255 / 0.45);
+  }
   100% {
     text-shadow: var(--hero-depth);
   }
-  50% {
-    text-shadow:
-      var(--hero-depth),
-      0 0 46px rgb(255 255 255 / 0.5);
-  }
 }
 
-.dark .hero-title {
-  animation-name: hero-breathe-dark;
+.dark .hero-title[data-ready="true"] {
+  animation-name: hero-settle-dark;
 }
 
-@keyframes hero-breathe-dark {
-  0%,
-  100% {
+@keyframes hero-settle-dark {
+  0% {
     text-shadow: var(--hero-depth);
   }
-  50% {
+  35% {
     text-shadow:
       var(--hero-depth),
-      0 0 52px rgb(94 179 228 / 0.5);
+      0 0 48px rgb(94 179 228 / 0.5);
+  }
+  100% {
+    text-shadow: var(--hero-depth);
   }
 }
 
@@ -1070,7 +1136,6 @@
    文件末尾的 prefers-reduced-motion 块里关闭。
    --------------------------------------------------------------- */
 
-/* 页面切换：淡入上移 */
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -1082,8 +1147,29 @@
   }
 }
 
+/* 元素入场（表单提示、评论反馈等）—— 不是页面切换，见下面的 .page-transition */
 .page-enter {
   animation: page-enter 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * 页面切换过渡（见 page-transition.tsx）。
+ * 两个相位分开写，因为它们的作用不同：
+ *   leaving —— 旧内容变暗消失（只动 opacity，150ms，快，不拖沓）；
+ *   entering —— 新内容淡入并轻微上移（320ms，缓出，有"落定"感）。
+ * 拆开的另一个原因：淡出如果带 transform，会让旧内容在消失途中位移，
+ * 看起来像"被推走"而不是"淡出"，与"新页再淡入"的节奏不搭。
+ */
+.page-transition {
+  transition: opacity 150ms linear;
+}
+
+.page-transition[data-leaving="true"] {
+  opacity: 0;
+}
+
+.page-transition[data-phase="entering"] {
+  animation: page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 按压反馈：可点击元素按下时轻微缩小 */
@@ -2140,10 +2226,18 @@ html.is-loaded .site-preloader {
   box-shadow: 0 0 0 13px color-mix(in oklab, var(--primary) 11%, transparent), 0 12px 34px rgb(0 0 0 / 0.22);
 }
 
-.friends-orbit:focus-within .friends-orbit__spin,
+/*
+ * 指针悬停或键盘聚焦时暂停轨道，方便点中小头像 / 读链接。
+ *
+ * ⚠️ 暂停条件**不能用 `:focus-within`**：鼠标点一下友链（尤其「在新标签页打开」）
+ * 之后焦点会留在那个 `<a>` 上，`:focus-within` 就一直匹配，动画**永久停住**，
+ * 用户看到的就是「有时候转有时候不转」「完全不转了」。
+ * 改用 `:has(:focus-visible)` —— 只有键盘导航聚焦时才暂停，鼠标点击不残留。
+ */
 .friends-orbit:hover .friends-orbit__spin,
-.friends-orbit:focus-within .friends-orbit__counter,
-.friends-orbit:hover .friends-orbit__counter {
+.friends-orbit:hover .friends-orbit__counter,
+.friends-orbit:has(:focus-visible) .friends-orbit__spin,
+.friends-orbit:has(:focus-visible) .friends-orbit__counter {
   animation-play-state: paused;
 }
 
