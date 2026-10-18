@@ -20,7 +20,12 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: S
   const type = KINDS.includes(typeParam as MediaKind) ? (typeParam as MediaKind) : null;
   const albumId = params.album === undefined ? undefined : Number(params.album) || null;
 
-  const [items, albums] = await Promise.all([listMedia({ type, albumId }), listAlbums()]);
+  /*
+   * 一次把媒体元数据读出来，交给客户端做类型/相册/关键词筛选和分页。
+   * 之前每次点筛选都用 router.push 触发整页 RSC + 重新挂载 200 张卡片，
+   * 媒体一多就会明显卡住；现在切换筛选不再走服务端。
+   */
+  const [items, albums] = await Promise.all([listMedia({ limit: 500 }), listAlbums()]);
 
   const listItems: MediaItem[] = items.map((item) => ({
     id: item.id,
@@ -39,6 +44,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: S
     <MediaManager
       items={listItems}
       type={type ?? "all"}
+      initialAlbum={albumId === undefined || albumId === null ? "all" : String(albumId)}
       albums={albums.map((album) => ({ id: album.id, name: album.name }))}
     />
   );

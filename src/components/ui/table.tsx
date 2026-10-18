@@ -1,19 +1,62 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const t = useTranslations()
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [scrollable, setScrollable] = React.useState(false)
+  const [atEnd, setAtEnd] = React.useState(true)
+
+  React.useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const update = () => {
+      const canScroll = el.scrollWidth > el.clientWidth + 2
+      setScrollable(canScroll)
+      setAtEnd(!canScroll || el.scrollLeft + el.clientWidth >= el.scrollWidth - 2)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    el.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
+    return () => {
+      observer.disconnect()
+      el.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+    }
+  }, [])
+
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
+    <div className="relative">
+      <div
+        ref={containerRef}
+        data-slot="table-container"
+        className="relative w-full overflow-x-auto"
+      >
+        <table
+          data-slot="table"
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
+      </div>
+      {scrollable && !atEnd ? (
+        <>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[color:var(--card)] to-transparent lg:hidden"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute right-2 bottom-1.5 rounded-full border border-border/50 bg-[color:var(--card)]/90 px-1.5 py-0.5 text-[0.6rem] text-muted-foreground shadow-sm lg:hidden"
+          >
+            {t("site.tableScrollHint")}
+          </span>
+        </>
+      ) : null}
     </div>
   )
 }

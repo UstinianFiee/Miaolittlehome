@@ -30,13 +30,13 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       return;
     }
     setPhase("leaving");
-    const toEnter = window.setTimeout(() => setPhase("entering"), 150);
+    const toEnter = window.setTimeout(() => setPhase("entering"), 140);
     return () => window.clearTimeout(toEnter);
   }, [pathname]);
 
   React.useEffect(() => {
     if (phase !== "entering") return;
-    const toIdle = window.setTimeout(() => setPhase("idle"), 320);
+    const toIdle = window.setTimeout(() => setPhase("idle"), 400);
     return () => window.clearTimeout(toIdle);
   }, [phase]);
 

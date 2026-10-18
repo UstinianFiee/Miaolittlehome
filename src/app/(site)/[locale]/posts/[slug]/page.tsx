@@ -1,4 +1,11 @@
-import { ArrowLeftIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  ClockIcon,
+  FileTextIcon,
+  FolderIcon,
+  UserIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -20,6 +27,7 @@ import { listApprovedComments } from "@/lib/comments";
 import { pickLocalized } from "@/lib/localized";
 import { extractMarkdownHeadings, renderMarkdown } from "@/lib/markdown";
 import { buildAlternates } from "@/lib/metadata";
+import { resizedImageUrl } from "@/lib/image-url";
 import { getPublishedPostBySlug, listPublishedSlugs } from "@/lib/query";
 import { getSiteInfo } from "@/lib/settings";
 
@@ -82,6 +90,23 @@ export default async function PostPage({ params }: PostPageProps) {
   const title = pickLocalized(locale, post.title, post.titleEn);
   const summary = pickLocalized(locale, post.summary, post.summaryEn);
   const isUpdated = post.updatedAt.getTime() - post.createdAt.getTime() > 60_000;
+  /*
+   * 字数 / 阅读时长：从渲染后的 HTML 去标签统计。
+   * 中文按「字」算、英文按「词」算，速度分别取 400 字/分、220 词/分（博客的常用估算）。
+   * 只是参考信息，不需要精确；最小显示 1 分钟。
+   */
+  const plainText = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const isZh = locale.startsWith("zh");
+  const wordCount = isZh
+    ? Array.from(plainText).length
+    : plainText
+      ? plainText.split(/\s+/).length
+      : 0;
+  const readingMinutes = Math.max(1, Math.ceil(wordCount / (isZh ? 400 : 220)));
 
   return (
     /*
@@ -104,73 +129,112 @@ export default async function PostPage({ params }: PostPageProps) {
         {/*
           正文卡片 + 右侧粘性目录。目录放侧边栏，阅读区不再插入额外区块，
           窄屏隐藏目录，正文保持单列；文章进度仍按整张 #article-body 计算。
+
+          2026-10-18 改版：文章封面放在卡片最顶部**通栏大图**，下接标题/正文。
+          封面不再缺席，也不再被挤成列表里的小缩略图；同时把阅读面板换成
+          更通透的 `.article-panel`（半透明 + 大模糊），在有内容区背景图时
+          能透出背景，接近参考站点的"封面 + 玻璃面板"观感。
         */}
-        <div id="article-body" className="surface-glass p-5 sm:p-8">
-          <div className={`grid items-start gap-8 ${headings.length > 0 ? "lg:grid-cols-[minmax(0,1fr)_15rem]" : ""}`}>
-            <div className="min-w-0">
-              {/* 标题居中，下面一行是发布时间 / 作者 / 分类 / 浏览，再用分隔线切到正文 */}
-              <header className="mb-8 text-center">
-                <h1 className="font-display text-3xl leading-snug text-balance sm:text-4xl">{title}</h1>
+        <div id="article-body" className="surface-glass article-panel overflow-hidden p-0">
+          {post.cover ? (
+            <figure className="article-cover">
+              {/* 封面是装饰性主图，标题已在下方；alt 留空避免读屏重复 */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={resizedImageUrl(post.cover, 1280)}
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </figure>
+          ) : null}
 
-                {summary ? (
-                  <p className="mx-auto mt-4 max-w-2xl text-muted-foreground text-balance">{summary}</p>
-                ) : null}
+          <div className="p-5 sm:p-8">
+            <div className={`grid items-start gap-8 ${headings.length > 0 ? "lg:grid-cols-[minmax(0,1fr)_15rem]" : ""}`}>
+              <div className="min-w-0">
+                {/* 标题居中，下面一行是发布时间 / 作者 / 分类 / 浏览，再用分隔线切到正文 */}
+                <header className="mb-8 text-center">
+                  <h1 className="font-display text-3xl leading-snug text-balance sm:text-4xl">{title}</h1>
 
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
-                  <span>
-                    {t("site.publishedAt")} <DualTime date={post.createdAt} />
-                  </span>
-                  <span aria-hidden className="opacity-50">·</span>
-                  <span>
-                    {t("site.author")} {site.author}
-                  </span>
-                  {isUpdated ? (
-                    <>
-                      <span aria-hidden className="opacity-50">·</span>
-                      <span>
-                        {t("site.updatedAt")} <DualTime date={post.updatedAt} />
-                      </span>
-                    </>
+                  {summary ? (
+                    <p className="mx-auto mt-4 max-w-2xl text-muted-foreground text-balance">{summary}</p>
                   ) : null}
-                  {post.category ? (
-                    <>
-                      <span aria-hidden className="opacity-50">·</span>
-                      <Link
-                        href={`/categories/${post.category.id}`}
-                        className="underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        {pickLocalized(locale, post.category.name, post.category.nameEn)}
-                      </Link>
-                    </>
-                  ) : null}
-                  <span aria-hidden className="opacity-50">·</span>
-                  <ViewCounter slug={post.slug} initialViews={post.views} />
-                </div>
 
-                {post.tags.length > 0 ? (
-                  <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-                    {post.tags.map(({ tag }) => (
-                      <Link key={tag.id} href={`/tags/${tag.slug}`}>
-                        <Badge variant="secondary">{tag.name}</Badge>
-                      </Link>
-                    ))}
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarIcon className="size-3.5 shrink-0" aria-hidden />
+                      {t("site.publishedAt")} <DualTime date={post.createdAt} />
+                    </span>
+                    <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <UserIcon className="size-3.5 shrink-0" aria-hidden />
+                      {site.author}
+                    </span>
+                    {isUpdated ? (
+                      <>
+                        <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                        <span className="inline-flex items-center gap-1">
+                          <ClockIcon className="size-3.5 shrink-0" aria-hidden />
+                          {t("site.updatedAt")} <DualTime date={post.updatedAt} />
+                        </span>
+                      </>
+                    ) : null}
+                    {post.category ? (
+                      <>
+                        <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                        <Link
+                          href={`/categories/${post.category.id}`}
+                          className="inline-flex items-center gap-1 underline-offset-4 hover:text-primary hover:underline"
+                        >
+                          <FolderIcon className="size-3.5 shrink-0" aria-hidden />
+                          {pickLocalized(locale, post.category.name, post.category.nameEn)}
+                        </Link>
+                      </>
+                    ) : null}
+                    <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                    <ViewCounter slug={post.slug} initialViews={post.views} />
                   </div>
-                ) : null}
 
-                <hr className="mt-7 border-0 border-t border-border/70" />
-              </header>
+                  {/* 第二行只放字数 / 阅读时长，避免和上面的元信息挤成不规律的两行 */}
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <FileTextIcon className="size-3 shrink-0" aria-hidden />
+                      {t("site.wordCount", { count: wordCount })}
+                    </span>
+                    <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <ClockIcon className="size-3 shrink-0" aria-hidden />
+                      {t("site.readingTime", { minutes: readingMinutes })}
+                    </span>
+                  </div>
 
-              <MarkdownContent html={html} />
-              <CodeCopy />
+                  {post.tags.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                      {post.tags.map(({ tag }) => (
+                        <Link key={tag.id} href={`/tags/${tag.slug}`}>
+                          <Badge variant="secondary">{tag.name}</Badge>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <hr className="mt-7 border-0 border-t border-border/70" />
+                </header>
+
+                <MarkdownContent html={html} />
+                <CodeCopy />
+              </div>
+
+              {headings.length > 0 ? (
+                <aside className="hidden self-stretch lg:block">
+                  <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto">
+                    <ArticleToc headings={headings} title={t("site.articleContents")} />
+                  </div>
+                </aside>
+              ) : null}
             </div>
-
-            {headings.length > 0 ? (
-              <aside className="hidden self-stretch lg:block">
-                <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto">
-                  <ArticleToc headings={headings} title={t("site.articleContents")} />
-                </div>
-              </aside>
-            ) : null}
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadIcon } from "lucide-react";
+import { SearchIcon, UploadIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uploadFileInChunks } from "@/lib/client-upload";
+import { cn } from "@/lib/utils";
 import { attachVideoThumbnail } from "@/lib/video-thumb-client";
 
 export type MediaOption = { id: number; path: string; title: string };
@@ -30,6 +31,7 @@ export function MediaField({
   options,
   accept = "image/*",
   preview = "image",
+  compact = false,
 }: {
   id: string;
   label: string;
@@ -42,12 +44,33 @@ export function MediaField({
   accept?: string;
   /** 预览方式：图片用 img，视频用 video */
   preview?: "image" | "video";
+  /** 缩小预览，适合列表里一排排的曲目封面 */
+  compact?: boolean;
 }) {
   const t = useTranslations();
   const [open, setOpen] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const [filter, setFilter] = React.useState("");
   const fileRef = React.useRef<HTMLInputElement>(null);
+
+  const filteredOptions = React.useMemo(() => {
+    const needle = filter.trim().toLowerCase();
+    if (!needle) {
+      return options;
+    }
+    return options.filter(
+      (option) =>
+        option.title.toLowerCase().includes(needle) ||
+        option.path.toLowerCase().includes(needle)
+    );
+  }, [filter, options]);
+
+  React.useEffect(() => {
+    if (!open) {
+      setFilter("");
+    }
+  }, [open]);
 
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -149,13 +172,22 @@ export function MediaField({
       {value ? (
         preview === "video" ? (
           // eslint-disable-next-line jsx-a11y/media-has-caption
-          <video src={value} muted playsInline controls className="max-h-40 w-auto rounded border border-border" />
+          <video
+            src={value}
+            muted
+            playsInline
+            controls
+            className={cn("w-auto rounded border border-border", compact ? "max-h-24" : "max-h-40")}
+          />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={value}
             alt=""
-            className="max-h-24 w-auto rounded border border-border object-contain"
+            className={cn(
+              "w-auto rounded border border-border object-contain",
+              compact ? "max-h-16" : "max-h-24"
+            )}
           />
         )
       ) : null}
@@ -166,39 +198,59 @@ export function MediaField({
             {preview === "video" ? t("adminSite.noVideo") : t("adminSite.noImage")}
           </p>
         ) : (
-          <div className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto rounded border border-border p-2 sm:grid-cols-4">
-            {options.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                title={option.title}
-                onClick={() => {
-                  onChange(option.path);
-                  setOpen(false);
-                }}
-                className="overflow-hidden rounded border border-border transition-colors hover:border-primary"
-              >
-                {preview === "video" ? (
-                  <VideoThumb
-                    src={option.path}
-                    className="aspect-square w-full object-cover"
-                    fallback={
-                      <span className="flex aspect-square w-full items-center justify-center bg-muted/40 p-1 text-[0.6rem] break-all text-muted-foreground">
-                        {option.title}
-                      </span>
-                    }
-                  />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={option.path}
-                    alt={option.title}
-                    loading="lazy"
-                    className="aspect-square w-full object-cover"
-                  />
-                )}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <div className="relative">
+              <SearchIcon
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                placeholder={t("media.searchPlaceholder")}
+                aria-label={t("media.searchPlaceholder")}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+
+            {filteredOptions.length === 0 ? (
+              <p className="text-xs text-muted-foreground">{t("media.noResults")}</p>
+            ) : (
+              <div className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto rounded border border-border p-2 sm:grid-cols-4">
+                {filteredOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    title={option.title}
+                    onClick={() => {
+                      onChange(option.path);
+                      setOpen(false);
+                    }}
+                    className="overflow-hidden rounded border border-border transition-colors hover:border-primary"
+                  >
+                    {preview === "video" ? (
+                      <VideoThumb
+                        src={option.path}
+                        className="aspect-square w-full object-cover"
+                        fallback={
+                          <span className="flex aspect-square w-full items-center justify-center bg-muted/40 p-1 text-[0.6rem] break-all text-muted-foreground">
+                            {option.title}
+                          </span>
+                        }
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={option.path}
+                        alt={option.title}
+                        loading="lazy"
+                        className="aspect-square w-full object-cover"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )
       ) : null}

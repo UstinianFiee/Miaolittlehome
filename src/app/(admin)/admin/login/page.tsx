@@ -35,7 +35,7 @@ export default async function AdminLoginPage() {
           className="absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(1000px 520px at 50% 0%, color-mix(in oklab, var(--primary) 26%, transparent), transparent 70%)",
+              "radial-gradient(1000px 520px at 50% 0%, color-mix(in oklab, var(--brand) 22%, transparent), transparent 70%)",
           }}
         />
       )}

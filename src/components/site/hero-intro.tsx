@@ -39,7 +39,7 @@ export function HeroIntro({
         aria-hidden={!ready}
       >
         {subtitle && ready ? (
-          <p className="hero-subtitle font-display mt-6 text-lg sm:text-2xl">
+          <p className="hero-subtitle font-display mt-6 max-w-3xl text-lg text-balance sm:text-2xl">
             <Typewriter text={subtitle} />
           </p>
         ) : (
@@ -51,7 +51,7 @@ export function HeroIntro({
 
       <a
         href="#home-content"
-        className="absolute bottom-24 z-10 flex flex-col items-center gap-1.5 text-white/70 transition-opacity duration-500 hover:text-white sm:bottom-40"
+        className="absolute bottom-28 z-10 flex flex-col items-center gap-1.5 text-white/70 transition-opacity duration-500 hover:text-white sm:bottom-44"
         style={{ opacity: ready ? 1 : 0 }}
         tabIndex={ready ? undefined : -1}
         aria-hidden={!ready}

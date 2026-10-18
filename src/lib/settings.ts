@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { cache } from "react";
+
 import { siteConfig } from "@/config/site";
 import { prisma } from "@/lib/prisma";
 
@@ -210,7 +212,12 @@ function parseBackgrounds(raw: string | undefined, legacy: string): string[] {
   return legacy ? [legacy] : [];
 }
 
-export async function getSiteInfo(): Promise<SiteInfo> {
+/*
+ * 同一请求里布局、generateMetadata、页面可能各调一次 getSiteInfo；
+ * 用 React cache 按请求去重，避免后台每页重复查 Setting 表。
+ * 注意：只在单次请求内缓存，后台保存后下个请求仍会读到新值。
+ */
+export const getSiteInfo = cache(async (): Promise<SiteInfo> => {
   const settings = await getAllSettings();
   const logo = settings[SITE_LOGO_KEY]?.trim() || "";
   const favicon = settings[SITE_FAVICON_KEY]?.trim() || "";
@@ -235,7 +242,7 @@ export async function getSiteInfo(): Promise<SiteInfo> {
     police: settings[SITE_POLICE_KEY]?.trim() || "",
     policeLink: settings[SITE_POLICE_LINK_KEY]?.trim() || "",
   };
-}
+});
 
 /**
  * 站点配置版本号：把所有 `site.*` 设置按 key 排序后取哈希。

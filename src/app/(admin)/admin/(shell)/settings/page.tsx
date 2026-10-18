@@ -36,9 +36,36 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="space-y-8">
-      <SiteSettingsManager initial={site} images={imageOptions} videos={videoOptions} />
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight">
+          {catalogs.zh.admin.nav.settings}
+        </h1>
+        <p className="text-sm text-muted-foreground">{catalogs.zh.adminSite.pageHint}</p>
+      </div>
 
-      <ProfileManager initial={profile} images={imageOptions} />
+      {/* 长表单锚点导航：不用来回滚动找「个人资料」 */}
+      <nav className="flex flex-wrap gap-1 rounded-lg border border-border/60 bg-card p-1.5 text-sm">
+        <a
+          href="#site-settings"
+          className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          {catalogs.zh.adminSite.title}
+        </a>
+        <a
+          href="#profile-settings"
+          className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          {catalogs.zh.adminProfile.title}
+        </a>
+      </nav>
+
+      <div id="site-settings" className="scroll-mt-28">
+        <SiteSettingsManager initial={site} images={imageOptions} videos={videoOptions} />
+      </div>
+
+      <div id="profile-settings" className="scroll-mt-28">
+        <ProfileManager initial={profile} images={imageOptions} />
+      </div>
     </div>
   );
 }

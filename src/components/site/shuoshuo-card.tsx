@@ -13,23 +13,24 @@ import { parseImages, type ShuoshuoRecord } from "@/lib/shuoshuo";
  *
  * ## 尾巴为什么长这样
  *
- * 尾巴是 .bubble 内的绝对定位 SVG，不占布局空间；.bubble-tail 叠在气泡边框上。
+ * 尾巴是 `.bubble` 的**兄弟节点**（`position: absolute`，不占布局），不是气泡内部元素。
+ * 旋转 45° 的方块只露左半边，根部被气泡矩形遮住 —— 这样气泡边框天然连续，
+ * 不会出现「用 SVG 去补边框」时常见的亚像素接缝（见 globals.css 的 `.bubble-tail` 注释）。
  *
- * 1. viewBox 为 0 0 17 20，根部 x=13.5；left=-14.5px 计入父级 1px 边框，
- *    使根部与气泡左边框对齐。闭合填充延至 x=17，覆盖连接段并伸入气泡内部。
- * 2. 描边使用另一条不闭合的路径，只画两段外沿曲线，不画根部竖线。
+ * ## 署名
  *
- * `--bubble-bg` 必须不透明且与气泡底色一致，防止被覆盖的边框透出或重叠处变暗。
+ * 气泡顶部显示的是**作者名**（`profile.name` → 站点 `author` 兜底），不是站点名；
+ * 站点名只出现在导航 / 页脚。
  */
 export function ShuoshuoCard({
   item,
   locale,
-  siteName,
+  authorName,
   avatar,
 }: {
   item: ShuoshuoRecord;
   locale: string;
-  siteName: string;
+  authorName: string;
   /** 头像：取「关于」页设置的那个，没设再回退到站点 Logo */
   avatar?: string;
 }) {
@@ -59,13 +60,9 @@ export function ShuoshuoCard({
 
       <div className="min-w-0 flex-1">
         <div className="relative">
+          <span aria-hidden className="bubble-tail" />
           <div className="bubble relative px-4 py-4 sm:px-5">
-            {/* 覆盖气泡左边框的连接段，只描两条曲线，不能描闭合根部。 */}
-            <svg aria-hidden viewBox="0 0 17 20" className="bubble-tail">
-              <path d="M13.5 1 C11 5 6 8 2 10 C6 12 11 15 13.5 19 L17 19 L17 1 Z" fill="var(--bubble-bg)" />
-              <path d="M13.5 1 C11 5 6 8 2 10 C6 12 11 15 13.5 19" fill="none" stroke="var(--bubble-border)" strokeWidth="1" strokeLinecap="round" />
-            </svg>
-            <p className="bubble-author mb-2 text-sm break-words">{siteName}</p>
+            <p className="bubble-author mb-2 text-sm break-words">{authorName}</p>
             <p className="text-sm leading-7 break-words whitespace-pre-wrap">{content}</p>
 
             {images.length > 0 ? (

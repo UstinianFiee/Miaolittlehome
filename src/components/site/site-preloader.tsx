@@ -1,80 +1,82 @@
 /**
- * 访问博客时的进场加载动画。
+ * 访问博客时的进场加载动画（2026-10-18 品牌化改版）。
  *
  * ## 为什么用「服务端出标记 + CSS 控制」而不是纯客户端
  *
  * 前台是 ISR 静态页，命中小页面几十毫秒就出来了。客户端方案有个绕不开的坑：
  * **JS 下载并执行完才会显示加载动画** —— 而慢网络下 JS 恰恰是最后到的，
- * 于是"加载动画"永远赶不上真正需要它的那段空白。
+ * 于是「加载动画」永远赶不上真正需要它的那段空白。
  *
  * 所以这里的做法是**默认显示、加载完再隐藏**：
  * 1. 遮罩的可见性**只由 CSS 决定**，服务端渲染的 HTML 里就带着它（不依赖 JS）；
  * 2. 一小段内联脚本在合适时机给 `<html>` 加 `is-loaded`，遮罩随之淡出；
  * 3. 另有硬上限兜底，页面里图片再多也不会一直转。
  *
- * ## 为什么"合适时机"不是 `load`
+ * ## 视觉
  *
- * `load` 要等**全部图片、字体**下完。首页有封面和背景图，实测 `load` 可能拖到十几秒，
- * 遮罩就会一直盖着已经能看的内容 —— 用户看到的是"整页闪一下白"。
- * 所以改成：`DOMContentLoaded` 后再给一小段宽限（让首屏内容落位），或者 `load` 提前到达，
- * 二者取先到者；硬上限也从 3 秒收到 1.2 秒。
+ * 以站点 Logo / 个人头像为绝对主角：
+ * - 中央一块带品牌渐变的「徽章」，Logo/头像在里面轻轻呼吸、上下浮动；
+ * - 外圈两层反向旋转的细环 + 两颗沿轨道运行的品牌光点；
+ * - 背后一团缓慢旋转的极光，给暗色开屏一点层次；
+ * - 下方站名 + 一条很短的流光进度条。
  *
- * 遮罩本身设成 `pointer-events: none`（见 globals.css）：它只是视觉过渡，
- * 不应该在出现的那段时间里把点击全部吞掉。
- *
- * 它挂在站点布局里，客户端路由切换不会重新挂载，所以不会反复播；
- * 页面内的导航反馈由 `RouteProgress` 顶部进度条负责。
+ * 纯 CSS，不新增客户端 JS；减少动效时全部停住。
  */
-const GRACE_MS = 400;
+const MIN_VISIBLE_MS = 520;
 const FAILSAFE_MS = 1200;
 
-export function SitePreloader({ logo, siteName }: { logo?: string; siteName: string }) {
+export function SitePreloader({
+  image,
+  siteName,
+}: {
+  /** 站点 Logo；没有 Logo 时由布局传入个人头像 */
+  image?: string;
+  siteName: string;
+}) {
+  const glyph = Array.from(siteName.trim())[0] ?? "·";
+
   return (
     <>
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){var d=document.documentElement;
-function done(){if(!d.classList.contains("is-loaded")){d.classList.add("is-loaded");}}
-function arm(){setTimeout(done,${GRACE_MS});}
-if(document.readyState==="complete"){done();}
-else{
-  window.addEventListener("load",done,{once:true});
-  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",arm,{once:true});}
-  else{arm();}
-  setTimeout(done,${FAILSAFE_MS});
-}})();`,
+          __html: `(function(){var d=document.documentElement,start=Date.now();
+function finish(){var wait=Math.max(0,${MIN_VISIBLE_MS}-(Date.now()-start));setTimeout(function(){if(!d.classList.contains("is-loaded")){d.classList.add("is-loaded");}},wait);}
+if(document.readyState==="complete"){finish();}
+else{window.addEventListener("load",finish,{once:true});setTimeout(finish,${FAILSAFE_MS});}})();`,
         }}
       />
       <div
         aria-hidden
         data-testid="site-preloader"
-        className="site-preloader fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4"
-        style={{ backgroundColor: "var(--background)" }}
+        className="site-preloader fixed inset-0 z-[100] flex flex-col items-center justify-center"
       >
-        {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logo}
-            alt=""
-            width={72}
-            height={72}
-            className="preloader-pulse size-18 rounded-xl border border-border/60 object-cover"
-          />
-        ) : (
-          <span
-            aria-hidden
-            className="preloader-pulse block size-14 rounded-full bg-primary ring-4 ring-primary/20"
-          />
-        )}
+        <div className="preloader-brand">
+          <span className="preloader-aura" />
+          <span className="preloader-orbit preloader-orbit--outer" />
+          <span className="preloader-orbit preloader-orbit--inner" />
+          <span className="preloader-orbit-dot preloader-orbit-dot--outer">
+            <i />
+          </span>
+          <span className="preloader-orbit-dot preloader-orbit-dot--inner">
+            <i />
+          </span>
+          <span className="preloader-glow" />
 
-        <p className="font-display text-sm text-muted-foreground">{siteName}</p>
+          <div className="preloader-medallion">
+            {image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={image} alt="" width={96} height={96} />
+            ) : (
+              <span className="preloader-glyph">{glyph}</span>
+            )}
+          </div>
+        </div>
 
-        {/* 细长的扫过条：比转圈更克制，也和站内其它加载反馈一致 */}
-        <div className="h-0.5 w-28 overflow-hidden rounded-full bg-muted">
-          <div className="preloader-bar h-full w-full rounded-full bg-primary" />
+        <p className="preloader-name">{siteName}</p>
+        <div className="preloader-track">
+          <span className="preloader-runner" />
         </div>
       </div>
     </>
   );
 }
-

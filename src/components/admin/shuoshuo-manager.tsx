@@ -305,7 +305,73 @@ export function ShuoshuoManager({
         </p>
       ) : null}
 
-      <div className="surface">
+      {/* 手机端：说说正文、图片数、发布时间与操作以卡片展示 */}
+      <div className="space-y-3 lg:hidden">
+        {items.length === 0 ? (
+          <p className="surface empty-state py-10 text-center text-sm text-muted-foreground">
+            {t("adminShuoshuo.empty")}
+          </p>
+        ) : (
+          items.map((item) => (
+            <article key={item.id} className="surface space-y-2.5 p-3">
+              <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                {item.content}
+              </p>
+              {item.location ? (
+                <p className="text-xs text-muted-foreground">{item.location}</p>
+              ) : null}
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={item.published ? "default" : "outline"}>
+                  {item.published
+                    ? t("adminShuoshuo.published")
+                    : t("adminShuoshuo.hidden")}
+                </Badge>
+                {item.pinned ? (
+                  <Badge variant="secondary">{t("adminShuoshuo.fieldPinned")}</Badge>
+                ) : null}
+                {item.images.length > 0 ? (
+                  <Badge variant="secondary">
+                    {t("adminShuoshuo.imageCount", { count: item.images.length })}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <DualTime date={item.createdAt} className="text-xs text-muted-foreground" />
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditingId(item.id);
+                      setForm({
+                        content: item.content,
+                        contentEn: item.contentEn ?? "",
+                        images: item.images,
+                        location: item.location ?? "",
+                        pinned: item.pinned,
+                        published: item.published,
+                      });
+                    }}
+                  >
+                    {t("adminShuoshuo.edit")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => void remove(item)}
+                    disabled={pending}
+                  >
+                    {t("adminShuoshuo.delete")}
+                  </Button>
+                </div>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="surface hidden lg:block">
         <Table>
           <TableHeader>
             <TableRow>

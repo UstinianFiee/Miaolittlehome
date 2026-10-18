@@ -2,21 +2,23 @@
 
 import {
   CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   CopyIcon,
   FileAudioIcon,
   FilmIcon,
   ImageIcon,
   PencilIcon,
+  SearchIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { FileUploader } from "@/components/admin/file-uploader";
 import { DualTime } from "@/components/site/dual-time";
-import { VideoThumb } from "@/components/video-thumb";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -41,6 +43,8 @@ export type MediaItem = {
 
 const FILTERS = ["all", "image", "audio", "video"] as const;
 const NO_ALBUM = "none";
+/** 每页卡片数：只渲染当前页，避免一次挂载几百个 Radix Select + 视频缩略图。 */
+const PAGE_SIZE = 24;
 
 function formatBytes(raw: string): string {
   const bytes = Number(raw);
@@ -135,38 +139,46 @@ function MediaTitle({
 }
 
 export function MediaManager({
-  items,
+  items: initialItems,
   type,
+  initialAlbum = "all",
   albums,
 }: {
   items: MediaItem[];
   type: string;
+  initialAlbum?: string;
   albums: { id: number; name: string }[];
 }) {
   const t = useTranslations();
-  const router = useRouter();
+
+  const [list, setList] = React.useState<MediaItem[]>(initialItems);
+  const [activeType, setActiveType] = React.useState(type);
+  const [albumFilter, setAlbumFilter] = React.useState(initialAlbum);
+  const [query, setQuery] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const [isPending, startTransition] = React.useTransition();
+  const deferredQuery = React.useDeferredValue(query);
 
   const [pendingId, setPendingId] = React.useState<number | null>(null);
   const [copiedId, setCopiedId] = React.useState<number | null>(null);
   const [thumbPendingId, setThumbPendingId] = React.useState<number | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  /**
-   * 给已有的视频补一张封面（上传时还没有自动抽帧功能的那些）。
-   * 抽帧在浏览器里做，一次只处理一个，不会同时拉很多视频。
-   */
-  async function makeThumb(item: MediaItem) {
-    setThumbPendingId(item.id);
-    setError(null);
+  /** 上传/补封面后拉一次最新元数据；不在每次改名、改相册、删除时整页刷新。 */
+  async function reloadItems() {
     try {
-      const ok = await backfillVideoThumbnail(item.id, item.path);
-      if (ok) {
-        router.refresh();
-      } else {
-        setError(t("media.thumbFailed"));
+      const response = await fetch("/api/admin/media?limit=500", { cache: "no-store" });
+      if (!response.ok) {
+        return;
       }
-    } finally {
-      setThumbPendingId(null);
+      const payload = (await response.json().catch(() => null)) as {
+        data?: { items?: MediaItem[] };
+      } | null;
+      if (payload?.data?.items) {
+        setList(payload.data.items);
+      }
+    } catch {
+      // 静默失败；列表仍保留旧数据，可手动刷新
     }
   }
 
@@ -176,6 +188,75 @@ export function MediaManager({
     audio: t("media.filterAudio"),
     video: t("media.filterVideo"),
   };
+
+  const filtered = React.useMemo(() => {
+    const needle = deferredQuery.trim().toLowerCase();
+    return list.filter((item) => {
+      if (activeType !== "all" && item.type !== activeType) {
+        return false;
+      }
+      if (albumFilter !== "all" && String(item.albumId ?? "") !== albumFilter) {
+        return false;
+      }
+      if (needle) {
+        const title = (item.title ?? "").toLowerCase();
+        if (!title.includes(needle) && !item.path.toLowerCase().includes(needle)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [list, activeType, albumFilter, deferredQuery]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // 筛选/搜索变化时回到第一页
+  React.useEffect(() => {
+    setPage(1);
+  }, [activeType, albumFilter, query]);
+
+  /*
+   * 用 history.replaceState 同步查询串，不触发 Next 路由。
+   * 之前这里用 router.push，每次切换都会重新请求 RSC 并重挂载所有卡片。
+   */
+  React.useEffect(() => {
+    const params = new URLSearchParams();
+    if (activeType !== "all") {
+      params.set("type", activeType);
+    }
+    if (albumFilter !== "all") {
+      params.set("album", albumFilter);
+    }
+    if (page > 1) {
+      params.set("page", String(page));
+    }
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+    const suffix = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `/admin/media${suffix ? `?${suffix}` : ""}`
+    );
+  }, [activeType, albumFilter, page, query]);
+
+  async function makeThumb(item: MediaItem) {
+    setThumbPendingId(item.id);
+    setError(null);
+    try {
+      const ok = await backfillVideoThumbnail(item.id, item.path);
+      if (ok) {
+        await reloadItems();
+      } else {
+        setError(t("media.thumbFailed"));
+      }
+    } finally {
+      setThumbPendingId(null);
+    }
+  }
 
   async function remove(item: MediaItem) {
     if (!window.confirm(t("media.deleteConfirm", { name: item.title ?? item.path }))) {
@@ -192,7 +273,8 @@ export function MediaManager({
         setError(t("media.deleteFailed", { message: payload?.error ?? "" }));
         return;
       }
-      router.refresh();
+      // 局部更新，不再整页 refresh
+      setList((prev) => prev.filter((row) => row.id !== item.id));
     } catch {
       setError(t("media.deleteFailed", { message: "" }));
     } finally {
@@ -215,7 +297,13 @@ export function MediaManager({
         setError(t("media.deleteFailed", { message: payload?.error ?? "" }));
         return;
       }
-      router.refresh();
+      const nextAlbumId = value === NO_ALBUM ? null : Number(value);
+      const albumName = albums.find((album) => album.id === nextAlbumId)?.name ?? null;
+      setList((prev) =>
+        prev.map((row) =>
+          row.id === item.id ? { ...row, albumId: nextAlbumId, albumName } : row
+        )
+      );
     } catch {
       setError(t("media.deleteFailed", { message: "" }));
     } finally {
@@ -238,7 +326,9 @@ export function MediaManager({
         setError(t("media.renameFailed", { message: payload?.error ?? "" }));
         return;
       }
-      router.refresh();
+      setList((prev) =>
+        prev.map((row) => (row.id === item.id ? { ...row, title } : row))
+      );
     } catch {
       setError(t("media.renameFailed", { message: "" }));
     } finally {
@@ -260,22 +350,63 @@ export function MediaManager({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold tracking-tight">{t("media.title")}</h1>
-        <FileUploader onUploaded={() => router.refresh()} />
+        <FileUploader onUploaded={() => void reloadItems()} />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((value) => (
           <Button
             key={value}
-            variant={type === value ? "default" : "outline"}
+            variant={activeType === value ? "default" : "outline"}
             size="sm"
             onClick={() =>
-              router.push(value === "all" ? "/admin/media" : `/admin/media?type=${value}`)
+              startTransition(() => {
+                setActiveType(value);
+                // 切换类型时清掉关键词，避免「音频」页看起来是空的（搜索词其实还在）
+                setQuery("");
+              })
             }
           >
             {filterLabels[value]}
           </Button>
         ))}
+
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <SearchIcon
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("media.searchPlaceholder")}
+              aria-label={t("media.searchPlaceholder")}
+              className="h-8 w-52 pl-8 text-xs"
+            />
+          </div>
+
+          <select
+            value={albumFilter}
+            onChange={(event) => setAlbumFilter(event.target.value)}
+            aria-label={t("media.album")}
+            className="h-8 rounded-md border border-border bg-card px-2 text-xs text-card-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+          >
+            <option value="all">{t("media.allAlbums")}</option>
+            {albums.map((album) => (
+              <option key={album.id} value={String(album.id)}>
+                {album.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>{t("media.resultCount", { count: filtered.length })}</span>
+        {pageCount > 1 ? (
+          <span>{t("site.pageInfo", { page: safePage, totalPages: pageCount })}</span>
+        ) : null}
       </div>
 
       {error ? (
@@ -284,13 +415,22 @@ export function MediaManager({
         </p>
       ) : null}
 
-      {items.length === 0 ? (
+      {list.length === 0 ? (
         <p className="empty-state rounded-lg border border-dashed border-border/70 bg-background py-16 text-center text-sm text-muted-foreground">
           {t("media.empty")}
         </p>
+      ) : filtered.length === 0 ? (
+        <p className="empty-state rounded-lg border border-dashed border-border/70 bg-background py-16 text-center text-sm text-muted-foreground">
+          {t("media.noResults")}
+        </p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => (
+        <ul
+          className={cn(
+            "grid gap-4 transition-opacity sm:grid-cols-2 xl:grid-cols-3",
+            isPending && "opacity-70"
+          )}
+        >
+          {pageItems.map((item) => (
             <li
               key={item.id}
               className="flex flex-col overflow-hidden surface"
@@ -305,7 +445,8 @@ export function MediaManager({
                     className="h-full w-full object-contain"
                   />
                 ) : item.type === "video" ? (
-                  // 有真封面就显示小图（上传时抽帧生成），只有老视频才回退到 <video> 现抽
+                  // 老视频没有封面时不再自动挂 <video> 抽帧：那会为每张卡发 Range 请求，
+                  // 视频一多就把带宽占满、筛选也卡。这里给轻量占位，需要封面就点「生成封面」。
                   item.thumb ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -315,11 +456,10 @@ export function MediaManager({
                       className="h-full w-full object-contain"
                     />
                   ) : (
-                    <VideoThumb
-                      src={item.path}
-                      className="h-full w-full object-cover"
-                      fallback={<TypeIcon type={item.type} />}
-                    />
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                      <FilmIcon className="size-6" />
+                      <span className="text-[0.65rem]">{t("media.noThumb")}</span>
+                    </div>
                   )
                 ) : (
                   <TypeIcon type={item.type} />
@@ -396,6 +536,34 @@ export function MediaManager({
           ))}
         </ul>
       )}
+
+      {pageCount > 1 ? (
+        <nav className="flex items-center justify-between gap-3 pt-1">
+          <span className="text-sm text-muted-foreground">
+            {t("site.pageInfo", { page: safePage, totalPages: pageCount })}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safePage <= 1}
+              onClick={() => setPage(Math.max(1, safePage - 1))}
+            >
+              <ChevronLeftIcon className="size-4" />
+              {t("site.prevPage")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safePage >= pageCount}
+              onClick={() => setPage(Math.min(pageCount, safePage + 1))}
+            >
+              {t("site.nextPage")}
+              <ChevronRightIcon className="size-4" />
+            </Button>
+          </div>
+        </nav>
+      ) : null}
     </div>
   );
 }

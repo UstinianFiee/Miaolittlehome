@@ -167,7 +167,115 @@ export function CommentManager({
         </p>
       ) : null}
 
-      <div className="surface">
+      {/* 手机端：评论表格改成卡片，正文、来源和审核操作不再被横向裁掉 */}
+      <div className="space-y-3 lg:hidden">
+        {items.length === 0 ? (
+          <p className="surface empty-state py-10 text-center text-sm text-muted-foreground">
+            {t("comments.empty")}
+          </p>
+        ) : (
+          items.map((item) => {
+            const parentPending = item.parentId !== null && item.parentApproved === false;
+
+            return (
+              <article key={item.id} className="surface space-y-2.5 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-medium">{item.author}</span>
+                      {item.parentId !== null ? (
+                        <Badge variant="outline">{t("comments.reply")}</Badge>
+                      ) : null}
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[item.email, item.ipRegion].filter(Boolean).join(" · ") || "—"}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={item.approved ? "default" : "outline"}
+                    className="shrink-0"
+                  >
+                    {item.approved
+                      ? t("comments.statusApproved")
+                      : t("comments.statusPending")}
+                  </Badge>
+                </div>
+
+                <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                  {item.content}
+                </p>
+
+                {parentPending ? (
+                  <Badge
+                    variant="outline"
+                    className="w-fit border-destructive/50 text-destructive"
+                    title={t("comments.parentPendingHint")}
+                  >
+                    {t("comments.parentPending")}
+                  </Badge>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                  {item.post ? (
+                    <a
+                      href={`/zh/posts/${item.post.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="max-w-full truncate underline-offset-4 hover:underline"
+                    >
+                      {item.post.title}
+                    </a>
+                  ) : (
+                    <span>{t("comments.wallSource")}</span>
+                  )}
+                  <span aria-hidden>·</span>
+                  <span className="truncate">
+                    {[item.browser, item.os].filter(Boolean).join(" · ") || "—"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <DualTime date={item.createdAt} className="text-xs text-muted-foreground" />
+                  <div className="flex gap-1">
+                    {item.approved ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={pendingId === item.id}
+                        onClick={() => void reject(item)}
+                      >
+                        <UndoIcon className="size-4" />
+                        {t("comments.reject")}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={pendingId === item.id}
+                        onClick={() => void setApproved(item.id, true)}
+                      >
+                        <CheckIcon className="size-4" />
+                        {t("comments.approve")}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t("comments.delete")}
+                      disabled={pendingId === item.id}
+                      onClick={() => void remove(item)}
+                    >
+                      <Trash2Icon className="trash-wiggle size-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        )}
+      </div>
+
+      <div className="surface hidden lg:block">
         <Table>
           <TableHeader>
             <TableRow>

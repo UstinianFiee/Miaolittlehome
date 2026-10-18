@@ -1,76 +1,104 @@
+import { BadgeCheckIcon, ShieldCheckIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import { FooterWaves } from "@/components/site/footer-waves";
+import { FooterThemeSwitch } from "@/components/site/footer-theme-switch";
+import { Link } from "@/i18n/navigation";
 import { getSiteInfo } from "@/lib/settings";
 
 /**
- * 全站页脚。
+ * 全站页脚（2026-10-18 精简版）。
  *
- * 结构：顶部 3 层波浪（`FooterWaves`）→ 站点名 + 一句描述 → 版权与技术栈 → 备案区。
- * 备案号与链接来自后台设置（`site.icp` / `site.icpLink`、`site.police` / `site.policeLink`），
- * **各自独立，没配置的那一项不渲染**。
- * 底色用 `--footer-bg`，与波浪渐变的下端色一致，接缝看不出来。
+ * 结构：
+ * - 第一行：Logo 胶囊 + 主题切换；
+ * - 第二行：版权 / Powered by + 备案信息；
+ * - 备案号带图标，ICP 与公网安备之间用细竖线分隔；
+ * - 不再单独占一行 powered / 技术栈 / 备案，整体高度约减半；
+ * - 手机底部保留播放器避让空间，桌面收起。
  */
 export async function SiteFooter() {
   const t = await getTranslations();
   const year = new Date().getFullYear();
-  const { name, author, description, icp, icpLink, police, policeLink } = await getSiteInfo();
+  const { name, author, logo, icp, icpLink, police, policeLink } = await getSiteInfo();
 
   return (
-    <footer
-      className="relative mt-14 border-t border-border/40 sm:mt-20"
-      style={{ backgroundColor: "var(--footer-bg)" }}
-    >
-      <FooterWaves />
+    <footer className="site-footer mt-10 border-t border-border/60">
+      <section className="mx-auto w-full max-w-5xl px-4 pt-5 pb-20 sm:px-6 sm:pt-6 sm:pb-24 lg:pb-6">
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/" className="footer-logo">
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="" width={28} height={28} loading="lazy" />
+            ) : (
+              <span aria-hidden className="footer-logo__mark" />
+            )}
+            <span className="max-w-[58vw] truncate">{name}</span>
+          </Link>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-2 px-4 py-7 text-center sm:px-6">
-        <p className="font-display text-base" style={{ color: "var(--card-foreground)" }}>
-          {name}
-        </p>
+          <FooterThemeSwitch />
+        </div>
 
-        {description ? (
-          <p className="max-w-xl text-sm text-muted-foreground text-balance">{description}</p>
-        ) : null}
+        <div className="footer-meta">
+          <div className="footer-meta__left">
+            <span>
+              © {year} {author} · {t("footer.rights")}
+            </span>
+            <span aria-hidden className="footer-dot">
+              ·
+            </span>
+            <span>{t("footer.poweredLine")}</span>
+          </div>
 
-        <p className="text-sm text-muted-foreground">
-          © {year} {author} · {t("footer.rights")} · {t("footer.poweredBy")}
-        </p>
+          {icp || police ? (
+            <div className="footer-filings">
+              {icp ? (
+                icpLink ? (
+                  <a
+                    href={icpLink}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer"
+                    className="footer-filing"
+                    aria-label={`${t("footer.icpLabel")}：${icp}`}
+                    title={t("footer.icpLabel")}
+                  >
+                    <BadgeCheckIcon aria-hidden />
+                    <span>{icp}</span>
+                  </a>
+                ) : (
+                  <span className="footer-filing" title={t("footer.icpLabel")}>
+                    <BadgeCheckIcon aria-hidden />
+                    <span>{icp}</span>
+                  </span>
+                )
+              ) : null}
 
-        {/* 备案区：ICP 与公安网备各自独立，没配的那项不出现 */}
-        {icp || police ? (
-          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {icp ? (
-              icpLink ? (
-                <a
-                  href={icpLink}
-                  target="_blank"
-                  rel="nofollow noopener noreferrer"
-                  className="link-underline transition-colors hover:text-primary"
-                >
-                  {icp}
-                </a>
-              ) : (
-                <span>{icp}</span>
-              )
-            ) : null}
+              {icp && police ? (
+                <span aria-hidden className="footer-filing__divider" />
+              ) : null}
 
-            {police ? (
-              policeLink ? (
-                <a
-                  href={policeLink}
-                  target="_blank"
-                  rel="nofollow noopener noreferrer"
-                  className="link-underline transition-colors hover:text-primary"
-                >
-                  {police}
-                </a>
-              ) : (
-                <span>{police}</span>
-              )
-            ) : null}
-          </p>
-        ) : null}
-      </div>
+              {police ? (
+                policeLink ? (
+                  <a
+                    href={policeLink}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer"
+                    className="footer-filing"
+                    aria-label={`${t("footer.policeLabel")}：${police}`}
+                    title={t("footer.policeLabel")}
+                  >
+                    <ShieldCheckIcon aria-hidden />
+                    <span>{police}</span>
+                  </a>
+                ) : (
+                  <span className="footer-filing" title={t("footer.policeLabel")}>
+                    <ShieldCheckIcon aria-hidden />
+                    <span>{police}</span>
+                  </span>
+                )
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </section>
     </footer>
   );
 }

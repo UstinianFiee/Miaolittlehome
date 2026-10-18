@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import { Greeting } from "@/components/site/greeting";
 import { HeroBackground } from "@/components/site/hero-background";
 import { HeroIntro } from "@/components/site/hero-intro";
-import { HeroWave } from "@/components/site/hero-wave";
+import { HeroWaves } from "@/components/site/hero-waves";
 import { SitePagination } from "@/components/site/pagination";
 import { PostCardView } from "@/components/site/post-card";
 import { Reveal } from "@/components/site/reveal";
@@ -28,7 +28,17 @@ export const HOME_PAGE_SIZE = 5;
 export async function HomeView({ locale, page }: { locale: string; page: number }) {
   const t = await getTranslations();
   const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
-  const { name, subtitle, backgrounds, backgroundVideo, pageBackground } = site;
+  const { name, subtitle, description, backgrounds, backgroundVideo } = site;
+  /*
+   * 封面副标题：优先用后台设置的副标题；为空时回退到站点描述 / 个人简介，
+   * 避免"设置里只填了描述"的站点首屏只剩一个孤零零的站名（用户反馈过）。
+   */
+  const heroSubtitle = subtitle || description || profile.bio;
+  /*
+   * 说说气泡的署名用**作者名**，不是站点名：
+   * 个人资料名 → 站点作者 → 站点名 逐级兜底（都为空时至少不空着）。
+   */
+  const authorName = profile.name || site.author || name;
 
   /*
    * 封面背景图走 `/img/1920/...`：上传原图常有 600KB+，1920 宽的 webp 只要几十 KB。
@@ -61,19 +71,27 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
       <section className="hero-shell relative isolate -mt-[5.25rem] flex flex-col items-center justify-center overflow-hidden px-4 text-center sm:-mt-[5.75rem]">
         <HeroBackground images={heroImages} video={backgroundVideo} />
 
-        <HeroIntro name={name} subtitle={subtitle} scrollLabel={t("home.scroll")} />
+        <HeroIntro name={name} subtitle={heroSubtitle} scrollLabel={t("home.scroll")} />
 
-        {/* 底部波浪：填的是内容区背景，与下方无缝衔接（同样走缩放后的图，别拉原图） */}
-        <HeroWave pageBackground={resizedImageUrl(pageBackground, 1920)} />
+        {/*
+          底部统一用 4 层 gentle-wave，填充内容区背景色。
+          有内容区背景图时由 CSS 在首页内容顶部补一段「背景色 → 透明」过渡带，
+          保证波浪底边和照片之间没有硬接缝；不再切换大曲线/丝带方案。
+        */}
+        <HeroWaves />
       </section>
 
       {/*
         内容区：左文章列表（分页）+ 右侧栏。
         `scroll-mt-*` 与 main 的顶部占位一致：封面那个下滑箭头是跳到 #home-content，
         没有它的话滚过去之后标题区会被悬浮导航胶囊盖住。
+        外层保持全宽，才能让有背景图时的过渡带铺满视口；内容宽度交给内层容器。
       */}
-      <div id="home-content" className="mx-auto w-full max-w-6xl scroll-mt-[5.25rem] px-4 py-14 sm:scroll-mt-[5.75rem] sm:px-6">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-8">
+      <div id="home-content" className="relative w-full scroll-mt-[5.25rem] sm:scroll-mt-[5.75rem]">
+        {/* 有内容区背景图时显示：与波浪同色的 56px 渐变带，见 globals.css */}
+        <div aria-hidden className="home-bg-bridge" />
+        <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-8">
           <div className="min-w-0">
             {/*
               标题区：问候语 + 列表标题合成一块。
@@ -108,7 +126,7 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
                       <ShuoshuoCard
                         item={entry.shuoshuo}
                         locale={locale}
-                        siteName={name}
+                        authorName={authorName}
                         avatar={avatar}
                       />
                     )}
@@ -121,6 +139,7 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
           </div>
 
           <SiteSidebar locale={locale} />
+        </div>
         </div>
       </div>
     </>

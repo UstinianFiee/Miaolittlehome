@@ -22,12 +22,15 @@ export function ArticleBar({ title }: { title: string }) {
   const t = useTranslations();
   const [progress, setProgress] = React.useState(0);
   const [visible, setVisible] = React.useState(false);
+  const frame = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     const target = document.getElementById("article-body");
 
-    const update = () => {
+    const measure = () => {
+      frame.current = null;
       const scrollY = window.scrollY;
+      let next = 0;
 
       if (target) {
         const rect = target.getBoundingClientRect();
@@ -35,23 +38,39 @@ export function ArticleBar({ title }: { title: string }) {
 
         if (scrollable > 40) {
           // 常规情况：按「正文卡片已读比例」推进
-          setProgress(Math.min(Math.max(-rect.top / scrollable, 0), 1));
+          next = Math.min(Math.max(-rect.top / scrollable, 0), 1);
         } else {
-          // 文章本身不足一屏（scrollable ≤ 0），再按正文算进度会永远停在 0，
+          // 文章本身不足一屏（scrollable ≤ 40），再按正文算进度会永远停在 0；
           // 退化成整页进度，至少能反映「读到底了」。
           const doc = document.documentElement;
           const total = doc.scrollHeight - window.innerHeight;
-          setProgress(total > 0 ? Math.min(Math.max(scrollY / total, 0), 1) : 0);
+          next = total > 0 ? Math.min(Math.max(scrollY / total, 0), 1) : 0;
         }
       }
 
-      setVisible(scrollY > 260);
+      // 帧级节流：只在小数点后两位变化时重渲染；CSS transition 负责补间。
+      setProgress((prev) => (Math.abs(prev - next) < 0.004 ? prev : next));
+      setVisible((prev) => {
+        const nextVisible = scrollY > 260;
+        return prev === nextVisible ? prev : nextVisible;
+      });
+    };
+
+    const update = () => {
+      if (frame.current !== null) {
+        return;
+      }
+      frame.current = window.requestAnimationFrame(measure);
     };
 
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     return () => {
+      if (frame.current !== null) {
+        window.cancelAnimationFrame(frame.current);
+        frame.current = null;
+      }
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
@@ -62,7 +81,7 @@ export function ArticleBar({ title }: { title: string }) {
       {/* 顶部渐变进度条 */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-[linear-gradient(90deg,color-mix(in_oklab,var(--primary)_55%,transparent),var(--primary))]"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] origin-left bg-[linear-gradient(90deg,color-mix(in_oklab,var(--brand)_45%,transparent),var(--brand))]"
         style={{
           transform: `scaleX(${progress})`,
           opacity: progress > 0 ? 1 : 0,
@@ -80,7 +99,7 @@ export function ArticleBar({ title }: { title: string }) {
       >
         <nav
           aria-label={t("site.articleNav")}
-          className="mx-auto flex h-11 w-full max-w-6xl items-center gap-2 rounded-xl border border-border/50 bg-[color:var(--nav-bg)] px-3 shadow-sm backdrop-blur-md"
+          className="article-bar nav-pill nav-pill-solid mx-auto flex h-11 w-full max-w-6xl items-center gap-2 rounded-xl border border-border/50 bg-[color:var(--nav-bg)] px-3 backdrop-blur-md"
         >
           <Link
             href="/posts"

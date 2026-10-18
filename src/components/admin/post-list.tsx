@@ -121,22 +121,22 @@ export function PostList({
 
       <div className="flex flex-wrap items-center gap-2">
         <form
-          className="flex items-center gap-2"
+          className="flex w-full items-center gap-2 sm:w-auto"
           onSubmit={(event) => {
             event.preventDefault();
             router.push(buildHref({ q: keywordInput.trim() || null, page: null }));
           }}
         >
-          <div className="relative">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
             <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keywordInput}
               onChange={(event) => setKeywordInput(event.target.value)}
               placeholder={t("posts.searchPlaceholder")}
-              className="w-56 pl-8"
+              className="w-full pl-8 sm:w-56"
             />
           </div>
-          <Button type="submit" variant="outline" size="sm">
+          <Button type="submit" variant="outline" size="sm" className="shrink-0">
             {t("posts.search")}
           </Button>
         </form>
@@ -185,7 +185,82 @@ export function PostList({
         </p>
       ) : null}
 
-      <div className="surface">
+      {/* 手机端：文章表格改成卡片，标题、状态、分类/标签和操作都完整可见 */}
+      <div className="space-y-3 lg:hidden">
+        {items.length === 0 ? (
+          <p className="surface empty-state py-10 text-center text-sm text-muted-foreground">
+            {t("posts.empty")}
+          </p>
+        ) : (
+          items.map((item) => (
+            <article key={item.id} className="surface space-y-2.5 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    {item.pinned ? (
+                      <PinIcon
+                        className="size-3.5 shrink-0 text-primary"
+                        aria-label={t("posts.pinned")}
+                      />
+                    ) : null}
+                    <h2 className="line-clamp-2 text-sm font-medium">{item.title}</h2>
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">{item.slug}</p>
+                </div>
+                <Badge
+                  variant={item.published ? "default" : "outline"}
+                  className="shrink-0"
+                >
+                  {item.published ? t("posts.published") : t("posts.draft")}
+                </Badge>
+              </div>
+
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="secondary">
+                  {item.categoryName ?? t("posts.uncategorized")}
+                </Badge>
+                {item.tagNames
+                  .filter((name) => name !== item.categoryName)
+                  .slice(0, 4)
+                  .map((name) => (
+                    <Badge key={name} variant="outline">
+                      {name}
+                    </Badge>
+                  ))}
+                {item.tagNames.filter((name) => name !== item.categoryName).length > 4 ? (
+                  <Badge variant="outline">
+                    +{item.tagNames.filter((name) => name !== item.categoryName).length - 4}
+                  </Badge>
+                ) : null}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>
+                  {t("posts.colViews")} {item.views}
+                </span>
+                <DualTime date={item.updatedAt} variant="inline" />
+              </div>
+
+              <div className="flex justify-end gap-1">
+                <Button asChild variant="ghost" size="sm">
+                  <NextLink href={`/admin/posts/${item.id}`}>{t("posts.edit")}</NextLink>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("posts.delete")}
+                  disabled={deletingId === item.id}
+                  onClick={() => void handleDelete(item)}
+                >
+                  <Trash2Icon className="trash-wiggle size-4 text-destructive" />
+                </Button>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="surface hidden lg:block">
         <Table>
           <TableHeader>
             <TableRow>

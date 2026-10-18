@@ -71,7 +71,7 @@ export function Particles({ className }: { className?: string }) {
 
         c.beginPath();
         c.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
-        c.fillStyle = `rgba(198, 228, 255, ${particle.a})`;
+        c.fillStyle = `rgba(57, 197, 187, ${particle.a})`;
         c.fill();
       }
 

@@ -90,7 +90,7 @@ export function PostCardView({ post, locale }: { post: PostCard; locale: string 
       {post.cover ? (
         <Link
           href={`/posts/${post.slug}`}
-          className="w-28 shrink-0 self-stretch overflow-hidden rounded-lg border border-border sm:w-64"
+          className="w-28 shrink-0 self-stretch overflow-hidden rounded-lg border border-border transition-colors duration-500 group-hover:border-brand/50 sm:w-64"
           tabIndex={-1}
           aria-hidden="true"
         >

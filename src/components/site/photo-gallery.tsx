@@ -67,7 +67,7 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
 
   return (
     <>
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 [&>li:only-child]:col-span-full">
         {photos.map((photo, position) => (
           <li key={photo.id}>
             <button

@@ -14,7 +14,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SitePreloader } from "@/components/site/site-preloader";
 import { ThemeProvider } from "@/components/theme-provider";
-import { getSiteInfo, getSiteVersion } from "@/lib/settings";
+import { getProfile, getSiteInfo, getSiteVersion } from "@/lib/settings";
 import { resizedImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 import { routing } from "@/i18n/routing";
@@ -86,13 +86,16 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   setRequestLocale(locale);
 
   // 播放列表与站点设置都在服务端读取；播放器挂在布局里，路由切换时不重新挂载
-  const [tracks, site, siteVersion] = await Promise.all([
+  const [tracks, site, siteVersion, profile] = await Promise.all([
     getPlaylist(),
     getSiteInfo(),
     getSiteVersion(),
+    getProfile(),
   ]);
 
   const { name, logo } = site;
+  // 品牌开屏优先站点 Logo，没配 Logo 就用个人头像；都没有时用站点首字
+  const brandImage = resizedImageUrl(logo || profile.avatar, 640);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -127,7 +130,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               {/* 站点设置改动后，把还停在旧版本上的客户端路由缓存刷掉 */}
               <ConfigSync version={siteVersion} />
               {/* 访问时的进场加载动画（只在页面还没加载完时出现，见组件注释） */}
-              <SitePreloader logo={logo} siteName={name} />
+              <SitePreloader image={brandImage} siteName={name} />
               <RouteProgress />
               <RippleLayer />
               <SiteHeader />

@@ -26,6 +26,8 @@
     "pageInfo": "Page {page} / {totalPages}",
     "publishedAt": "Published",
     "updatedAt": "Updated",
+    "wordCount": "{count} words",
+    "readingTime": "{minutes} min read",
     "readMore": "Read more",
     "yearMonth": "{year}-{month}",
     "albumsTitle": "Albums",
@@ -48,7 +50,8 @@
     "categoriesHint": "Categories, hanging like bookmarks on a rail",
     "tagsHint": "Finer-grained labels, a wall of little stickers",
     "wallCount": "{count} messages",
-    "archiveHint": "Newest first, grouped by year and month."
+    "archiveHint": "Newest first, grouped by year and month.",
+    "tableScrollHint": "Swipe to see more"
   },
   "nav": {
     "primary": "Primary navigation",
@@ -269,7 +272,8 @@
       "shuoshuo_delete": "Delete note",
       "backup_export": "Export backup",
       "backup_import": "Import backup"
-    }
+    },
+    "tableScrollHint": "Swipe to see more"
   },
   "locale": {
     "zh": "中文",
@@ -277,7 +281,15 @@
   },
   "footer": {
     "rights": "All rights reserved",
-    "poweredBy": "Built with Next.js"
+    "poweredBy": "Built with Next.js",
+    "poweredLine": "Powered by Next.js",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "techStack": "Next.js · Prisma · Tailwind CSS",
+    "icpLabel": "ICP filing",
+    "policeLabel": "Public security filing"
   },
   "placeholder": {
     "title": "Page under construction",
@@ -326,6 +338,10 @@
     "filterImage": "Images",
     "filterAudio": "Audio",
     "filterVideo": "Video",
+    "searchPlaceholder": "Search title or path",
+    "allAlbums": "All albums",
+    "resultCount": "{count} files",
+    "noResults": "No matching files",
     "empty": "No media yet",
     "copyPath": "Copy path",
     "copied": "Copied",
@@ -333,6 +349,7 @@
     "deleteConfirm": "Delete \"{name}\"? The file is removed from disk and cannot be recovered.",
     "deleteFailed": "Delete failed: {message}",
     "makeThumb": "Make cover",
+    "noThumb": "No cover",
     "thumbWorking": "Working…",
     "thumbFailed": "Could not create a cover — the browser may not support this video format.",
     "uploadFailed": "Upload failed: {message}",
@@ -602,18 +619,57 @@
     "pinned": "Pinned"
   },
   "aboutEdit": {
-    "title": "About page details", "hint": "Optional fields stay hidden when empty. Separate skills and interests with commas or new lines. Empty skills show the site stack; empty projects show recent posts.",
-    "role": "Role / occupation", "location": "City (optional)", "motto": "A thought / motto", "skills": "Skills (up to 24)", "interests": "Interests (up to 24)",
-    "projects": "Projects (one per line: name | https://url | description, up to 8)", "story": "More about me / a letter to the future (plain text, blank lines separate paragraphs)"
+    "title": "About page details",
+    "hint": "Optional fields stay hidden when empty. Separate skills and interests with commas or new lines. Empty skills show the site stack; empty projects show recent posts.",
+    "role": "Role / occupation",
+    "location": "City (optional)",
+    "motto": "A thought / motto",
+    "skills": "Skills (up to 24)",
+    "interests": "Interests (up to 24)",
+    "projects": "Projects (one per line: name | https://url | description, up to 8)",
+    "story": "More about me / a letter to the future (plain text, blank lines separate paragraphs)"
   },
   "aboutPage": {
-    "eyebrow": "A LITTLE ABOUT ME", "hello": "Hello, I'm {name}", "intro": "Welcome to my little corner. A place for words, photos and pieces of everyday life.", "sayHello": "Say hello",
-    "footprints": "A FEW THINGS LEFT ALONG THE WAY", "littleWorld": "A little world, always growing", "posts": "Posts", "notes": "Notes", "albums": "Albums", "friends": "Neighbors",
-    "motto": "Turn days into words. Keep the things that matter.", "skills": "Technologies I explore", "skillsHint": "Learning, experimenting, and bringing ideas to life.", "builtWith": "What this site is built with", "builtHint": "From pages to data, from ideas to a working site. The technologies behind this blog.",
-    "contact": "Let's keep in touch", "contactHint": "A shared interest or just passing by — you're welcome here.", "leaveMessage": "Leave a message", "projects": "Things I've made", "recentWriting": "Recently written", "writingEmpty": "The next story is on its way.", "allWriting": "Browse all posts",
-    "interests": "Things I enjoy", "explore": "Beyond the words", "photoTitle": "Collected moments", "photoHint": "Browse little slices of life", "noteTitle": "Everyday notes", "noteHint": "Small things worth remembering", "friendTitle": "Neighboring planets", "friendHint": "Visit other corners of the web",
-    "moments": "A few moments to keep", "openAlbum": "Open album", "photoAlt": "Album moment {index}", "playlist": "The site's playlist", "playlistHint": "Open the music player in the corner of the page to listen.",
-    "story": "A little more about me", "latestNote": "The latest little note", "readNotes": "Read more notes", "thanks": "Thank you for taking a moment to get to know this place.", "visitFriends": "Explore the friend galaxy"
+    "eyebrow": "A LITTLE ABOUT ME",
+    "hello": "Hello, I'm {name}",
+    "intro": "Welcome to my little corner. A place for words, photos and pieces of everyday life.",
+    "sayHello": "Say hello",
+    "footprints": "A FEW THINGS LEFT ALONG THE WAY",
+    "littleWorld": "A little world, always growing",
+    "posts": "Posts",
+    "notes": "Notes",
+    "albums": "Albums",
+    "friends": "Neighbors",
+    "motto": "Turn days into words. Keep the things that matter.",
+    "skills": "Technologies I explore",
+    "skillsHint": "Learning, experimenting, and bringing ideas to life.",
+    "builtWith": "What this site is built with",
+    "builtHint": "From pages to data, from ideas to a working site. The technologies behind this blog.",
+    "contact": "Let's keep in touch",
+    "contactHint": "A shared interest or just passing by — you're welcome here.",
+    "leaveMessage": "Leave a message",
+    "projects": "Things I've made",
+    "recentWriting": "Recently written",
+    "writingEmpty": "The next story is on its way.",
+    "allWriting": "Browse all posts",
+    "interests": "Things I enjoy",
+    "explore": "Beyond the words",
+    "photoTitle": "Collected moments",
+    "photoHint": "Browse little slices of life",
+    "noteTitle": "Everyday notes",
+    "noteHint": "Small things worth remembering",
+    "friendTitle": "Neighboring planets",
+    "friendHint": "Visit other corners of the web",
+    "moments": "A few moments to keep",
+    "openAlbum": "Open album",
+    "photoAlt": "Album moment {index}",
+    "playlist": "The site's playlist",
+    "playlistHint": "Open the music player in the corner of the page to listen.",
+    "story": "A little more about me",
+    "latestNote": "The latest little note",
+    "readNotes": "Read more notes",
+    "thanks": "Thank you for taking a moment to get to know this place.",
+    "visitFriends": "Explore the friend galaxy"
   },
   "about": {
     "social": "Elsewhere",
@@ -733,6 +789,7 @@
   },
   "adminSite": {
     "title": "Site info",
+    "pageHint": "Configure site info, profile, and registrations here; each long form's save button stays visible while you scroll.",
     "hint": "The site name appears in the header, footer and browser title.",
     "name": "Site name",
     "author": "Author",

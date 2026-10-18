@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: CategoriesPageProps): Promise
   return buildPageMetadata({ locale, path: "/categories", titleKey: "nav.categories" });
 }
 
-/** 书签的 primary 占比：同一色系里循环，避免雷同又不引入杂色 */
+/** 书签的苍绿占比：同一色系里循环，避免雷同又不引入杂色 */
 const MIXES = ["10%", "16%", "22%", "13%", "19%"] as const;
 
 export default async function CategoriesPage({ params }: CategoriesPageProps) {
@@ -43,7 +43,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
                 href={`/categories/${category.id}`}
                 className="bookmark group inline-flex min-w-[6rem] flex-col items-start rounded-t-md px-3.5 pt-3 pb-5 text-left font-display text-sm"
                 style={{
-                  backgroundColor: `color-mix(in oklab, var(--primary) ${MIXES[index % MIXES.length]}, var(--card))`,
+                  backgroundColor: `color-mix(in oklab, var(--bookmark-tone, var(--brand)) ${MIXES[index % MIXES.length]}, var(--card))`,
                 }}
               >
                 <span className="transition-colors group-hover:text-primary">

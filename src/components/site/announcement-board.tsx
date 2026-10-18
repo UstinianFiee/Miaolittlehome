@@ -67,7 +67,7 @@ function AnnouncementRow({
     <li className="relative border-b border-border/60 py-3 pl-3 last:border-0">
       {/* 置顶竖线：绝对定位，不参与布局，因此不影响条目对齐 */}
       {item.pinned ? (
-        <span aria-hidden className="absolute top-3.5 bottom-3.5 left-0 w-0.5 rounded-full bg-primary" />
+        <span aria-hidden className="absolute top-3.5 bottom-3.5 left-0 w-0.5 rounded-full bg-brand" />
       ) : null}
 
       {body}

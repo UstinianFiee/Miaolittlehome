@@ -42,10 +42,10 @@ export function AdminShell({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={logo} alt="" className="size-7 shrink-0 rounded object-cover" />
       ) : (
-        <span aria-hidden className="size-2 shrink-0 rounded-full bg-primary ring-4 ring-primary/15" />
+        <span aria-hidden className="size-2 shrink-0 rounded-full bg-brand ring-4 ring-brand/15" />
       )}
-      <span className="font-display truncate text-lg">{siteName}</span>
-      <span className="shrink-0 rounded-md border border-border/60 px-1.5 py-0.5 text-[0.7rem] text-muted-foreground">
+      <span className="font-display min-w-0 truncate text-base sm:text-lg">{siteName}</span>
+      <span className="hidden shrink-0 rounded-md border border-border/60 px-1.5 py-0.5 text-[0.7rem] text-muted-foreground sm:inline-flex">
         {t("admin.title")}
       </span>
     </NextLink>

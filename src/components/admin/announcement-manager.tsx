@@ -164,7 +164,62 @@ export function AnnouncementManager({ items }: { items: AnnouncementRow[] }) {
         </p>
       ) : null}
 
-      <div className="surface">
+      {/* 手机端：公告正文和操作直接以卡片展示 */}
+      <div className="space-y-3 lg:hidden">
+        {items.length === 0 ? (
+          <p className="surface empty-state py-10 text-center text-sm text-muted-foreground">
+            {t("adminAnnouncements.empty")}
+          </p>
+        ) : (
+          items.map((item) => (
+            <article key={item.id} className="surface space-y-2.5 p-3">
+              <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                {item.content}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={item.published ? "default" : "outline"}>
+                  {item.published
+                    ? t("adminAnnouncements.published")
+                    : t("adminAnnouncements.hidden")}
+                </Badge>
+                {item.pinned ? (
+                  <Badge variant="secondary">{t("adminAnnouncements.fieldPinned")}</Badge>
+                ) : null}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <DualTime date={item.createdAt} className="text-xs text-muted-foreground" />
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditingId(item.id);
+                      setForm({
+                        content: item.content,
+                        pinned: item.pinned,
+                        published: item.published,
+                      });
+                    }}
+                  >
+                    {t("adminAnnouncements.edit")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => void remove(item)}
+                    disabled={pending}
+                  >
+                    {t("adminAnnouncements.delete")}
+                  </Button>
+                </div>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="surface hidden lg:block">
         <Table>
           <TableHeader>
             <TableRow>

@@ -132,8 +132,8 @@ export function RouteProgress() {
         style={{
           width: `${progress}%`,
           background:
-            "linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary) 65%, transparent) 35%, var(--primary) 75%, color-mix(in oklab, var(--primary) 30%, #ffffff))",
-          boxShadow: "0 0 12px color-mix(in oklab, var(--primary) 65%, transparent)",
+            "linear-gradient(90deg, transparent, color-mix(in oklab, var(--brand) 60%, transparent) 32%, var(--brand) 72%, color-mix(in oklab, var(--brand) 45%, #ffffff))",
+          boxShadow: "0 0 12px color-mix(in oklab, var(--brand) 65%, transparent)",
           transition: "width 240ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       />

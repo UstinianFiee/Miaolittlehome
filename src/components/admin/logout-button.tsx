@@ -23,9 +23,17 @@ export function LogoutButton() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={handleLogout} disabled={pending}>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleLogout}
+      disabled={pending}
+      aria-label={t("actions.logout")}
+      title={t("actions.logout")}
+      className="px-2 sm:px-3"
+    >
       <LogOutIcon className="size-4" />
-      {t("actions.logout")}
+      <span className="hidden sm:inline">{t("actions.logout")}</span>
     </Button>
   );
 }

@@ -54,7 +54,7 @@ export default async function SoftwarePage({ params }: Props) {
               <li key={item.id}>
                 <Link
                   href={`/software/${item.id}`}
-                  className="surface group flex gap-4 p-4 transition-all duration-300 hover:border-primary/45 hover:shadow-md"
+                  className="surface group flex gap-4 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/50 hover:shadow-md"
                 >
                   {item.icon ? (
                     // eslint-disable-next-line @next/next/no-img-element

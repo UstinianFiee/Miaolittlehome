@@ -12,7 +12,10 @@ export async function GET(request: Request) {
   const albumParam = url.searchParams.get("album");
   const albumId = albumParam === null ? undefined : Number(albumParam) || null;
 
-  const items = await listMedia({ type, albumId });
+  const limitParam = Number(url.searchParams.get("limit"));
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(Math.floor(limitParam), 500) : 200;
+
+  const items = await listMedia({ type, albumId, limit });
 
   return NextResponse.json({
     ok: true,

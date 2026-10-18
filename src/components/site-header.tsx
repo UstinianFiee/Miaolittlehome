@@ -18,7 +18,7 @@ export async function SiteHeader() {
   const { name, logo } = await getSiteInfo();
 
   return (
-    <HeaderShell>
+    <HeaderShell siteName={name}>
       <Link
         href="/"
         className="font-display flex shrink-0 items-center gap-2 text-[1.375rem] font-semibold tracking-tight"
@@ -27,7 +27,7 @@ export async function SiteHeader() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logo} alt="" className="size-8 shrink-0 rounded object-cover" />
         ) : (
-          <span aria-hidden className="size-2 rounded-full bg-primary ring-4 ring-primary/15" />
+          <span aria-hidden className="size-2 rounded-full bg-brand ring-4 ring-brand/20" />
         )}
         {/* 站点名过长时截断，避免把导航和右侧控件挤出胶囊 */}
         <span className="max-w-[9rem] truncate sm:max-w-[15rem]">{name}</span>

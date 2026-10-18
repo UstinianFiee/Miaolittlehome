@@ -266,7 +266,7 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
         <Button
           type="submit"
           aria-busy={pending}
-          className="btn-gradient press ripple h-11 w-full"
+          className="press ripple h-11 w-full"
           disabled={pending || !mounted}
         >
           {pending ? (

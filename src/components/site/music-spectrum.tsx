@@ -40,10 +40,14 @@ export const MusicSpectrum = React.memo(function MusicSpectrum({
       // 会把整个页面带进错误边界。这里做一次最便宜的防御。
       ringColor = theme.getPropertyValue("--player-ring").trim() || "#3bbfb9";
       const ringSoft = theme.getPropertyValue("--player-ring-soft").trim() || "#a8ece6";
+      const ringCyan = theme.getPropertyValue("--glow-cyan").trim() || "#5fdbe4";
+      const ringPink = theme.getPropertyValue("--glow-pink").trim() || "#ff9ec7";
       try {
         gradient = ctx.createLinearGradient(0, 0, size, size);
         gradient.addColorStop(0, ringSoft);
-        gradient.addColorStop(0.5, ringColor);
+        gradient.addColorStop(0.32, ringColor);
+        gradient.addColorStop(0.62, ringCyan);
+        gradient.addColorStop(0.82, ringPink);
         gradient.addColorStop(1, ringSoft);
       } catch {
         // 颜色确实无法解析时退化成单色，频谱照常绘制。

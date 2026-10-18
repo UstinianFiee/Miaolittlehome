@@ -18,6 +18,8 @@ export async function ShuoshuoListView({ locale, page }: { locale: string; page:
   const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
   // 头像用「关于」页设置的那个，没设再回退到站点 Logo
   const avatar = profile.avatar || site.logo;
+  // 说说气泡署名用作者名（个人资料名 → 站点作者 → 站点名）
+  const authorName = profile.name || site.author || site.name;
 
   const { items, total, pageSize } = await listPublishedShuoshuo({ page });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -42,7 +44,7 @@ export async function ShuoshuoListView({ locale, page }: { locale: string; page:
         <div>
           {items.map((item, index) => (
             <Reveal key={item.id} delay={Math.min(index, 5) * 50}>
-              <ShuoshuoCard item={item} locale={locale} siteName={site.name} avatar={avatar} />
+              <ShuoshuoCard item={item} locale={locale} authorName={authorName} avatar={avatar} />
             </Reveal>
           ))}
         </div>

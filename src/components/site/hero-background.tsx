@@ -131,15 +131,19 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   }
 
   if (images.length === 0) {
+    /*
+     * 没有背景图时的兜底封面。
+     * 不能再用"淡色径向渐变"：浅色主题下它和页面底色几乎一样，
+     * 白色标题 / 透明导航会直接糊掉（详见 globals.css 的 .hero-fallback 注释）。
+     * 现在是深青底 + 两团漂移的苍绿极光 + 一层点阵，白字对比度足够。
+     */
     return (
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(1000px 480px at 50% 0%, color-mix(in oklab, var(--primary) 24%, transparent), transparent 70%)",
-        }}
-      />
+      <div aria-hidden className="hero-fallback absolute inset-0 -z-10 overflow-hidden">
+        <span className="hero-fallback__glow hero-fallback__glow--1" />
+        <span className="hero-fallback__glow hero-fallback__glow--2" />
+        <span className="hero-fallback__glow hero-fallback__glow--3" />
+        <span className="hero-fallback__grain" />
+      </div>
     );
   }
 

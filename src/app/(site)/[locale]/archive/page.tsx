@@ -90,12 +90,12 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
                         {t("site.yearMonth", { year: group.year, month: group.month })}
                       </h3>
 
-                      <ol className="relative ml-1 space-y-1 border-l border-primary/30 pl-4 sm:pl-6">
+                      <ol className="relative ml-1 space-y-1 border-l border-brand/35 pl-4 sm:pl-6">
                         {group.posts.map((post) => (
                           <li key={post.id} className="group relative">
                             <span
                               aria-hidden
-                              className="absolute top-5 -left-[1.275rem] size-2 rounded-full bg-primary ring-4 ring-card transition-shadow duration-200 group-hover:ring-primary/15 sm:-left-[1.775rem]"
+                              className="absolute top-5 -left-[1.275rem] size-2 rounded-full bg-brand ring-4 ring-card transition-shadow duration-200 group-hover:ring-brand/20 sm:-left-[1.775rem]"
                             />
                             <Link
                               href={`/posts/${post.slug}`}

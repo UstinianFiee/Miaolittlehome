@@ -43,6 +43,7 @@ export function AdminSidebar({ className, onNavigate }: AdminSidebarProps) {
                     <NextLink
                       href={item.href}
                       onClick={onNavigate}
+                      prefetch={false}
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "press flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",

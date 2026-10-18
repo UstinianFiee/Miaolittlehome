@@ -211,6 +211,7 @@ export function PlaylistManager({
                     value={track.cover}
                     onChange={(next) => update(position, { cover: next })}
                     options={images}
+                    compact
                   />
                 </div>
 

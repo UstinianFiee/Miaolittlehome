@@ -49,7 +49,7 @@ export async function SiteSidebar({ locale }: { locale: string }) {
   const displayName = profile.name || info.name;
 
   return (
-    <aside className="space-y-6">
+    <aside className="sidebar-stagger space-y-6">
       {/* 个人资料 */}
       <div className="surface p-5 text-center">
         {profile.avatar ? (
@@ -58,7 +58,7 @@ export async function SiteSidebar({ locale }: { locale: string }) {
             src={profile.avatar}
             alt=""
             loading="lazy"
-            className="mx-auto size-20 rounded-full border-2 border-primary/30 object-cover"
+            className="mx-auto size-20 rounded-full border-2 border-brand/40 object-cover ring-4 ring-brand/10"
           />
         ) : (
           <div className="mx-auto flex size-20 items-center justify-center rounded-full border-2 border-border bg-muted/40">
@@ -82,7 +82,7 @@ export async function SiteSidebar({ locale }: { locale: string }) {
                 rel="nofollow noopener noreferrer"
                 aria-label={item.label || iconLabel(item.icon)}
                 title={item.label || iconLabel(item.icon)}
-                className="flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                className="flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-brand hover:text-primary"
               >
                 <ProfileIcon name={item.icon} className="size-4" />
               </a>

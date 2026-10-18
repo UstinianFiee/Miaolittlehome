@@ -165,7 +165,7 @@ export function ProfileManager({
 
   return (
     <section className="space-y-5 surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="sticky top-[5.5rem] z-20 -mx-4 -mt-4 mb-4 flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-border/50 bg-[color:var(--card)]/95 px-4 py-3 backdrop-blur">
         <h2 className="font-medium">{t("adminProfile.title")}</h2>
         <Button
           type="button"

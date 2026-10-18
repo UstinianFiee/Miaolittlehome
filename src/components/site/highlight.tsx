@@ -23,7 +23,7 @@ export function Highlight({ text, query }: { text: string; query: string }) {
       parts.push(text.slice(cursor, found));
     }
     parts.push(
-      <mark key={key} className="rounded bg-primary/20 px-0.5 text-foreground">
+      <mark key={key} className="rounded bg-brand/25 px-0.5 text-foreground">
         {text.slice(found, found + target.length)}
       </mark>
     );

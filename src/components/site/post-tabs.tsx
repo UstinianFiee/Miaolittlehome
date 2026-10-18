@@ -46,7 +46,7 @@ export function PostTabs({
             className={cn(
               "flex-1 px-4 py-3 text-sm transition-colors",
               tab === item.key
-                ? "border-b-2 border-primary font-medium text-primary"
+                ? "border-b-2 border-brand font-medium text-primary"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
