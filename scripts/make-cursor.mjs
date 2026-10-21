@@ -22,10 +22,10 @@ const TARGET = "public/cursor-cat.png";
 
 /** 光标画布边长（32 是各平台都稳的上限） */
 const SIZE = 32;
-/** 小猫主体边长与偏移：向右下错开，和尖头留出约 2px 空隙 */
-const CAT = 23;
-const CAT_LEFT = 9;
-const CAT_TOP = 7;
+/** 小猫主体边长与偏移：向右下错开，和尖头留出约 1px 的空隙（再大就显得脱节） */
+const CAT = 24;
+const CAT_LEFT = 8;
+const CAT_TOP = 6;
 
 if (!fs.existsSync(SOURCE)) {
   throw new Error(
