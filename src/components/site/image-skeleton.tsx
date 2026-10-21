@@ -28,6 +28,42 @@ export function ImageSkeleton({
 }) {
   const [loaded, setLoaded] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+
+  // src 变化（筛选/换封面）时重新回到骨架态
+  React.useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
+
+  /*
+   * 兜底：图片可能在 React 挂载之前就已经从缓存里 decode 完成，
+   * 那样 `onLoad` 不会再触发 —— 表现就是骨架一直转、图片一直 opacity-0
+   * （小尺寸 SVG/已缓存的封面尤其容易命中）。挂载后主动检查一次 complete，
+   * 已就绪直接置为 loaded，失败则显示占位。
+   */
+  React.useEffect(() => {
+    const el = imgRef.current;
+    if (!el) {
+      return;
+    }
+    if (el.complete) {
+      if (el.naturalWidth > 0) {
+        setLoaded(true);
+      } else {
+        setFailed(true);
+      }
+      return;
+    }
+    const handleLoad = () => setLoaded(true);
+    const handleError = () => setFailed(true);
+    el.addEventListener("load", handleLoad);
+    el.addEventListener("error", handleError);
+    return () => {
+      el.removeEventListener("load", handleLoad);
+      el.removeEventListener("error", handleError);
+    };
+  }, [src]);
 
   if (failed) {
     return (
@@ -48,6 +84,7 @@ export function ImageSkeleton({
       {!loaded ? <div className="skeleton absolute inset-0" aria-hidden="true" /> : null}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         loading="lazy"

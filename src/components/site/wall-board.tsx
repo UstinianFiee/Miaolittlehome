@@ -237,21 +237,21 @@ export function WallBoard({
           {detail ? (
             <>
               <DialogHeader className="min-w-0">
-                <DialogTitle className="font-display">{t("comments.detailTitle")}</DialogTitle>
+                <DialogTitle className="font-display break-words">{t("comments.detailTitle")}</DialogTitle>
               </DialogHeader>
 
               <div className="max-h-[60vh] space-y-3 overflow-y-auto">
                 <article className="rounded-lg border border-border/60 bg-card/40 p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{detail.author || t("comments.anonymous")}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="min-w-0 break-words font-medium">{detail.author || t("comments.anonymous")}</span>
                     {detail.isAdmin ? (
-                      <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.8rem] text-primary">
+                      <span className="shrink-0 rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.8rem] text-primary">
                         {t("comments.siteOwner")}
                       </span>
                     ) : null}
                     <DualTime
                       date={detail.createdAtIso}
-                      className="ml-auto text-[0.8rem] text-muted-foreground"
+                      className="ml-auto shrink-0 text-[0.8rem] text-muted-foreground"
                     />
                   </div>
                   <p className="mt-2 text-sm leading-6 break-words whitespace-pre-wrap">
@@ -266,18 +266,18 @@ export function WallBoard({
                   <ul className="space-y-2 border-l-2 border-primary/25 pl-3">
                     {detail.replies.map((reply) => (
                       <li key={reply.id} className="rounded-md border border-border/50 bg-background/50 p-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="min-w-0 break-words text-sm font-medium">
                             {reply.author || t("comments.anonymous")}
                           </span>
                           {reply.isAdmin ? (
-                            <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.8rem] text-primary">
+                            <span className="shrink-0 rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.8rem] text-primary">
                               {t("comments.siteOwner")}
                             </span>
                           ) : null}
                           <DualTime
                             date={reply.createdAtIso}
-                            className="ml-auto text-[0.8rem] text-muted-foreground"
+                            className="ml-auto shrink-0 text-[0.8rem] text-muted-foreground"
                           />
                         </div>
                         <p className="mt-1.5 text-sm leading-6 break-words whitespace-pre-wrap">

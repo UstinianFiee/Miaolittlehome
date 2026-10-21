@@ -128,8 +128,8 @@ function AuthorLine({ comment }: { comment: CommentView }) {
   const t = useTranslations();
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <span className="font-medium">{comment.author || t("comments.anonymous")}</span>
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="min-w-0 break-words font-medium">{comment.author || t("comments.anonymous")}</span>
       {comment.isAdmin ? (
         <Badge
           variant="secondary"
@@ -168,7 +168,7 @@ function CommentBody({
         <CommentAvatar name={comment.author} isAdmin={comment.isAdmin} />
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <AuthorLine comment={comment} />
             {isPending ? <Badge variant="outline">{t("comments.pendingBadge")}</Badge> : null}
             <DualTime
@@ -380,11 +380,11 @@ export function CommentSection({
       className={cn("surface p-6 sm:p-7", formOnly ? "mt-8" : "mt-12")}
       id="comments"
     >
-      <h2 className="font-display flex items-center gap-2 text-lg">
-        <MessageSquareIcon className="size-4" />
-        {formOnly ? t("comments.wallFormTitle") : t("comments.title")}
+      <h2 className="font-display flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-lg leading-[1.4]">
+        <MessageSquareIcon className="size-4 shrink-0" />
+        <span className="min-w-0 break-words">{formOnly ? t("comments.wallFormTitle") : t("comments.title")}</span>
         {formOnly ? null : (
-          <span className="text-sm font-normal text-muted-foreground">
+          <span className="shrink-0 text-sm font-normal text-muted-foreground">
             {t("comments.count", { count: totalCount })}
           </span>
         )}
@@ -434,9 +434,9 @@ export function CommentSection({
           {/* formOnly 时上面的 h2 已经是「写留言」，这里就不再重复一个小标题 */}
           {formOnly ? null : <h3 className="text-sm font-medium">{t("comments.formTitle")}</h3>}
           {replyTo ? (
-            <div className="flex items-center gap-2 text-[0.8rem] leading-[1.6] text-muted-foreground">
-              <span>{t("comments.replyTo", { name: replyTo.author })}</span>
-              <Button type="button" variant="ghost" size="sm" className="max-sm:h-11" onClick={() => setReplyTo(null)}>
+            <div className="flex min-w-0 items-center gap-2 text-[0.8rem] leading-[1.6] text-muted-foreground">
+              <span className="min-w-0 truncate">{t("comments.replyTo", { name: replyTo.author })}</span>
+              <Button type="button" variant="ghost" size="sm" className="shrink-0 max-sm:h-11" onClick={() => setReplyTo(null)}>
                 {t("comments.cancelReply")}
               </Button>
             </div>

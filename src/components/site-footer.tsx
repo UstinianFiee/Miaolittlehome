@@ -24,8 +24,8 @@ export async function SiteFooter() {
   return (
     <footer className="site-footer mt-10 border-t border-border/60">
       <section className="mx-auto w-full max-w-5xl px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-24 lg:pb-6">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="footer-logo">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <Link href="/" className="footer-logo min-w-0">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -38,7 +38,8 @@ export async function SiteFooter() {
             ) : (
               <span aria-hidden className="footer-logo__mark" />
             )}
-            <span className="max-w-[58vw] truncate">{name}</span>
+            {/* 英文站名更长：窄屏先让位给主题切换，必要时换行而不是顶宽页面 */}
+            <span className="max-w-[42vw] truncate sm:max-w-[58vw]">{name}</span>
           </Link>
 
           <FooterThemeSwitch />

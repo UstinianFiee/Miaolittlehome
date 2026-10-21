@@ -42,13 +42,13 @@ function AnnouncementRow({
       {collapsible ? (
         <button type="button" onClick={onToggle} aria-expanded={expanded}
           className="flex w-full cursor-pointer items-start gap-2 text-left">
-          <span className={cn("min-w-0 flex-1 text-sm leading-6 whitespace-pre-wrap", !expanded && "line-clamp-2")}>
+          <span className={cn("min-w-0 flex-1 text-sm leading-6 break-words whitespace-pre-wrap", !expanded && "line-clamp-2")}>
             {item.content}
           </span>
           <ChevronDownIcon className={cn("mt-1 size-4 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-180")} />
         </button>
       ) : (
-        <span className="block text-sm leading-6 whitespace-pre-wrap">{item.content}</span>
+        <span className="block text-sm leading-6 break-words whitespace-pre-wrap">{item.content}</span>
       )}
 
       <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8rem] leading-[1.6] text-muted-foreground">
@@ -97,17 +97,17 @@ export function AnnouncementBoard({
 
   return (
     <section className="surface p-5">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="font-display flex items-center gap-2 text-base">
-          <MegaphoneIcon className="size-4" />
-          {t("announcements.title")}
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <h2 className="font-display flex min-w-0 items-center gap-2 text-base leading-[1.4]">
+          <MegaphoneIcon className="size-4 shrink-0" />
+          <span className="min-w-0 truncate">{t("announcements.title")}</span>
         </h2>
 
         {total > items.length ? (
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" data-testid="announcement-more">
-                {t("announcements.more")}（{total}）
+              <Button variant="ghost" size="sm" className="shrink-0" data-testid="announcement-more">
+                {t("announcements.more")} ({total})
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">

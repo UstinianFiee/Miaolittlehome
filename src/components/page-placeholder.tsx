@@ -18,9 +18,9 @@ export function PagePlaceholder({ stage, scopeKey }: PagePlaceholderProps) {
   const t = useTranslations();
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-4 py-20 sm:px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("placeholder.title")}</h1>
-      <p className="text-muted-foreground">
+    <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col items-start gap-4 px-4 py-20 sm:px-6">
+      <h1 className="text-2xl font-semibold tracking-tight break-words">{t("placeholder.title")}</h1>
+      <p className="break-words text-muted-foreground">
         {t("placeholder.notice", { stage, scope: t(`placeholder.scope.${scopeKey}`) })}
       </p>
       <Button asChild variant="outline" size="sm">

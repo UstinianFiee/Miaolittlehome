@@ -33,12 +33,12 @@ export async function SitePagination({ basePath, page, totalPages }: SitePaginat
     target <= 1 ? basePath || "/" : `${basePath}/page/${target}`;
 
   return (
-    <nav className="mt-8 flex items-center justify-between gap-3">
-      <span className="text-sm text-muted-foreground">
+    <nav className="mt-8 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <span className="min-w-0 whitespace-nowrap text-sm leading-[1.6] text-muted-foreground">
         {t("site.pageInfo", { page, totalPages })}
       </span>
 
-      <div className="flex gap-2">
+      <div className="flex shrink-0 gap-2">
         {page > 1 ? (
           <Button asChild variant="outline" size="sm" className="max-sm:h-11">
             <Link href={hrefFor(page - 1)} scroll={false}>

@@ -32,7 +32,7 @@ export function ArticleToc({
             <a
               href={`#${heading.id}`}
               className={cn(
-                "block rounded px-2 py-1 text-[0.8rem] leading-[1.6] transition-colors",
+                "block min-w-0 rounded px-2 py-1 text-[0.8rem] leading-[1.6] break-words transition-colors",
                 "text-muted-foreground hover:bg-primary/8 hover:text-primary",
                 "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
                 heading.depth === 3 && "pl-3.5",

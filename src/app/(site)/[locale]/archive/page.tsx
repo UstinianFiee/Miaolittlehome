@@ -69,7 +69,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
       <div className="surface archive-panel p-5 sm:p-9">
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-6">
         <div className="space-y-2">
-          <h1 className="font-display text-2xl">{t("site.archiveTitle")}</h1>
+          <h1 className="font-display text-2xl sm:text-3xl">{t("site.archiveTitle")}</h1>
           <p className="text-sm text-muted-foreground">{t("site.archiveHint")}</p>
         </div>
         <p className="text-sm text-muted-foreground tabular-nums">

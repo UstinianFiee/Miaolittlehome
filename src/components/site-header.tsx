@@ -36,18 +36,25 @@ export async function SiteHeader() {
         ) : (
           <span aria-hidden className="size-2 rounded-full bg-brand ring-4 ring-brand/20" />
         )}
-        {/* 站点名过长时截断，避免把导航和右侧控件挤出胶囊；375px 下最多约 6rem */}
-        <span className="max-w-[6rem] truncate sm:max-w-[15rem]">{name}</span>
+        {/* 站点名过长时截断（悬停 title 看全名），给导航和右侧控件留空间 */}
+        <span
+          className="max-w-[6rem] truncate sm:max-w-[9rem] 2xl:max-w-[11rem]"
+          title={name}
+        >
+          {name}
+        </span>
       </Link>
 
         {/*
           桌面导航：英文文案（Categories / Guestbook…）比中文长得多，
           窄屏放不下会溢出胶囊、压到右侧控件上。
-          因此 1280px 起才显示，并且容器可收缩 + 横向滚动兜底（滚动条隐藏）。
+          因此 1280px 起才显示；容器用 flex-1 + min-w-0 吃掉中间剩余空间，
+          真放不下时只在导航内部横向滚动（滚动条隐藏），
+          绝不把右侧控件挤出视口；站点名过长时优先截断站名而不是裁导航。
         */}
         <nav
           aria-label={t("nav.primary")}
-          className="scrollbar-none hidden min-w-0 overflow-x-auto xl:block"
+          className="scrollbar-none hidden min-w-0 flex-1 overflow-x-auto xl:block"
         >
           <NavLinks className="ml-2" />
         </nav>
@@ -67,14 +74,15 @@ export async function SiteHeader() {
           {/* 竖分隔线：把「主题切换」和「后台入口」明确分开，之前贴得太近 */}
           <span aria-hidden className="mx-1.5 h-5 w-px bg-current opacity-20" />
           {/*
-            后台入口：窄屏只显示图标（英文 "Sign in" 会挤占导航空间），
-            2xl 起空间充裕再补上文字；两者都带 aria-label，无障碍不受影响。
+            后台入口：只显示图标（带 aria-label / title）。
+            **不要在 2xl 补文字**：顶栏内层是 max-w-6xl 固定宽，1536px 起点一旦多出
+            “Sign in / 登录” 约 50px，英文 12 个导航项就会被压缩裁切（实测 822 > 745）。
+            需要文字入口时放移动端抽屉里（MobileNav 底部本来就有）。
           */}
           <Button asChild variant="ghost" size="sm" className="nav-login-button hidden sm:inline-flex">
             {/* 后台不参与语言路由，这里必须用 next/link，不能用 next-intl 的 Link */}
             <NextLink href={adminEntry.href} aria-label={t(adminEntry.labelKey)} title={t(adminEntry.labelKey)}>
               <LogInIcon className="size-4" />
-              <span className="hidden 2xl:inline">{t(adminEntry.labelKey)}</span>
             </NextLink>
           </Button>
           <MobileNav siteName={name} logo={logo} />

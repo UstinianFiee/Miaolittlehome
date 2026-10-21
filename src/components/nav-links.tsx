@@ -38,13 +38,13 @@ export function NavLinks({ className, onNavigate }: NavLinksProps) {
               className={cn(
                 /*
                  * 12 个导航项（英文 Home / Categories / Guestbook…）在 1280~1536px 这一段
-                 * 挤得非常紧，实测只剩 9px 余量 —— 换个字体或换个系统就直接顶出去、
-                 * 最后两项被裁掉。所以这一档刻意收小：字号 0.9rem、内边距 1.5、
-                 * 项间不留空隙；到 2xl 空间够了再放大回接近全尺寸。
-                 * 改这几个值前先用 `.verify/probe-nav-width.mjs` 量一遍余量。
+                 * 挤得非常紧。注意顶栏内层容器是 max-w-6xl（1224px）固定宽度：
+                 * 视口再宽，导航可用空间也不会继续变大 —— 所以**不要**在 2xl 放大字号/内边距，
+                 * 否则 1536px 起导航内容会比可用宽度多出 70px，最后两项被裁掉。
+                 * 全宽度统一用这一档：0.875rem / px-1.5，项间无空隙。
+                 * 改这几个值前先用 `.verify/ui-verify.mjs` 量一遍导航是否被压缩。
                  */
-                "font-display nav-item press rounded-md px-1.5 py-1.5 text-[0.9rem] whitespace-nowrap transition-colors max-sm:px-3 max-sm:py-3.5",
-                "2xl:px-2 2xl:text-[0.95rem]",
+                "font-display nav-item press rounded-md px-1.5 py-1.5 text-[0.875rem] whitespace-nowrap transition-colors max-sm:px-3 max-sm:py-3.5",
                 /*
                  * 不用 bg-accent：--accent 是 10% 的蓝（浅色）/ 45% 的灰（深色），
                  * 当底色会让文字发糊、对比度掉得厉害。改成「选中=主题色+下划线，

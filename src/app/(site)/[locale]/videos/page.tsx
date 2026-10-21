@@ -27,9 +27,9 @@ export default async function VideosPage({ params }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
-      <header className="page-heading mb-8 flex items-baseline justify-between gap-4">
+      <header className="page-heading mb-8 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h1 className="font-display text-2xl">{t("videos.title")}</h1>
-        <span className="text-sm text-muted-foreground">
+        <span className="shrink-0 text-sm text-muted-foreground">
           {t("videos.count", { count: videos.length })}
         </span>
       </header>

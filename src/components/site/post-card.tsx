@@ -35,7 +35,7 @@ export function PostCardView({ post, locale }: { post: PostCard; locale: string 
             />
           ) : null}
           <h2
-            className="font-display text-lg leading-snug text-balance"
+            className="font-display min-w-0 text-lg leading-snug text-balance break-words"
             style={{ color: "var(--card-foreground)" }}
           >
             <Link
@@ -48,7 +48,7 @@ export function PostCardView({ post, locale }: { post: PostCard; locale: string 
         </div>
 
         {summary ? (
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed break-words text-foreground">
             {summary}
           </p>
         ) : null}
@@ -58,7 +58,7 @@ export function PostCardView({ post, locale }: { post: PostCard; locale: string 
           {post.category ? (
             <Link
               href={`/categories/${post.category.id}`}
-              className="font-medium text-primary transition-opacity hover:opacity-75"
+              className="min-w-0 break-words font-medium text-primary transition-opacity hover:opacity-75"
             >
               {pickLocalized(locale, post.category.name, post.category.nameEn)}
             </Link>

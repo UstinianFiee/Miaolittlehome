@@ -624,7 +624,7 @@
   },
   "announcements": {
     "title": "Announcements",
-    "more": "View more",
+    "more": "More",
     "allTitle": "All announcements",
     "allHint": "{count} announcements",
     "pinned": "Pinned"

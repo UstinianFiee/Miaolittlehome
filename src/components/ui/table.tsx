@@ -51,7 +51,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute right-2 bottom-1.5 rounded-full border border-border/50 bg-[color:var(--card)]/90 px-2 py-1 text-xs text-muted-foreground shadow-sm lg:hidden"
+            className="pointer-events-none absolute right-2 bottom-1.5 max-w-[calc(100%-1rem)] truncate rounded-full border border-border/50 bg-[color:var(--card)]/90 px-2 py-1 text-xs text-muted-foreground shadow-sm lg:hidden"
           >
             {t("site.tableScrollHint")}
           </span>

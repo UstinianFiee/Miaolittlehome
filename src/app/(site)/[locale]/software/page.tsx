@@ -33,9 +33,9 @@ export default async function SoftwarePage({ params }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6">
-      <header className="page-heading mb-6 flex items-baseline justify-between gap-4">
+      <header className="page-heading mb-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h1 className="font-display text-2xl">{t("software.title")}</h1>
-        <span className="text-sm text-muted-foreground">
+        <span className="shrink-0 text-sm text-muted-foreground">
           {t("software.count", { count: items.length })}
         </span>
       </header>

@@ -2,10 +2,22 @@
 
 import * as React from "react";
 
+import { cn } from "@/lib/utils";
+
 /**
- * 打字机动效：逐字显示文本，结束后保留闪烁光标。
- * 零依赖；服务端渲染时输出空串，客户端挂载后开始打字，不会产生水合不一致。
+ * 循环打字机（首页封面副标题用）。
+ *
+ * 行为：逐字打出 → 停留一会儿 → 逐字删除 → 短暂停顿 → 重新开始。
+ * 全程**保持单行**（whitespace-nowrap），配合 hero-intro 里按文字长度换算的
+ * 响应式字号，手机 375/390 宽度也能整句显示，不会被封面容器裁掉。
+ *
+ * 零依赖；SSR 时输出空串，客户端挂载后才开始打，不会有水合不一致。
+ * 尊重 prefers-reduced-motion：直接显示整句、不循环。
  */
+const HOLD_MS = 2600; // 整句停留
+const DELETE_MS = 45; // 删除速度
+const RESTART_MS = 650; // 清空后重新开始的停顿
+
 export function Typewriter({
   text,
   speed = 110,
@@ -13,14 +25,20 @@ export function Typewriter({
   className,
 }: {
   text: string;
+  /** 逐字出现的间隔（毫秒） */
   speed?: number;
+  /** 首次开始前的延迟（毫秒） */
   startDelay?: number;
   className?: string;
 }) {
   const [shown, setShown] = React.useState("");
 
   React.useEffect(() => {
-    // 尊重系统的「减少动态效果」偏好
+    if (!text) {
+      setShown("");
+      return;
+    }
+
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -30,51 +48,69 @@ export function Typewriter({
       return;
     }
 
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
     let index = 0;
-    let interval: ReturnType<typeof setInterval> | undefined;
+    let phase: "typing" | "holding" | "deleting" = "typing";
 
-    const startTimer = setTimeout(() => {
-      interval = setInterval(() => {
-        index += 1;
+    const step = () => {
+      if (cancelled) {
+        return;
+      }
+
+      if (phase === "typing") {
+        index = Math.min(index + 1, text.length);
         setShown(text.slice(0, index));
-        if (index >= text.length && interval) {
-          clearInterval(interval);
+        if (index >= text.length) {
+          phase = "holding";
+          timer = setTimeout(step, HOLD_MS);
+        } else {
+          timer = setTimeout(step, speed);
         }
-      }, speed);
-    }, startDelay);
+        return;
+      }
+
+      if (phase === "holding") {
+        phase = "deleting";
+        timer = setTimeout(step, DELETE_MS);
+        return;
+      }
+
+      index = Math.max(index - 1, 0);
+      setShown(text.slice(0, index));
+      if (index === 0) {
+        phase = "typing";
+        timer = setTimeout(step, RESTART_MS);
+      } else {
+        timer = setTimeout(step, DELETE_MS);
+      }
+    };
+
+    timer = setTimeout(step, startDelay);
 
     return () => {
-      clearTimeout(startTimer);
-      if (interval) {
-        clearInterval(interval);
+      cancelled = true;
+      if (timer) {
+        clearTimeout(timer);
       }
     };
   }, [text, speed, startDelay]);
 
-  const done = shown.length >= text.length;
-
-  return (
-    <span className={className}>
-      {/*
-        不可见副本占位，避免逐字出现时下方内容跳动。
-        不要再加 whitespace-nowrap：副标题是句子时，375px 下不换行会被 hero 的
-        overflow-hidden 直接裁掉半句；允许换行后由整段文本宽度决定容器高度。
-      */}
-      <span className="relative inline-block max-w-full whitespace-normal">
-        <span aria-hidden className="invisible">
-          {text}
-        </span>
-        <span className="absolute inset-0">
-          {shown}
-          <span
-            aria-hidden
-            className={done ? "animate-pulse" : ""}
-            style={{ marginLeft: "0.1em" }}
-          >
-            |
-          </span>
-        </span>
+  return (    <span
+      className={cn("typewriter inline-block align-bottom", className)}
+      aria-label={text}
+    >
+      <span aria-hidden className="whitespace-nowrap">
+        {shown}
       </span>
+      {/*
+        光标用一条细竖条而不是字符 "|"：不受字体字形宽度影响，
+        删除到空串时也不会让整行宽度塌一下。
+      */}
+      <span
+        aria-hidden
+        className="typewriter__caret ml-[0.09em] inline-block h-[1em] w-[0.09em] translate-y-[0.12em] animate-pulse rounded-full bg-current align-baseline"
+      />
     </span>
   );
 }

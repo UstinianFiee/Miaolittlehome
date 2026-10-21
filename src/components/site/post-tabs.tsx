@@ -63,10 +63,10 @@ export function PostTabs({
             <li key={post.id}>
               <Link
                 href={`/posts/${post.slug}`}
-                className="flex items-start gap-2 rounded px-3 py-2 text-sm transition-colors hover:bg-accent/40 hover:text-primary"
+                className="flex min-w-0 items-start gap-2 rounded px-3 py-2 text-sm transition-colors hover:bg-accent/40 hover:text-primary"
               >
                 <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-primary/60" />
-                <span className="line-clamp-2">{pickLocalized(locale, post.title, post.titleEn)}</span>
+                <span className="min-w-0 line-clamp-2 break-words">{pickLocalized(locale, post.title, post.titleEn)}</span>
               </Link>
             </li>
           ))

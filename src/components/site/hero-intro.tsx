@@ -26,11 +26,37 @@ export function HeroIntro({
   // 固定引用，避免每次渲染都让 HeroTitle 的 effect 重跑（见 hero-title.tsx 注释）
   const handleTitleDone = React.useCallback(() => setReady(true), []);
 
+  /*
+   * 副标题要求「单行完整显示 + 循环打字」，不能靠换行兜底。
+   * 但中英文长度差很多（英文平均每字符约 0.56em，中文 1em），固定字号在
+   * 375/390 宽手机或长英文副标题下必然溢出，所以按「文字宽度估算 + 视口宽」
+   * 反推字号：fontSize = (100vw - 左右留白) / 估算宽度(em)，再 clamp 到
+   * [0.9rem, 1.6rem]。这样短句在桌面能放大、长句在手机自动缩小，始终单行。
+   */
+  const subtitleUnits = React.useMemo(() => {
+    let units = 0;
+    for (const char of subtitle) {
+      if (char === " ") {
+        units += 0.32;
+      } else if (char.charCodeAt(0) > 0x2e80) {
+        units += 1;
+      } else {
+        units += 0.56;
+      }
+    }
+    return Math.max(units, 1);
+  }, [subtitle]);
+
+  const subtitleStyle: React.CSSProperties = {
+    fontSize: `clamp(0.9rem, calc((100vw - 2.75rem) / ${subtitleUnits.toFixed(2)}), 1.6rem)`,
+    lineHeight: 1.55,
+  };
+
   return (
     <>
       <HeroTitle
         text={name}
-        className="max-w-4xl text-3xl leading-tight text-balance sm:text-6xl"
+        className="max-w-[92vw] text-[2rem] leading-tight text-balance sm:text-6xl"
         onDone={handleTitleDone}
       />
 
@@ -41,11 +67,14 @@ export function HeroIntro({
         aria-hidden={!ready}
       >
         {subtitle && ready ? (
-          <p className="hero-subtitle font-display mt-6 max-w-3xl text-lg text-balance sm:text-2xl">
+          <p
+            className="hero-subtitle font-display mt-5 whitespace-nowrap text-center sm:mt-7"
+            style={subtitleStyle}
+          >
             <Typewriter text={subtitle} />
           </p>
         ) : (
-          <p className="mt-6 text-lg sm:text-2xl" aria-hidden="true">
+          <p className="mt-5 text-center sm:mt-7" aria-hidden="true" style={subtitleStyle}>
             &nbsp;
           </p>
         )}

@@ -69,7 +69,7 @@ export function ShareButton({ path }: { path: string }) {
         </DialogTrigger>
         <DialogContent className="min-w-0 sm:max-w-sm">
           <DialogHeader className="min-w-0">
-            <DialogTitle>{t("share.qrTitle")}</DialogTitle>
+            <DialogTitle className="break-words">{t("share.qrTitle")}</DialogTitle>
             <DialogDescription className="min-w-0 truncate">{url}</DialogDescription>
           </DialogHeader>
 
