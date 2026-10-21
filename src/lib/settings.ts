@@ -22,6 +22,8 @@ export const SITE_BACKGROUNDS_KEY = "site.backgrounds";
 /** 首页背景视频；设置后优先于图片轮播。 */
 export const SITE_BACKGROUND_VIDEO_KEY = "site.backgroundVideo";
 export const SITE_SUBTITLE_KEY = "site.subtitle";
+/** 英文副标题：/en 下优先使用；留空回退 SITE_SUBTITLE_KEY（与文章 titleEn 的回退规则一致）。 */
+export const SITE_SUBTITLE_EN_KEY = "site.subtitleEn";
 /** 内容区背景：首页封面下方与各内页 */
 export const SITE_PAGE_BACKGROUND_KEY = "site.pageBackground";
 /** 文章详情页背景（留空则沿用内容区背景） */
@@ -174,6 +176,8 @@ export type SiteInfo = {
   author: string;
   description: string;
   subtitle: string;
+  /** 英文副标题（仅 /en 使用；为空回退 subtitle） */
+  subtitleEn: string;
   logo: string;
   /** 单张首页背景图（= backgrounds[0]，保留给旧调用点）。 */
   background: string;
@@ -234,6 +238,7 @@ export const getSiteInfo = cache(async (): Promise<SiteInfo> => {
     author: settings[SITE_AUTHOR_KEY]?.trim() || siteConfig.author,
     description: settings[SITE_DESCRIPTION_KEY]?.trim() || "",
     subtitle: settings[SITE_SUBTITLE_KEY]?.trim() || "",
+    subtitleEn: settings[SITE_SUBTITLE_EN_KEY]?.trim() || "",
     logo,
     background: backgrounds[0] ?? "",
     backgrounds,
@@ -363,7 +368,8 @@ export const getSiteVersion = unstable_cache(
   { revalidate: 60, tags: ["site-version"] }
 );
 
-export function siteToSettings(input: Partial<SiteInfo>): Record<string, string> {  const entries: Record<string, string> = {};
+export function siteToSettings(input: Partial<SiteInfo>): Record<string, string> {
+  const entries: Record<string, string> = {};
 
   if (typeof input.name === "string") {
     entries[SITE_NAME_KEY] = input.name.trim();
@@ -376,6 +382,9 @@ export function siteToSettings(input: Partial<SiteInfo>): Record<string, string>
   }
   if (typeof input.subtitle === "string") {
     entries[SITE_SUBTITLE_KEY] = input.subtitle.trim();
+  }
+  if (typeof input.subtitleEn === "string") {
+    entries[SITE_SUBTITLE_EN_KEY] = input.subtitleEn.trim();
   }
   if (typeof input.logo === "string") {
     entries[SITE_LOGO_KEY] = input.logo.trim();

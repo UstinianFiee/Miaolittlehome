@@ -812,6 +812,8 @@
     "failed": "Save failed: {message}",
     "subtitle": "Site subtitle",
     "subtitleHint": "Shown under the site name on the home cover, typed out letter by letter.",
+    "subtitleEn": "English subtitle",
+    "subtitleEnHint": "Used on the /en home cover; falls back to the Chinese subtitle when empty.",
     "logo": "Site logo",
     "logoHint": "A square image shown at the left of the navbar and used as the tab icon. Leave empty to show the site name instead.",
     "background": "Home background image",

@@ -11,6 +11,7 @@ import { Reveal } from "@/components/site/reveal";
 import { ShuoshuoCard } from "@/components/site/shuoshuo-card";
 import { SiteSidebar } from "@/components/site/site-sidebar";
 import { resizedImageUrl } from "@/lib/image-url";
+import { pickLocalized } from "@/lib/localized";
 import { listPublishedFeed } from "@/lib/query";
 import { getProfile, getSiteInfo } from "@/lib/settings";
 
@@ -39,12 +40,14 @@ export async function HomeView({
 }) {
   const t = await getTranslations();
   const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
-  const { name, subtitle, description, backgrounds, backgroundVideo } = site;
+  const { name, subtitle, subtitleEn, description, backgrounds, backgroundVideo } = site;
   /*
-   * 封面副标题：优先用后台设置的副标题；为空时回退到站点描述 / 个人简介，
-   * 避免"设置里只填了描述"的站点首屏只剩一个孤零零的站名（用户反馈过）。
+   * 封面副标题：/en 优先英文副标题（site.subtitleEn），留空回退中文副标题——
+   * 与文章 titleEn / contentEn 的回退规则一致；两者都没有再回退站点描述 / 个人简介，
+   * 避免「设置里只填了描述」的站点首屏只剩一个孤零零的站名（用户反馈过）。
    */
-  const heroSubtitle = subtitle || description || profile.bio;
+  const heroSubtitle =
+    pickLocalized(locale, subtitle, subtitleEn) || description || profile.bio;
   /*
    * 说说气泡的署名用**作者名**，不是站点名：
    * 个人资料名 → 站点作者 → 站点名 逐级兜底（都为空时至少不空着）。

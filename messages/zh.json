@@ -812,6 +812,8 @@
     "failed": "保存失败：{message}",
     "subtitle": "站点副标题",
     "subtitleHint": "显示在首页封面的站点名下方，带打字机动效。",
+    "subtitleEn": "英文副标题",
+    "subtitleEnHint": "英文页面 /en 的首页封面使用；留空则回退上面的中文副标题。",
     "logo": "站点 Logo",
     "logoHint": "建议正方形图片，显示在导航栏左侧，同时作为页签图标；留空则显示站点名文字。",
     "background": "首页背景图",

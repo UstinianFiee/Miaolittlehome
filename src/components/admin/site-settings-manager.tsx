@@ -17,6 +17,8 @@ export type SiteInfoRow = {
   author: string;
   description: string;
   subtitle: string;
+  /** 英文副标题：/en 下使用，留空回退中文副标题 */
+  subtitleEn: string;
   logo: string;
   background: string;
   backgrounds: string[];
@@ -50,6 +52,7 @@ export function SiteSettingsManager({
 
   const [name, setName] = React.useState(initial.name);
   const [subtitle, setSubtitle] = React.useState(initial.subtitle);
+  const [subtitleEn, setSubtitleEn] = React.useState(initial.subtitleEn);
   const [author, setAuthor] = React.useState(initial.author);
   const [description, setDescription] = React.useState(initial.description);
   const [logo, setLogo] = React.useState(initial.logo);
@@ -114,6 +117,7 @@ export function SiteSettingsManager({
         body: JSON.stringify({
           name,
           subtitle,
+          subtitleEn,
           author,
           description,
           logo,
@@ -197,7 +201,7 @@ export function SiteSettingsManager({
           />
         </div>
 
-        <div className="space-y-2 lg:col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="site-subtitle">{t("adminSite.subtitle")}</Label>
           <Input
             id="site-subtitle"
@@ -206,6 +210,18 @@ export function SiteSettingsManager({
             maxLength={120}
           />
           <p className="text-xs text-muted-foreground">{t("adminSite.subtitleHint")}</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="site-subtitle-en">{t("adminSite.subtitleEn")}</Label>
+          <Input
+            id="site-subtitle-en"
+            value={subtitleEn}
+            onChange={(event) => setSubtitleEn(event.target.value)}
+            maxLength={120}
+            placeholder="A little corner for code and words."
+          />
+          <p className="text-xs text-muted-foreground">{t("adminSite.subtitleEnHint")}</p>
         </div>
 
         <div className="space-y-2 lg:col-span-2">

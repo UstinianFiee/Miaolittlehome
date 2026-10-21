@@ -20,6 +20,8 @@ export async function PUT(request: Request) {
       author: requireString(body.author, "作者", { max: 50 }),
       description: typeof body.description === "string" ? body.description.slice(0, 300) : undefined,
       subtitle: typeof body.subtitle === "string" ? body.subtitle.slice(0, 120) : undefined,
+      subtitleEn:
+        typeof body.subtitleEn === "string" ? body.subtitleEn.slice(0, 120) : undefined,
       // logo / background 存的是站内媒体路径或外链，长度设上限即可
       logo: typeof body.logo === "string" ? body.logo.slice(0, 500) : undefined,
       background: typeof body.background === "string" ? body.background.slice(0, 500) : undefined,
