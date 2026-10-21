@@ -462,7 +462,6 @@ export function CommentSection({
             <EmojiPicker
               textareaId="comment-content"
               label={t("comments.emoji")}
-              align="right"
             />
           </div>
           <Textarea id="comment-content" name="content" rows={5} maxLength={1000} required />
