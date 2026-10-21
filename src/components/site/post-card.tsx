@@ -54,7 +54,7 @@ export function PostCardView({ post, locale }: { post: PostCard; locale: string 
         ) : null}
 
         {/* 元信息一行：分类 · 时间 · 阅读量 */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8rem] leading-[1.6] text-muted-foreground">
           {post.category ? (
             <Link
               href={`/categories/${post.category.id}`}

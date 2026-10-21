@@ -131,6 +131,7 @@
     "editorPlaceholder": "在此撰写正文，支持 Markdown",
     "editorLoading": "编辑器加载中…",
     "editorLoadFailed": "编辑器加载失败，请刷新页面后重试。",
+    "editorRetry": "重新加载",
     "search": "搜索"
   },
   "categories": {
@@ -194,6 +195,13 @@
     "title": "后台管理",
     "backToSite": "返回前台",
     "openNav": "打开后台菜单",
+    "closeNav": "关闭后台菜单",
+    "copyFailed": "复制失败，请手动选择路径复制",
+    "errorTitle": "后台页面出错了",
+    "errorHint": "可能是数据库/网络异常，也可能是刚保存的数据暂时读不出来。可以重试，或回后台首页。",
+    "errorRetry": "重试",
+    "errorBack": "返回后台首页",
+    "errorDigest": "错误编号：{digest}",
     "group": {
       "content": "内容",
       "taxonomy": "分类与标签",
@@ -353,6 +361,7 @@
     "thumbWorking": "生成中…",
     "thumbFailed": "生成封面失败，可能是浏览器不支持这个视频格式。",
     "uploadFailed": "上传失败：{message}",
+    "uploadPartial": "已成功 {success} 个，失败 {failed} 个：{detail}",
     "album": "所属相册",
     "noAlbum": "未归入相册",
     "setTitle": "标题",
@@ -608,6 +617,8 @@
     "removeFileConfirm": "确定删除安装包「{name}」？",
     "noFiles": "还没有安装包",
     "uploadFailed": "上传失败：{message}",
+    "uploadPartial": "已成功 {success} 个，失败 {failed} 个：{detail}",
+    "versionRequired": "请先填写版本号再上传安装包",
     "failed": "操作失败：{message}",
     "hint": "支持 zip / 7z / rar / exe / dmg / apk 等，单文件不超过 2GB；超过 10MB 会自动分片上传。"
   },
@@ -770,6 +781,7 @@
     "cleanupConfirm": "确定清理超出 {days} 天的日志？",
     "cleanupDone": "已清理操作日志 {operations} 条、访问记录 {visits} 条",
     "cleanupFailed": "清理失败：{message}",
+    "loadFailed": "加载失败：{message}",
     "searchPlaceholder": "搜索对象 / 详情 / 路径",
     "filterAction": "动作",
     "allActions": "全部动作",

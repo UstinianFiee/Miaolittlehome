@@ -70,7 +70,7 @@ function Speaker({ comment }: { comment: CommentView }) {
         <div className="min-w-0">
           <p className="truncate font-medium">{comment.author || t("comments.anonymous")}</p>
           {comment.isAdmin ? (
-            <p className="text-xs text-primary">{t("comments.siteOwner")}</p>
+            <p className="text-[0.8rem] leading-[1.6] text-primary">{t("comments.siteOwner")}</p>
           ) : null}
         </div>
       </div>
@@ -79,7 +79,7 @@ function Speaker({ comment }: { comment: CommentView }) {
         标签列必须 shrink-0 + nowrap：「发布于」这种两字标签在窄纸条里
         会被挤成「发布」/「于」两行，看着像坏了。让它固定，由右侧的值换行。
       */}
-      <dl className="space-y-1.5 text-xs text-muted-foreground">
+      <dl className="space-y-1.5 text-[0.8rem] leading-[1.6] text-muted-foreground">
         {comment.ipRegion ? (
           <div className="flex justify-between gap-3">
             <dt className="shrink-0 whitespace-nowrap">{t("comments.fromRegion")}</dt>
@@ -168,7 +168,7 @@ function Note({
               </button>
             ) : null}
           </p>
-          <p className="mt-auto flex items-center gap-2 pt-3 text-[0.7rem] text-muted-foreground">
+          <p className="mt-auto flex items-center gap-2 pt-3 text-[0.8rem] leading-[1.6] text-muted-foreground">
             {comment.replies.length > 0 ? (
               <span>
                 {comment.replies.length} {t("comments.repliesLabel")}
@@ -189,7 +189,7 @@ function Note({
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3 w-full"
+              className="mt-3 w-full max-sm:h-11"
               // 别再让外层那张卡的点击把牌翻回去
               onClick={(event) => {
                 event.stopPropagation();
@@ -245,19 +245,19 @@ export function WallBoard({
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{detail.author || t("comments.anonymous")}</span>
                     {detail.isAdmin ? (
-                      <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.7rem] text-primary">
+                      <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.8rem] text-primary">
                         {t("comments.siteOwner")}
                       </span>
                     ) : null}
                     <DualTime
                       date={detail.createdAtIso}
-                      className="ml-auto text-xs text-muted-foreground"
+                      className="ml-auto text-[0.8rem] text-muted-foreground"
                     />
                   </div>
                   <p className="mt-2 text-sm leading-6 break-words whitespace-pre-wrap">
                     {detail.content}
                   </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-2 text-[0.8rem] leading-[1.6] text-muted-foreground">
                     {[detail.ipRegion, detail.browser, detail.os].filter(Boolean).join(" · ")}
                   </p>
                 </article>
@@ -271,13 +271,13 @@ export function WallBoard({
                             {reply.author || t("comments.anonymous")}
                           </span>
                           {reply.isAdmin ? (
-                            <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.7rem] text-primary">
+                            <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[0.8rem] text-primary">
                               {t("comments.siteOwner")}
                             </span>
                           ) : null}
                           <DualTime
                             date={reply.createdAtIso}
-                            className="ml-auto text-[0.7rem] text-muted-foreground"
+                            className="ml-auto text-[0.8rem] text-muted-foreground"
                           />
                         </div>
                         <p className="mt-1.5 text-sm leading-6 break-words whitespace-pre-wrap">
@@ -297,6 +297,7 @@ export function WallBoard({
                 <Button
                   type="button"
                   size="sm"
+                  className="max-sm:h-11"
                   onClick={() => {
                     onReply(detail);
                     setDetail(null);

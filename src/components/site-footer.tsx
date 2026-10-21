@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { FooterThemeSwitch } from "@/components/site/footer-theme-switch";
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { getSiteInfo } from "@/lib/settings";
 
 /**
@@ -22,12 +23,18 @@ export async function SiteFooter() {
 
   return (
     <footer className="site-footer mt-10 border-t border-border/60">
-      <section className="mx-auto w-full max-w-5xl px-4 pt-5 pb-20 sm:px-6 sm:pt-6 sm:pb-24 lg:pb-6">
+      <section className="mx-auto w-full max-w-5xl px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-24 lg:pb-6">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="footer-logo">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="" width={28} height={28} loading="lazy" />
+              <img
+                src={resizedImageUrl(logo, 128)}
+                alt=""
+                width={28}
+                height={28}
+                loading="lazy"
+              />
             ) : (
               <span aria-hidden className="footer-logo__mark" />
             )}

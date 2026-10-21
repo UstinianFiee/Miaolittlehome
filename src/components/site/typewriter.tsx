@@ -55,8 +55,12 @@ export function Typewriter({
 
   return (
     <span className={className}>
-      {/* 用一个不可见副本占位，避免逐字出现时下方内容跳动 */}
-      <span className="relative inline-block whitespace-nowrap">
+      {/*
+        不可见副本占位，避免逐字出现时下方内容跳动。
+        不要再加 whitespace-nowrap：副标题是句子时，375px 下不换行会被 hero 的
+        overflow-hidden 直接裁掉半句；允许换行后由整段文本宽度决定容器高度。
+      */}
+      <span className="relative inline-block max-w-full whitespace-normal">
         <span aria-hidden className="invisible">
           {text}
         </span>

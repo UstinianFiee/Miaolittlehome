@@ -6,11 +6,12 @@ import type { Writable } from "node:stream";
 import type { Prisma } from "@prisma/client";
 
 import { MEDIA_DIR } from "@/lib/media";
+import { ALLOWED_EXTENSIONS as MEDIA_ALLOWED_EXTENSIONS } from "@/lib/media-extensions";
 import { formatDual } from "@/lib/datetime";
 import { formatBytes } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getSiteInfo } from "@/lib/settings";
-import { SOFTWARE_DIR } from "@/lib/software-storage";
+import { assertPackageExtension, PackageError, SOFTWARE_DIR } from "@/lib/software-storage";
 import { ZipWriter } from "@/lib/zip";
 
 /**
@@ -856,27 +857,48 @@ export async function applyBackupData(data: ImportData): Promise<BackupCounts> {
   );
 }
 
+/** 媒体文件允许的扩展名（与 media-extensions.ts 的上传白名单保持同一份数据）。 */
+const MEDIA_IMPORT_EXTENSIONS = new Set(
+  Object.values(MEDIA_ALLOWED_EXTENSIONS)
+    .flat()
+    .map((ext) => ext.toLowerCase())
+);
+
+export type BackupTargetResult = {
+  /** 解析出的安全绝对路径；null 表示这条不该落盘（backup.json / 未知前缀 / 被跳过） */
+  target: string | null;
+  /** 被跳过的原因，供导入结果里的 warnings 展示；正常跳过（如 backup.json）为 null */
+  warning: string | null;
+};
+
 /**
  * 把包里的条目名解析成磁盘上的目标路径。
  *
- * 返回 null 表示这条不该落盘（`backup.json` 本身，或将来包里新增的未知前缀）——
- * 忽略未知前缀是有意的：以后往包里加东西时，旧版本导入不会直接失败。
+ * 返回 `target: null` 表示这条不该落盘：
+ * - `backup.json` 本身、或将来包里新增的未知前缀（有意忽略，保证旧版本导入不失败）；
+ * - 扩展名不在白名单里的媒体/安装包文件（**跳过并给出 warning**）。
+ *
+ * 为什么必须校验扩展名：导入的文件会落进 `/media`、`/software`，生产由 Nginx
+ * 按扩展名同源直出。包里塞一个 `media/x.html` 就等于往站点上挂了一个可执行的
+ * 同源页面（存储型 XSS）。路径穿越（`..`）仍然直接抛错，不降级为跳过。
  */
-export function resolveBackupTarget(entryName: string): string | null {
+export function resolveBackupTarget(entryName: string): BackupTargetResult {
   let root: string;
   let relative: string;
+  let mediaFile = false;
 
   if (entryName === "backup.json") {
-    return null;
+    return { target: null, warning: null };
   }
   if (entryName.startsWith("media/")) {
     root = MEDIA_DIR;
     relative = entryName.slice("media/".length);
+    mediaFile = true;
   } else if (entryName.startsWith("software/")) {
     root = SOFTWARE_DIR;
     relative = entryName.slice("software/".length);
   } else {
-    return null;
+    return { target: null, warning: null };
   }
 
   const normalized = relative.replaceAll("\\", "/").replace(/^\/+/, "");
@@ -884,12 +906,29 @@ export function resolveBackupTarget(entryName: string): string | null {
     throw new BackupError(`备份包里含有非法路径：${entryName}`);
   }
 
+  if (mediaFile) {
+    const ext = path.extname(normalized).toLowerCase();
+    if (!MEDIA_IMPORT_EXTENSIONS.has(ext)) {
+      return { target: null, warning: `已跳过不支持的媒体文件：${entryName}` };
+    }
+  } else {
+    try {
+      // 直接复用安装包上传时的扩展名白名单，避免两份规则走岔
+      assertPackageExtension(normalized);
+    } catch (error) {
+      if (error instanceof PackageError) {
+        return { target: null, warning: `已跳过不支持的安装包格式：${entryName}` };
+      }
+      throw error;
+    }
+  }
+
   const target = path.resolve(root, normalized);
   if (!target.startsWith(root + path.sep)) {
     throw new BackupError(`备份包里的路径越界：${entryName}`);
   }
 
-  return target;
+  return { target, warning: null };
 }
 
 // ---------- 统计（给后台页面显示） ----------

@@ -1,7 +1,9 @@
-import Link from "next/link";
 import type { CSSProperties } from "react";
 
 import type { Friend } from "@prisma/client";
+
+import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 
 const CENTER = { x: 400, y: 320 };
 /**
@@ -68,7 +70,7 @@ function arrangeFriends(friends: Friend[]): OrbitFriend[] {
 function FriendAvatar({ friend }: { friend: Friend }) {
   if (friend.avatar) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={friend.avatar} alt="" loading="lazy" decoding="async" className="size-full rounded-full object-cover" />;
+    return <img src={resizedImageUrl(friend.avatar, 128)} alt="" loading="lazy" decoding="async" className="size-full rounded-full object-cover" />;
   }
   return <span aria-hidden className="flex size-full items-center justify-center rounded-full bg-primary/12 font-display text-xl text-primary">{Array.from(friend.name)[0] ?? "?"}</span>;
 }
@@ -97,7 +99,7 @@ export function FriendsOrbit({
   return (
     <>
       <section className="friends-orbit-stage mx-auto" aria-label={siteName}>
-        <div className="friends-orbit" aria-label={`${friends.length} links arranged around ${siteName}`}>
+        <div className="friends-orbit" aria-label={`${siteName} 的友链星系`}>
           <div className="friends-orbit__spin">
             <svg
               aria-hidden="true"
@@ -148,9 +150,9 @@ export function FriendsOrbit({
                     <span className="friends-orbit__tooltip">
                       <strong className="block font-display text-base text-[color:var(--card-foreground)]">{item.friend.name}</strong>
                       {item.friend.description ? (
-                        <span className="mt-1 block text-xs leading-5 text-muted-foreground">{item.friend.description}</span>
+                        <span className="mt-1 block text-[0.8rem] leading-[1.6] text-muted-foreground">{item.friend.description}</span>
                       ) : null}
-                      <span className="mt-2 block truncate text-[0.7rem] text-primary">
+                      <span className="mt-2 block truncate text-[0.8rem] text-primary">
                         {item.friend.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                       </span>
                     </span>
@@ -163,7 +165,7 @@ export function FriendsOrbit({
           <Link href="/" aria-label={siteName} className="friends-orbit__center">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="" className="size-14 rounded-full object-cover" />
+              <img src={resizedImageUrl(logo, 128)} alt="" className="size-14 rounded-full object-cover" />
             ) : (
               <span aria-hidden className="friends-orbit__center-mark">{Array.from(siteName)[0] ?? "M"}</span>
             )}
@@ -180,7 +182,7 @@ export function FriendsOrbit({
               <span className="min-w-0 flex-1">
                 <strong className="block font-display text-base text-[color:var(--card-foreground)]">{friend.name}</strong>
                 {friend.description ? <span className="mt-1 block text-sm leading-6 text-muted-foreground">{friend.description}</span> : null}
-                <span className="mt-2 block truncate text-xs text-primary">{friend.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
+                <span className="mt-2 block truncate text-[0.8rem] text-primary">{friend.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
               </span>
               <span aria-hidden="true" className="friends-mobile-card__spark" />
             </a>

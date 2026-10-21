@@ -89,12 +89,14 @@ export function ArticleBar({ title }: { title: string }) {
         }}
       />
 
-      {/* 文章导航栏：滚过标题后出现 */}
+      {/* 文章导航栏：滚过标题后出现；隐藏时用 invisible 保证不可见控件也不进 Tab 序列 */}
       <div
         aria-hidden={!visible}
         className={cn(
-          "fixed inset-x-0 top-[4.75rem] z-40 px-3 transition-all duration-300 sm:top-[5.25rem] sm:px-4",
-          visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
+          "fixed inset-x-0 top-[4.75rem] z-40 px-3 transition-[opacity,transform] duration-300 sm:top-[5.25rem] sm:px-4",
+          visible
+            ? "visible translate-y-0 opacity-100"
+            : "invisible pointer-events-none -translate-y-2 opacity-0"
         )}
       >
         <nav
@@ -105,7 +107,7 @@ export function ArticleBar({ title }: { title: string }) {
             href="/posts"
             aria-label={t("site.backToPosts")}
             title={t("site.backToPosts")}
-            className="press flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+            className="press flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground sm:size-8"
           >
             <ArrowLeftIcon className="size-4" />
           </Link>
@@ -113,7 +115,7 @@ export function ArticleBar({ title }: { title: string }) {
           <span className="min-w-0 flex-1 truncate text-sm">{title}</span>
 
           <span
-            className="shrink-0 text-xs tabular-nums text-muted-foreground"
+            className="hidden shrink-0 text-[0.8rem] leading-[1.6] tabular-nums text-muted-foreground sm:inline"
             title={t("site.readingProgress")}
           >
             {Math.round(progress * 100)}%
@@ -124,7 +126,7 @@ export function ArticleBar({ title }: { title: string }) {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             aria-label={t("site.backToTop")}
             title={t("site.backToTop")}
-            className="press flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+            className="press flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground sm:size-8"
           >
             <ArrowUpIcon className="size-4" />
           </button>

@@ -92,11 +92,75 @@ export function parseTagNames(value: unknown): string[] {
   return names;
 }
 
-/** 把 ValidationError 转成统一的错误响应体。 */
+/** 请求体超过允许大小（用于 Content-Length 预检，映射成 413）。 */
+export class PayloadTooLargeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PayloadTooLargeError";
+  }
+}
+
+/**
+ * 校验请求体大小：`Content-Length` 超限立即抛 413，避免先把整个 body
+ * 读进内存再发现太大。
+ *
+ * 分块传输（没有 Content-Length）时这里放行，由下游的分片大小上限兜底。
+ */
+export function assertBodyWithinLimit(request: Request, maxBytes: number): void {
+  const header = request.headers.get("content-length");
+  if (!header) {
+    return;
+  }
+
+  const length = Number(header);
+  if (!Number.isFinite(length) || length < 0) {
+    throw new ValidationError("请求体长度不合法");
+  }
+  if (length > maxBytes) {
+    throw new PayloadTooLargeError(
+      `请求体过大（${Math.ceil(length / 1024)}KB），上限 ${Math.floor(maxBytes / 1024)}KB`
+    );
+  }
+}
+
+/**
+ * Prisma 已知错误码 → 可读中文与正确的 HTTP 状态。
+ *
+ * 用鸭子类型判断（不 import `@prisma/client`），避免这个纯工具模块把 Prisma
+ * 运行时带进任何非数据库调用方。
+ */
+const PRISMA_ERROR_MESSAGES: Record<string, { message: string; status: number }> = {
+  P2002: { message: "数据已存在（唯一约束冲突），请换一个名称或标识", status: 409 },
+  P2003: { message: "引用的数据不存在（外键约束），请检查关联项", status: 400 },
+  P2025: { message: "要操作的数据不存在或已被删除", status: 404 },
+};
+
+function prismaErrorCode(error: unknown): string | null {
+  if (typeof error !== "object" || error === null) {
+    return null;
+  }
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
+/** 把已知错误转成统一的错误响应体。 */
 export function errorResponse(error: unknown): { message: string; status: number } {
   if (error instanceof ValidationError) {
     return { message: error.message, status: 400 };
   }
+  if (error instanceof PayloadTooLargeError) {
+    return { message: error.message, status: 413 };
+  }
+
+  const code = prismaErrorCode(error);
+  if (code) {
+    const mapped = PRISMA_ERROR_MESSAGES[code];
+    if (mapped) {
+      console.error(`[api] 数据库约束错误（${code}）：`, error);
+      return mapped;
+    }
+  }
+
   console.error("[api] 未预期的错误：", error);
   return { message: "服务器内部错误", status: 500 };
 }

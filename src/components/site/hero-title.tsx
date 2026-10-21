@@ -31,6 +31,15 @@ export function HeroTitle({
 }) {
   const chars = Array.from(text);
   const [ready, setReady] = React.useState(false);
+  /**
+   * onDone 存进 ref：父组件每次渲染都会传新的箭头函数，若把它写进依赖数组，
+   * 任何重渲染都会清掉并重排下面两个定时器（至少多跑一轮 onDone，最坏成循环）。
+   */
+  const onDoneRef = React.useRef(onDone);
+
+  React.useEffect(() => {
+    onDoneRef.current = onDone;
+  });
 
   const totalMs = Math.max(0, (chars.length - 1) * CHAR_STAGGER_MS + CHAR_IN_MS + SETTLE_MS);
 
@@ -41,17 +50,17 @@ export function HeroTitle({
 
     if (reduce) {
       setReady(true);
-      onDone?.();
+      onDoneRef.current?.();
       return;
     }
 
     const settle = window.setTimeout(() => setReady(true), totalMs);
-    const done = window.setTimeout(() => onDone?.(), totalMs);
+    const done = window.setTimeout(() => onDoneRef.current?.(), totalMs);
     return () => {
       window.clearTimeout(settle);
       window.clearTimeout(done);
     };
-  }, [totalMs, onDone]);
+  }, [totalMs]);
 
   return (
     <h1 className={cn("hero-title", className)} data-ready={ready ? "true" : "false"}>

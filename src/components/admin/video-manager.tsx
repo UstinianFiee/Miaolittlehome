@@ -174,7 +174,7 @@ export function VideoManager({
         </div>
 
         <div className="space-y-2">
-          <Label>{t("adminVideos.fieldSourceType")}</Label>
+          <Label htmlFor="video-source-type">{t("adminVideos.fieldSourceType")}</Label>
           <Select
             value={form.sourceType}
             onValueChange={(value) => setForm({ ...form, sourceType: value })}

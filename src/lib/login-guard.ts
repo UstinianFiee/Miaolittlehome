@@ -23,9 +23,35 @@ type Entry = { count: number; firstAt: number };
 
 const failures = new Map<string, Entry>();
 
+/** 已知的占位盐（模板里的值）；生产环境出现它们等于没加盐。 */
+const IP_HASH_SALT_PLACEHOLDERS = ["change-me", "replace-with"];
+
+/**
+ * 取 IP 哈希盐。
+ *
+ * 与评论限频同一套规则：生产环境缺失/占位直接抛错（fail-closed），
+ * 开发环境保留兜底。
+ */
+function resolveIpHashSalt(fallback: string): string {
+  const value = process.env.IP_HASH_SALT?.trim();
+
+  if (process.env.NODE_ENV === "production") {
+    const lowered = (value ?? "").toLowerCase();
+    const isPlaceholder = IP_HASH_SALT_PLACEHOLDERS.some((item) => lowered.includes(item));
+    if (!value || isPlaceholder) {
+      throw new Error(
+        "IP_HASH_SALT 未配置或仍为占位值，无法对登录来源 IP 做不可逆哈希；请在环境变量中设置随机长字符串（参见 deploy/.env.production.example）"
+      );
+    }
+    return value;
+  }
+
+  return value || fallback;
+}
+
 /** 只存哈希，不在内存里留原始 IP。 */
 function keyOf(ip: string): string {
-  const salt = process.env.IP_HASH_SALT ?? "blog-login-guard";
+  const salt = resolveIpHashSalt("blog-login-guard");
   return crypto.createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
 }
 

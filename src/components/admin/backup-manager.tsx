@@ -102,29 +102,38 @@ export function BackupManager({ stats }: { stats: BackupStatsView }) {
     setResult(null);
     setPercent(0);
 
-    const outcome = await uploadFileInChunks(
-      file,
-      {
-        init: "/api/admin/backup/upload/init",
-        chunk: "/api/admin/backup/upload/chunk",
-        complete: "/api/admin/backup/upload/complete",
-      },
-      {},
-      setPercent
-    );
+    try {
+      const outcome = await uploadFileInChunks(
+        file,
+        {
+          init: "/api/admin/backup/upload/init",
+          chunk: "/api/admin/backup/upload/chunk",
+          complete: "/api/admin/backup/upload/complete",
+        },
+        {},
+        setPercent
+      );
 
-    if (!outcome.ok) {
-      setError(t("adminBackup.failed", { message: outcome.message }));
+      if (!outcome.ok) {
+        setError(t("adminBackup.failed", { message: outcome.message }));
+        return;
+      }
+
+      setResult(outcome.data as BackupImportResult);
+      setFile(null);
+      setPercent(100);
+      // 页面上的统计是服务端渲染的，导入后要重新取一次
+      router.refresh();
+    } catch (error) {
+      // uploadFileInChunks 已兜底；这里保证导入状态一定复位
+      setError(
+        t("adminBackup.failed", {
+          message: error instanceof Error ? error.message : "",
+        })
+      );
+    } finally {
       setImporting(false);
-      return;
     }
-
-    setResult(outcome.data as BackupImportResult);
-    setFile(null);
-    setPercent(100);
-    setImporting(false);
-    // 页面上的统计是服务端渲染的，导入后要重新取一次
-    router.refresh();
   }
 
   return (

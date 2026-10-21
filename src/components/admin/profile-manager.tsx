@@ -101,6 +101,13 @@ export function ProfileManager({
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  // 头像上传中不允许保存，避免保存旧头像路径
+  const [uploadingCount, setUploadingCount] = React.useState(0);
+  const uploadingBusy = uploadingCount > 0;
+
+  const handleMediaBusy = React.useCallback((busy: boolean) => {
+    setUploadingCount((count) => (busy ? count + 1 : Math.max(0, count - 1)));
+  }, []);
 
   function updateLink(index: number, patch: Partial<ProfileLinkRow>) {
     setLinks((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -127,6 +134,10 @@ export function ProfileManager({
   }
 
   async function save() {
+    if (uploadingBusy) {
+      return;
+    }
+
     setPending(true);
     setMessage(null);
     setError(null);
@@ -173,7 +184,7 @@ export function ProfileManager({
           data-testid="profile-save"
           className="press ripple"
           onClick={() => void save()}
-          disabled={pending}
+          disabled={pending || uploadingBusy}
           aria-busy={pending}
         >
           {pending ? (
@@ -222,6 +233,7 @@ export function ProfileManager({
         value={avatar}
         onChange={setAvatar}
         options={images}
+        onBusyChange={handleMediaBusy}
       />
 
       <div className="space-y-4 border-t border-border/60 pt-5">

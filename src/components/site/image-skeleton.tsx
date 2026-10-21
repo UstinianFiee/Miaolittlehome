@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ImageOffIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
  * 用户看到的就是卡片上一块突兀的空白。骨架把这段空白变成有意义的加载反馈。
  *
  * 只动 opacity，不撑布局；图片已经在 DOM 里（浏览器缓存命中时 onLoad 会立刻触发）。
+ * 加载失败（媒体被删 / /img 转码出错）时关闭骨架并显示占位，避免 shimmer 永远转。
  */
 export function ImageSkeleton({
   src,
@@ -25,6 +27,21 @@ export function ImageSkeleton({
   imgClassName?: string;
 }) {
   const [loaded, setLoaded] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+
+  if (failed) {
+    return (
+      <div
+        className={cn(
+          "flex h-full w-full items-center justify-center bg-muted/50 text-muted-foreground",
+          className
+        )}
+        aria-hidden="true"
+      >
+        <ImageOffIcon className="size-6" />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
@@ -36,6 +53,7 @@ export function ImageSkeleton({
         loading="lazy"
         decoding="async"
         onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
         className={cn(
           "h-full w-full object-cover transition-opacity duration-500",
           loaded ? "opacity-100" : "opacity-0",

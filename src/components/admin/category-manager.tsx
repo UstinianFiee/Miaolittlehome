@@ -154,12 +154,12 @@ export function CategoryManager({ items }: { items: CategoryRow[] }) {
         </div>
 
         <div className="space-y-2">
-          <Label>{t("categories.type")}</Label>
+          <Label htmlFor="category-type">{t("categories.type")}</Label>
           <Select
             value={form.type}
             onValueChange={(value) => setForm({ ...form, type: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger id="category-type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

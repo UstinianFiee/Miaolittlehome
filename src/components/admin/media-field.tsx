@@ -32,6 +32,7 @@ export function MediaField({
   accept = "image/*",
   preview = "image",
   compact = false,
+  onBusyChange,
 }: {
   id: string;
   label: string;
@@ -46,6 +47,8 @@ export function MediaField({
   preview?: "image" | "video";
   /** 缩小预览，适合列表里一排排的曲目封面 */
   compact?: boolean;
+  /** 上传开始/结束时通知外层，便于外层在上传中禁用保存 */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const t = useTranslations();
   const [open, setOpen] = React.useState(false);
@@ -53,6 +56,35 @@ export function MediaField({
   const [uploadError, setUploadError] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState("");
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const onBusyChangeRef = React.useRef(onBusyChange);
+  const busyRef = React.useRef(false);
+
+  React.useEffect(() => {
+    onBusyChangeRef.current = onBusyChange;
+  });
+
+  /**
+   * 只在「空闲 → 上传中 / 上传中 → 空闲」的边界通知外层。
+   * 不能用 effect 简单跟随 uploading：空闲字段重新测试时也会触发一次 false，
+   * 把另一个字段的“上传中”计数误减掉。
+   */
+  const notifyBusy = React.useCallback((busy: boolean) => {
+    if (busyRef.current === busy) {
+      return;
+    }
+    busyRef.current = busy;
+    onBusyChangeRef.current?.(busy);
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      // 上传中卸载也要通知一次，避免外层计数永远减不下来
+      if (busyRef.current) {
+        busyRef.current = false;
+        onBusyChangeRef.current?.(false);
+      }
+    };
+  }, []);
 
   const filteredOptions = React.useMemo(() => {
     const needle = filter.trim().toLowerCase();
@@ -82,26 +114,33 @@ export function MediaField({
 
     setUploading(true);
     setUploadError(null);
+    notifyBusy(true);
 
-    const outcome = await uploadFileInChunks(file, {
-      init: "/api/admin/media/upload/init",
-      chunk: "/api/admin/media/upload/chunk",
-      complete: "/api/admin/media/upload/complete",
-    });
+    try {
+      const outcome = await uploadFileInChunks(file, {
+        init: "/api/admin/media/upload/init",
+        chunk: "/api/admin/media/upload/chunk",
+        complete: "/api/admin/media/upload/complete",
+      });
 
-    setUploading(false);
+      if (!outcome.ok) {
+        setUploadError(outcome.message);
+        return;
+      }
 
-    if (!outcome.ok) {
-      setUploadError(outcome.message);
-      return;
-    }
+      const data = outcome.data as { id?: number; path?: string } | null;
+      // 视频补一张真封面（失败不影响主文件，见 video-thumb-client.ts）
+      await attachVideoThumbnail(file, data?.id);
 
-    const data = outcome.data as { id?: number; path?: string } | null;
-    // 视频补一张真封面（失败不影响主文件，见 video-thumb-client.ts）
-    await attachVideoThumbnail(file, data?.id);
-
-    if (data?.path) {
-      onChange(data.path);
+      if (data?.path) {
+        onChange(data.path);
+      }
+    } catch (error) {
+      // uploadFileInChunks 已兜底，这里只防御意外的同步异常
+      setUploadError(error instanceof Error ? error.message : "上传失败，请重试");
+    } finally {
+      setUploading(false);
+      notifyBusy(false);
     }
   }
 

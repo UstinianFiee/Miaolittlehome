@@ -6,9 +6,13 @@ import { clearLoginFailures, loginBlockedFor, recordLoginFailure } from "@/lib/l
 import { logOperation } from "@/lib/logs";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
+import { assertBodyWithinLimit, PayloadTooLargeError } from "@/lib/validation";
 
 /** 用户不存在时也执行一次比较，避免通过响应时间区分「用户是否存在」。 */
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing-safety", 10);
+
+/** 登录请求体上限：用户名 64 + 密码 200，64KB 绰绰有余。 */
+const LOGIN_BODY_MAX_BYTES = 64 * 1024;
 
 type LoginBody = {
   username?: unknown;
@@ -33,8 +37,12 @@ export async function POST(request: Request) {
 
   let body: LoginBody;
   try {
+    assertBodyWithinLimit(request, LOGIN_BODY_MAX_BYTES);
     body = (await request.json()) as LoginBody;
-  } catch {
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 413 });
+    }
     return NextResponse.json({ ok: false, error: "invalid_request" }, { status: 400 });
   }
 

@@ -131,6 +131,7 @@
     "editorPlaceholder": "Write your content here, Markdown supported",
     "editorLoading": "Loading editor…",
     "editorLoadFailed": "The editor could not be loaded. Refresh the page and try again.",
+    "editorRetry": "Reload editor",
     "search": "Search"
   },
   "categories": {
@@ -194,6 +195,13 @@
     "title": "Admin",
     "backToSite": "Back to site",
     "openNav": "Open admin menu",
+    "closeNav": "Close admin menu",
+    "copyFailed": "Copy failed. Please select and copy the path manually.",
+    "errorTitle": "Something went wrong in the admin",
+    "errorHint": "This may be a database or network error, or data that cannot be read right now. Retry, or go back to the dashboard.",
+    "errorRetry": "Retry",
+    "errorBack": "Back to dashboard",
+    "errorDigest": "Error ID: {digest}",
     "group": {
       "content": "Content",
       "taxonomy": "Categories & tags",
@@ -353,6 +361,7 @@
     "thumbWorking": "Working…",
     "thumbFailed": "Could not create a cover — the browser may not support this video format.",
     "uploadFailed": "Upload failed: {message}",
+    "uploadPartial": "Uploaded {success}; failed {failed}: {detail}",
     "album": "Album",
     "noAlbum": "Not in an album",
     "setTitle": "Title",
@@ -608,6 +617,8 @@
     "removeFileConfirm": "Delete package \"{name}\"?",
     "noFiles": "No packages yet",
     "uploadFailed": "Upload failed: {message}",
+    "uploadPartial": "Uploaded {success}; failed {failed}: {detail}",
+    "versionRequired": "Enter a version before uploading a package",
     "failed": "Action failed: {message}",
     "hint": "zip / 7z / rar / exe / dmg / apk and more, up to 2GB per file; files over 10MB are chunked automatically."
   },
@@ -770,6 +781,7 @@
     "cleanupConfirm": "Delete log entries older than {days} days?",
     "cleanupDone": "Removed {operations} operation and {visits} visit entries",
     "cleanupFailed": "Cleanup failed: {message}",
+    "loadFailed": "Failed to load: {message}",
     "searchPlaceholder": "Search target / detail / path",
     "filterAction": "Action",
     "allActions": "All actions",

@@ -14,6 +14,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SitePreloader } from "@/components/site/site-preloader";
 import { ThemeProvider } from "@/components/theme-provider";
+import { siteConfig } from "@/config/site";
 import { getProfile, getSiteInfo, getSiteVersion } from "@/lib/settings";
 import { resizedImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,21 @@ export async function generateMetadata({
   const t = await getTranslations({ locale });
   const info = await getSiteInfo();
 
+  /*
+   * 社交卡片（og:image / twitter:image）解析相对地址要用绝对基准。
+   * NEXT_PUBLIC_SITE_URL 会在构建期内联，所以这里读到的是部署时配置的域名；
+   * 配错（例如漏写协议）时退回 localhost，避免整页 metadata 直接抛错。
+   */
+  const baseUrl = (() => {
+    try {
+      return new URL(siteConfig.url);
+    } catch {
+      return new URL("http://localhost:3000");
+    }
+  })();
+
   return {
+    metadataBase: baseUrl,
     title: {
       default: info.name,
       template: `%s · ${info.name}`,
@@ -94,8 +109,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   ]);
 
   const { name, logo } = site;
-  // 品牌开屏优先站点 Logo，没配 Logo 就用个人头像；都没有时用站点首字
-  const brandImage = resizedImageUrl(logo || profile.avatar, 640);
+  // 品牌开屏优先站点 Logo，没配 Logo 就用个人头像；都没有时用站点首字。
+  // 开屏徽章只有 96px 大小，用 256 档足够 2x 屏，没必要把上传原图（最长边 2560）整张拉下来。
+  const brandImage = resizedImageUrl(logo || profile.avatar, 256);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -115,10 +131,21 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             >
               {site.pageBackground ? (
                 <>
+                  {/*
+                    内容区背景按视口取图：手机用 640 宽、桌面用 1280 宽。
+                    之前所有设备都拉 1920 宽的转码图（手机上多下 2~5 倍流量），
+                    1Mbps 服务器上首屏要多等 1~2 秒；这里两个固定图层按断点显示，
+                    不引入额外 JS，也不影响下方遮罩层。
+                  */}
                   <div
                     aria-hidden
-                    className="fixed inset-0 -z-20 bg-cover bg-center"
-                    style={{ backgroundImage: `url("${resizedImageUrl(site.pageBackground, 1920)}")` }}
+                    className="fixed inset-0 -z-20 bg-cover bg-center md:hidden"
+                    style={{ backgroundImage: `url("${resizedImageUrl(site.pageBackground, 640)}")` }}
+                  />
+                  <div
+                    aria-hidden
+                    className="fixed inset-0 -z-20 hidden bg-cover bg-center md:block"
+                    style={{ backgroundImage: `url("${resizedImageUrl(site.pageBackground, 1280)}")` }}
                   />
                   {/*
                     背景图遮罩保持轻薄：上方稍微压暗/提亮，向下快速淡出，避免整页蒙一层灰白。

@@ -5,7 +5,7 @@ import { setRequestLocale } from "next-intl/server";
 import { HOME_PAGE_SIZE, HomeView } from "@/components/site/home-view";
 import { routing } from "@/i18n/routing";
 import { buildAlternates } from "@/lib/metadata";
-import { listPublishedFeed } from "@/lib/query";
+import { countPublishedFeed } from "@/lib/query";
 
 type PagedHomeProps = {
   params: Promise<{ locale: string; page: string }>;
@@ -21,9 +21,10 @@ function parsePage(raw: string): number {
 }
 
 export async function generateStaticParams() {
-  // 首页信息流是「文章 + 说说」混排，页数必须按合并后的总数算
-  const { total, pageSize } = await listPublishedFeed({ page: 1, pageSize: HOME_PAGE_SIZE });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // 首页信息流是「文章 + 说说」混排，页数必须按合并后的总数算。
+  // 这里只关心总数，用两条 count 就能得到，不必把两张表的全部记录取回。
+  const total = await countPublishedFeed();
+  const totalPages = Math.max(1, Math.ceil(total / HOME_PAGE_SIZE));
   const last = Math.min(totalPages, PRERENDER_LIMIT);
 
   const params: { locale: string; page: string }[] = [];
@@ -52,12 +53,14 @@ export default async function PagedHomePage({ params }: PagedHomeProps) {
     redirect(`/${locale}`);
   }
 
-  const { total, pageSize } = await listPublishedFeed({ page: 1, pageSize: HOME_PAGE_SIZE });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // 这里只需要总数判断页码是否越界；当前页的条目交给 HomeView 查（它本来就要查一次）。
+  // 之前这里跑的是完整的 listPublishedFeed，等于每渲染一页都把两张表全量扫两遍。
+  const total = await countPublishedFeed();
+  const totalPages = Math.max(1, Math.ceil(total / HOME_PAGE_SIZE));
 
   if (page > totalPages) {
     notFound();
   }
 
-  return <HomeView locale={locale} page={page} />;
+  return <HomeView locale={locale} page={page} total={total} />;
 }

@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import path from "node:path";
 
 import IP2Region from "ip2region";
@@ -88,17 +89,48 @@ export function resolveIpRegion(ip: string): string | null {
   }
 }
 
-/** 从请求头里取客户端 IP（Nginx 反代时优先取 X-Forwarded-For 的第一段）。 */
-export function clientIpFromHeaders(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) {
-      return first;
+/**
+ * 校验并归一化 IP 字面量。
+ *
+ * 用 `node:net` 的 `isIP` 判断（零依赖，比手写正则更可靠），非法输入一律返回 null。
+ * 兼容代理偶尔发来的 `[::1]` 方括号写法。
+ */
+function normalizeIp(raw: string | null | undefined): string | null {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  let candidate = trimmed;
+  if (candidate.startsWith("[")) {
+    const end = candidate.indexOf("]");
+    if (end > 0) {
+      candidate = candidate.slice(1, end);
     }
   }
 
-  return headers.get("x-real-ip")?.trim() || "";
+  return isIP(candidate) ? candidate : null;
+}
+
+/**
+ * 从请求头里取客户端 IP。
+ *
+ * **优先 `X-Real-IP`**：Nginx 用 `$remote_addr` 设置它，客户端无法伪造。
+ * 只有在没有反代（或反代没透传该头）时，才退回 `X-Forwarded-For` 的第一段 ——
+ * 那段是客户端可控的，仅能当兜底。非法/缺失返回 null，由调用方决定降级行为。
+ */
+export function clientIpFromHeaders(headers: Headers): string | null {
+  const realIp = normalizeIp(headers.get("x-real-ip"));
+  if (realIp) {
+    return realIp;
+  }
+
+  const forwarded = headers.get("x-forwarded-for");
+  if (!forwarded) {
+    return null;
+  }
+
+  return normalizeIp(forwarded.split(",")[0] ?? "");
 }
 
 /**

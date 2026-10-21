@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSoftwareFileForDownload, incrementDownload } from "@/lib/software";
+import { relativeFromPackagePublicPath, resolvePackagePath } from "@/lib/software-storage";
 
 /**
  * 安装包下载入口：先计数再 302 跳到真实文件地址。
@@ -12,6 +13,25 @@ import { getSoftwareFileForDownload, incrementDownload } from "@/lib/software";
  * `https://0.0.0.0:3000/software-files/...`，浏览器直接报 ERR_ADDRESS_INVALID。
  * 回一个**相对路径**的 Location 最稳：由浏览器按当前地址自己解析。
  */
+
+/**
+ * 库里存的 `filePath` 必须是本站安装包路径。
+ *
+ * 备份导入时该字段来自包里的字符串（不经过上传校验），若不校验就拼进 Location，
+ * 就成了开放重定向（`Location: https://evil`）。这里按上传侧的同一套规则验一遍。
+ */
+function isServablePackagePath(filePath: string): boolean {
+  if (!filePath.startsWith("/software-files/")) {
+    return false;
+  }
+  try {
+    resolvePackagePath(relativeFromPackagePublicPath(filePath));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const fileId = Number(id);
@@ -21,7 +41,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const file = await getSoftwareFileForDownload(fileId);
-  if (!file || !file.software.published) {
+  if (!file || !file.software.published || !isServablePackagePath(file.filePath)) {
     return new NextResponse("Not found", { status: 404 });
   }
 

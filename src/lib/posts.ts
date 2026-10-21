@@ -97,7 +97,13 @@ export type PostInput = {
   pinned: boolean;
 };
 
-/** 把标签名解析为 id，缺失的自动创建。 */
+/**
+ * 把标签名解析为 id，缺失的自动创建。
+ *
+ * 用 `upsert` 而不是「先查后插」：两个人同时保存带同一个新标签的文章时，
+ * 先查后插会双双认为不存在、随后撞 `Tag.name` 唯一约束变成 500。
+ * upsert 在 name（唯一键）上做，冲突时直接拿到已有记录的 id。
+ */
 export async function resolveTagIds(names: string[]): Promise<number[]> {
   const ids: number[] = [];
 
@@ -109,8 +115,13 @@ export async function resolveTagIds(names: string[]): Promise<number[]> {
     }
 
     const slug = await uniqueTagSlug(tagSlugBase(name));
-    const created = await prisma.tag.create({ data: { name, slug }, select: { id: true } });
-    ids.push(created.id);
+    const tag = await prisma.tag.upsert({
+      where: { name },
+      update: {},
+      create: { name, slug },
+      select: { id: true },
+    });
+    ids.push(tag.id);
   }
 
   return ids;

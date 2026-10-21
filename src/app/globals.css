@@ -49,14 +49,20 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   /*
-   * 全站统一使用站酷快乐体（与站点标题同款）。
-   * 之前 --font-sans 是系统字体，导致导航、正文、按钮、后台表单里
-   * 大量文字和标题不一致；现在把基础字体也指向展示字体。
-   * 代码块仍由 --font-mono 兜底，见 base 层的 code/pre 规则。
+   * 正文字体：系统中文无衬线栈。
+   *
+   * 之前 `--font-sans` 也指向站酷快乐体，等于全站正文都在下载这套中文字体：
+   * 该字体按 unicode-range 切成近百个 woff2 分片，前台一页文案就会命中十几个、
+   * 约 300KB+。1Mbps 服务器上等于每个新访客先等 2~3 秒字形，而且它只有 400 字重，
+   * 长文阅读也偏花哨、不如系统黑体耐看。
+   * 现在正文/导航/表单/后台统一走系统字体（零下载、可读性好）；
+   * 站酷快乐体只留给展示字体 `--font-display`（站点名、页标题、区块标题），
+   * 命中分片会降到个位数。代码块仍由 `--font-mono` 兜底。
    */
   --font-sans:
-    "ZCOOL KuaiLe", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei",
+    sans-serif;
   /* 展示字体：站酷快乐体，用于站点名 / 大标题 / 区块标题 */
   --font-display:
     "ZCOOL KuaiLe", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
@@ -274,6 +280,12 @@
      * 布局里的占位高度（导航 pt-*）也是 rem，会一起跟随，不会错位。
      */
     font-size: 17px;
+    /*
+     * 禁止浏览器合成粗体：--font-display（站酷快乐体）只有 400 字重，
+     * 组件里残留的 font-medium / font-semibold 会被浏览器"描"成假粗体，中文发糊。
+     * 字重层级改用字号/颜色表达；系统正文字体本身有真实字重，不受影响。
+     */
+    font-synthesis: none;
   }
 
   body {
@@ -612,7 +624,7 @@
 }
 .time-popover[data-state="open"] { animation: time-reveal 180ms ease-out; }
 .time-popover[data-state="closed"] { animation: time-hide 120ms ease-in; }
-.time-popover__zone { display: block; max-width: 16rem; overflow-wrap: anywhere; margin-bottom: 0.4rem; color: var(--muted-foreground); font-size: 0.68rem; }
+.time-popover__zone { display: block; max-width: 16rem; overflow-wrap: anywhere; margin-bottom: 0.4rem; color: var(--muted-foreground); font-size: 0.75rem; }
 .time-popover__row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .time-popover__row > span { color: var(--primary); font-weight: 500; }
 .time-popover__arrow { fill: var(--background); }
@@ -648,7 +660,7 @@
 .about-hero { border-radius: 1rem; background-image: radial-gradient(ellipse at 90% 15%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 65%), radial-gradient(ellipse at 10% 85%, color-mix(in srgb, var(--tone-lilac) 6%, transparent), transparent 60%); }
 .about-portrait { padding: 0.5rem; border: 1px solid color-mix(in srgb, var(--brand) 42%, var(--border)); border-radius: 50%; background: color-mix(in srgb, var(--brand) 9%, var(--background)); box-shadow: 0 0 0 0.55rem color-mix(in srgb, var(--brand) 6%, transparent); }
 .about-hero__orbit { position: absolute; width: 30rem; height: 30rem; right: -9rem; top: -10rem; border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent); border-radius: 50%; box-shadow: 0 0 0 3rem color-mix(in srgb, var(--brand) 4%, transparent), 0 0 0 6rem color-mix(in srgb, var(--brand) 3%, transparent); pointer-events: none; }
-.about-eyebrow { font-size: 0.68rem; letter-spacing: 0.14em; color: var(--primary); font-weight: 500; }
+.about-eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; color: var(--primary); font-weight: 500; }
 .about-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem; }
 .about-panel { min-width: 0; padding: 1.65rem; border-radius: 0.8rem; }
 .about-span-4 { grid-column: span 4; } .about-span-5 { grid-column: span 5; } .about-span-7 { grid-column: span 7; } .about-span-8 { grid-column: span 8; } .about-span-12 { grid-column: span 12; }
@@ -668,7 +680,7 @@
 .about-quote > svg { color: color-mix(in srgb, var(--tone-apricot) 65%, transparent); }
 .about-tech { min-width: 0; display: flex; gap: 0.6rem; align-items: center; padding: 0.8rem 0.7rem; border: 1px solid var(--border); border-radius: 0.5rem; font-size: 0.8rem; overflow-wrap: anywhere; transition: border-color 180ms ease, transform 180ms ease; }
 .about-tech:hover { border-color: color-mix(in oklab, var(--brand) 60%, var(--border)); transform: translateY(-2px); }
-.about-tech__index { font-size: 0.6rem; color: var(--tone-lilac); font-variant-numeric: tabular-nums; }
+.about-tech__index { font-size: 0.75rem; color: var(--tone-lilac); font-variant-numeric: tabular-nums; }
 .about-tech:nth-child(even) .about-tech__index { color: var(--tone-apricot); }
 .about-entry { display: flex; gap: 1rem; justify-content: space-between; align-items: center; padding-block: 1rem; overflow-wrap: anywhere; }
 .about-entry:hover strong { color: var(--primary); }
@@ -683,7 +695,7 @@
 .about-photo:nth-child(3) { transform: rotate(-1deg); }
 .about-photo:hover { transform: translateY(-4px) rotate(0); }
 .about-photo img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 0.15rem; }
-.about-photo span { display: block; text-align: center; font-size: 0.6rem; color: var(--muted-foreground); padding-top: 0.3rem; }
+.about-photo span { display: block; text-align: center; font-size: 0.75rem; color: var(--muted-foreground); padding-top: 0.3rem; }
 .about-page a:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 @media (max-width: 767px) { .about-grid > * { grid-column: span 12; } .about-panel { padding: 1.25rem; } }
 @media (prefers-reduced-motion: reduce) { .about-page *, .about-page *::before { transition: none !important; animation: none !important; } .about-photo:hover, .about-tech:hover { transform: none; } }
@@ -855,9 +867,11 @@
   height: 100%;
   align-items: center;
   gap: 0.5rem;
+  visibility: visible;
   transition:
     transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 240ms ease;
+    opacity 240ms ease,
+    visibility 0s;
   will-change: transform, opacity;
 }
 
@@ -865,6 +879,12 @@
   pointer-events: none;
   opacity: 0;
   transform: translateY(-115%);
+  /* 淡出结束后再从可访问性树/键盘序列移除，避免不可见链接仍能被 Tab 到 */
+  visibility: hidden;
+  transition:
+    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease,
+    visibility 0s 380ms;
 }
 
 /* 收起后中央的站点名 / 回到顶部 */
@@ -910,7 +930,7 @@
   position: absolute;
   color: var(--primary);
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.05em;
   opacity: 0;
   transform: translateY(6px);
@@ -935,15 +955,32 @@
   transform: none;
 }
 
-@media (max-width: 767px) {
+/*
+ * 平板（<1280px）不做「收起整行菜单」：这一档桌面导航已隐藏，菜单入口就是左侧行里的
+ * 汉堡按钮；一旦整行收起，平板上滚过 220px 后会没有任何菜单入口，只剩回顶部。
+ * 收起效果只在真正空间充裕的桌面（≥1280px）启用。
+ */
+@media (max-width: 1279px) {
   .site-header__row[data-compact="true"] {
     pointer-events: auto;
     opacity: 1;
     transform: none;
+    visibility: visible;
+    transition:
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 240ms ease;
   }
 
   .site-header__title {
     display: none;
+  }
+}
+
+/* 手机端顶栏图标按钮补足触控热区（图标尺寸不变） */
+@media (max-width: 639px) {
+  .site-header__inner [data-slot="button"] {
+    min-width: 2.625rem;
+    min-height: 2.625rem;
   }
 }
 
@@ -1080,6 +1117,8 @@
   }
 }
 
+/*
+   ---------------------------------------------------------------
    分类是"竖长条挂在横杆上"（.bookmark），标签是"一墙小方贴纸"：
    方块 + 内部分割线 + 固定轻微倾角，悬停时抬起并把角度归正。
    倾角由 id 派生，刷新不会跳；保留薄荷纸色，边线按薄荷、杏色、淡紫循环。
@@ -1115,6 +1154,16 @@
   box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--brand) 40%, rgb(6 47 48 / 0.4));
 }
 
+/*
+ * 分类书签 / 标签贴纸里的「篇数」小字目前写的是 text-[0.7rem]（11.9px），
+ * 中文在这个字号下偏小。页面本身不在本阶段改动范围，这里统一提到 0.8rem。
+ */
+.bookmark > span:last-child,
+.tag-card > span:last-child {
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
 /* ---------------------------------------------------------------
    Shiki 代码高亮（双主题）
    渲染时只输出 CSS 变量（--shiki-light* / --shiki-dark*），
@@ -1142,7 +1191,13 @@
    文章正文排版
    --------------------------------------------------------------- */
 .markdown-body {
-  @apply text-[0.95rem] text-foreground;
+  /*
+   * 正文用 1rem（根字号 17px）：中文长文在这个字号下最舒服。
+   * 行高 1.9 比列表页的 1.8 更松一点，读长段落不挤；
+   * overflow-wrap 保证超长 URL / 英文单词不会把正文顶出容器。
+   */
+  @apply text-[1rem] leading-[1.9] text-foreground;
+  overflow-wrap: break-word;
 }
 
 .markdown-body > * + * {
@@ -1155,27 +1210,38 @@
 .markdown-body h4 {
   @apply scroll-mt-24 font-semibold tracking-tight;
   color: var(--card-foreground);
+  /* 标题换行更均衡，避免最后一行只剩一两个字 */
+  text-wrap: balance;
 }
 
 .markdown-body h1 {
-  @apply mt-8 text-2xl;
+  @apply mt-10 text-2xl;
+  line-height: 1.4;
 }
 
 .markdown-body h2 {
-  @apply mt-8 border-b border-border/60 pb-2 text-xl;
+  @apply mt-10 border-b border-border/60 pb-2 text-xl;
+  line-height: 1.45;
 }
 
 .markdown-body h3 {
-  @apply mt-6 text-lg;
+  @apply mt-8 text-lg;
+  line-height: 1.5;
 }
 
 .markdown-body h4 {
   @apply mt-6 text-base;
+  line-height: 1.55;
 }
 
 .markdown-body p,
 .markdown-body li {
-  @apply leading-7;
+  @apply leading-[1.9];
+}
+
+.markdown-body p {
+  /* 段落换行也尽量均衡（渐进增强，老浏览器忽略） */
+  text-wrap: pretty;
 }
 
 .markdown-body a {
@@ -1241,333 +1307,26 @@
   @apply bg-transparent p-0;
 }
 
-/* ---------------------------------------------------------------
-   流光丝带变体（A/B 预览）
-   ---------------------------------------------------------------
-   在内容曲线后面画 2 条渐变丝带 + 1 条流动亮线。
-   丝带用 SVG 描边（非等比拉伸时会配合 vector-effect 保持线宽），
-   只动 transform / opacity / stroke-dashoffset，不重绘形状。
-   --------------------------------------------------------------- */
-.hero-horizon__silks {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.hero-horizon__silk {
-  stroke: none;
-  filter: blur(1.5px);
-  transform-origin: 50% 50%;
-  will-change: transform, opacity;
-}
-
-.hero-horizon__silk-glow {
-  stroke: none;
-  filter: blur(14px);
-  opacity: 0.32;
-  transform-origin: 50% 50%;
-  animation: silk-drift-a 24s ease-in-out infinite alternate;
-}
-
-.hero-horizon__silk-group {
-  transform-origin: 50% 50%;
-  will-change: transform, opacity;
-}
-
-.hero-horizon__silk-group--a {
-  animation: silk-drift-a 24s ease-in-out infinite alternate;
-}
-
-.hero-horizon__silk-group--b {
-  animation: silk-drift-b 30s ease-in-out infinite alternate;
-}
-
-.hero-horizon__silk--a {
-  opacity: 0.82;
-}
-
-.hero-horizon__silk--b {
-  opacity: 0.66;
-}
-
-.hero-horizon__silk-edge {
-  fill: none;
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  opacity: 0.85;
-  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--glow-cyan) 45%, transparent));
-}
-
-.hero-horizon__silk-flow {
-  fill: none;
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-dasharray: 130 900;
-  opacity: 1;
-  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--glow-cyan) 55%, transparent));
-  animation: silk-flow 10s linear infinite;
-}
-
-@keyframes silk-drift-a {
-  from {
-    transform: translate3d(-14px, 3px, 0) scaleY(0.9);
-    opacity: 0.4;
+/*
+ * 窄屏正文表格：列多时不要挤压换行（中文会被拆成每格 2-3 行），
+ * 让表格自身横向滚动；外层阅读面板的 overflow-hidden 不会裁掉滚动区。
+ */
+@media (max-width: 639px) {
+  .markdown-body table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  to {
-    transform: translate3d(16px, -3px, 0) scaleY(1.08);
-    opacity: 0.64;
+
+  .markdown-body th,
+  .markdown-body td {
+    white-space: nowrap;
   }
-}
 
-@keyframes silk-drift-b {
-  from {
-    transform: translate3d(10px, -2px, 0) scaleY(1.04);
-    opacity: 0.32;
-  }
-  to {
-    transform: translate3d(-18px, 4px, 0) scaleY(0.9);
-    opacity: 0.5;
-  }
-}
-
-@keyframes silk-flow {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -1646;
-  }
-}
-
-/* ---------------------------------------------------------------
-   封面底部「极光地平线」（2026-10-18 替换原三层波浪动画）
-   ---------------------------------------------------------------
-   原来 3 层 mask 波浪靠 mask-position 平移，观感偏卡通水波，和整站风格不搭。
-   现在是一条**静态**平滑曲线 + 曲线背后的多色极光：
-   - 曲线填充层用 mask 裁切，填「与内容区完全一致的背景」，接缝为零；
-   - 背景图仍然必须 `background-attachment: fixed`（与内容区同一视口坐标系、同一种 cover），
-     否则 128px 高的窗口和整屏取样的图对不上，会露一条色差线；
-   - 台面遮罩用 `--scrim-bottom`（内容区底部实际生效的透明度），不是 --scrim-top；
-   - 极光只动 transform / opacity；曲线本身不动，动的是光。
-   --------------------------------------------------------------- */
-:root {
-  --horizon-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cpath d='M0,88C210,30,420,16,650,34C900,54,1140,86,1440,52L1440,120L0,120Z' fill='%23fff'/%3E%3C/svg%3E");
-}
-
-.hero-horizon {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: clamp(6rem, 12vw, 10rem);
-  overflow: hidden;
-  pointer-events: none;
-  isolation: isolate;
-}
-
-/* 极光：在曲线后面，从地平线往上透出，底部会被曲线填充盖住 */
-.hero-horizon__aurora {
-  position: absolute;
-  inset: -10% 0 0;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 52%, transparent 100%);
-  mask-image: linear-gradient(to top, #000 0%, #000 52%, transparent 100%);
-}
-
-/* 一条横向的极光光带：比纯圆斑更像"极光"，颜色沿地平线缓慢流动 */
-.hero-horizon__ribbon {
-  position: absolute;
-  left: -18%;
-  right: -18%;
-  bottom: 42%;
-  height: 42%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(57 197 187 / 0.42) 14%,
-    rgb(95 219 228 / 0.34) 34%,
-    rgb(185 164 240 / 0.22) 52%,
-    rgb(255 158 199 / 0.3) 70%,
-    transparent 92%
-  );
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 44%, #000 72%, transparent 100%);
-  mask-image: linear-gradient(to top, transparent 0%, #000 44%, #000 72%, transparent 100%);
-  mix-blend-mode: screen;
-  opacity: 0.62;
-  will-change: transform, opacity;
-  animation: horizon-ribbon 20s ease-in-out infinite alternate;
-}
-
-.hero-horizon__glow {
-  position: absolute;
-  border-radius: 50%;
-  mix-blend-mode: screen;
-  will-change: transform, opacity;
-  animation: horizon-drift 26s ease-in-out infinite alternate;
-}
-
-.hero-horizon__glow--brand {
-  left: -6%;
-  bottom: -38%;
-  width: 62%;
-  aspect-ratio: 1.9 / 1;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--brand) 58%, transparent),
-    transparent 72%
-  );
-}
-
-.hero-horizon__glow--cyan {
-  right: -8%;
-  bottom: -46%;
-  width: 56%;
-  aspect-ratio: 1.7 / 1;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--glow-cyan) 40%, transparent),
-    transparent 72%
-  );
-  animation-duration: 34s;
-  animation-direction: alternate-reverse;
-}
-
-.hero-horizon__glow--pink {
-  left: 34%;
-  bottom: -62%;
-  width: 44%;
-  aspect-ratio: 1.5 / 1;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--glow-pink) 32%, transparent),
-    transparent 72%
-  );
-  animation-duration: 29s;
-  animation-delay: -8s;
-}
-
-@keyframes horizon-drift {
-  from {
-    transform: translate3d(-3%, 2%, 0) scale(1);
-    opacity: 0.5;
-  }
-  to {
-    transform: translate3d(4%, -3%, 0) scale(1.12);
-    opacity: 0.76;
-  }
-}
-
-@keyframes horizon-ribbon {
-  from {
-    transform: translate3d(-3%, 2%, 0) scaleY(0.92);
-    opacity: 0.56;
-  }
-  to {
-    transform: translate3d(3%, -1%, 0) scaleY(1.08);
-    opacity: 0.86;
-  }
-}
-
-/* 曲线填充层：与内容区完全一致的背景（纯色 / 背景图 + 遮罩） */
-.hero-horizon__curve {
-  position: absolute;
-  inset: 0;
-  -webkit-mask-image: var(--horizon-mask);
-  mask-image: var(--horizon-mask);
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}
-
-.hero-horizon__layer {
-  position: absolute;
-  inset: 0;
-}
-
-/* 背景图必须 fixed：与内容区背景层同一视口坐标系、同一种 cover */
-.hero-horizon__fill {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-.hero-horizon__scrim {
-  position: absolute;
-  inset: 0;
-}
-
-/* 地平线描边 + 沿曲线滑过的高光 */
-.hero-horizon__lines {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-/* 贴着曲线的一层柔光：极光在地平线上的"边光"，比大团光斑更收敛 */
-.hero-horizon__rim {
-  opacity: 0.34;
-  filter: blur(5px);
-}
-
-.hero-horizon__sweep {
-  stroke: color-mix(in oklab, var(--brand) 72%, #ffffff);
-  stroke-dasharray: 90 1400;
-  stroke-dashoffset: 0;
-  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--brand) 60%, transparent));
-  animation: horizon-sweep 11s linear infinite;
-  opacity: 0.95;
-}
-
-@keyframes horizon-sweep {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -1490;
-  }
-}
-
-/* 上浮的微光，给地平线一点空气感；数量克制，全部只动 transform / opacity */
-.hero-horizon__mote {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--brand) 82%, #ffffff);
-  box-shadow: 0 0 8px color-mix(in oklab, var(--brand) 70%, transparent);
-  opacity: 0;
-  animation: horizon-mote 9s ease-in-out infinite;
-}
-
-.hero-horizon__mote--1 { left: 16%; bottom: 10%; animation-delay: -2s; }
-.hero-horizon__mote--2 { left: 38%; bottom: 20%; animation-delay: -5.5s; animation-duration: 11s; }
-.hero-horizon__mote--3 { left: 58%; bottom: 14%; animation-delay: -4s; animation-duration: 8.5s; }
-.hero-horizon__mote--4 { left: 74%; bottom: 24%; animation-delay: -7s; animation-duration: 12s; }
-.hero-horizon__mote--5 { left: 88%; bottom: 12%; animation-delay: -1s; animation-duration: 10s; }
-
-@keyframes horizon-mote {
-  0%,
-  100% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.75);
-  }
-  28% {
-    opacity: 0.9;
-  }
-  62% {
-    opacity: 0.7;
-    transform: translateY(-16px) scale(1);
-  }
-  82% {
-    opacity: 0;
-    transform: translateY(-26px) scale(0.85);
+  /* 文章详情主标题在 375px 下从 3xl(51px) 收到 2xl 左右，避免长标题占 3 行 */
+  .article-panel h1 {
+    font-size: 1.75rem;
+    line-height: 1.35;
   }
 }
 
@@ -1744,7 +1503,7 @@
   padding-inline: 0.5rem;
   border-radius: 9999px;
   color: var(--primary);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   line-height: 1;
   transition:
     background-color 220ms ease,
@@ -1766,8 +1525,8 @@
   margin-top: 0.75rem;
   padding-top: 0.7rem;
   border-top: 1px solid color-mix(in oklab, var(--border) 52%, transparent);
-  font-size: 0.72rem;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1.6;
   color: var(--muted-foreground);
 }
 
@@ -1836,6 +1595,12 @@
   .footer-filings {
     width: 100%;
   }
+
+  /* 手机端把三档主题切换的触控高度补到接近 44px（字号/外观不变） */
+  .footer-theme button {
+    min-height: 2.5rem;
+    padding-inline: 0.7rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1844,27 +1609,6 @@
   .footer-filing,
   .footer-filing svg {
     transition: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-horizon__ribbon,
-  .hero-horizon__glow,
-  .hero-horizon__mote,
-  .hero-horizon__sweep,
-  .hero-horizon__silk,
-  .hero-horizon__silk-glow,
-  .hero-horizon__silk-group,
-  .hero-horizon__silk-flow {
-    animation: none;
-  }
-
-  .hero-horizon__mote {
-    opacity: 0.5;
-  }
-
-  .hero-horizon__sweep {
-    display: none;
   }
 }
 
@@ -1886,7 +1630,7 @@
   border-radius: 0.375rem;
   background-color: var(--background);
   color: var(--muted-foreground);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.6;
   cursor: pointer;
   opacity: 0;
@@ -2165,9 +1909,23 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /*
+   * 关闭动画后必须补回最终态：.hero-char 的基础样式是 opacity:0，
+   * 只有 animation 的 forwards 才把它带到 1。少了这一句，开启"减少动态效果"
+   * 的用户会看到首页主标题完全空白。
+   */
   .hero-title,
   .hero-char {
     animation: none;
+  }
+
+  .hero-char {
+    opacity: 1;
+    transform: none;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }
 
@@ -2195,20 +1953,12 @@
 
 /*
  * 页面切换过渡（见 page-transition.tsx）。
- * 两个相位分开写，因为它们的作用不同：
- *   leaving —— 旧内容变暗消失（只动 opacity，140ms，快，不拖沓）；
- *   entering —— 新内容淡入并轻微上移（400ms，苍绿缓出，有"落定"感）。
- * 拆开的另一个原因：淡出如果带 transform，会让旧内容在消失途中位移，
- * 看起来像"被推走"而不是"淡出"，与"新页再淡入"的节奏不搭。
+ *
+ * 只做「新内容淡入上移」，不再做「旧内容淡出」：
+ * pathname 变化时 layout 的 children 已经是新页面，若此时再对容器置淡出相位，
+ * 实际淡出的是**新内容**（表现为新页先闪一下再淡入）。离场交给浏览器导航，
+ * 这里只负责进入，避免反向操作。
  */
-.page-transition {
-  transition: opacity 140ms linear;
-}
-
-.page-transition[data-leaving="true"] {
-  opacity: 0;
-}
-
 .page-transition[data-phase="entering"] {
   animation: page-enter 400ms var(--ease-out-quint);
 }

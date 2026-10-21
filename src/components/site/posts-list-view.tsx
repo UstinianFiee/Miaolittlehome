@@ -12,9 +12,22 @@ import { listPublishedPosts } from "@/lib/query";
  *
  * 与首页同理：页面一旦读 `searchParams` 就无法静态预渲染，所以分页参数
  * 放在路径里。`/[locale]/posts` 与 `/[locale]/posts/page/[page]` 共用这份实现。
+ *
+ * `total` 由分页页用 count 算好后传进来，避免为了显示总数再跑一遍完整列表查询
+ * （这里仍需查一次当前页的 items）。
  */
-export async function PostsListView({ locale, page }: { locale: string; page: number }) {
-  const { items, total, pageSize } = await listPublishedPosts({ page });
+export async function PostsListView({
+  locale,
+  page,
+  total: totalProp,
+}: {
+  locale: string;
+  page: number;
+  total?: number;
+}) {
+  const { items, total: fetchedTotal, pageSize } = await listPublishedPosts({ page });
+  // 分页页已经算过总数时直接用（第 1 页没有传，就用本次查询的 count 结果）
+  const total = totalProp ?? fetchedTotal;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const t = await getTranslations();

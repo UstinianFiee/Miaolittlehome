@@ -22,7 +22,15 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   // 已挂载的图层数量：从第 1 张开始，随轮播推进逐步增加
   const [mounted, setMounted] = React.useState(1);
   const [reduceMotion, setReduceMotion] = React.useState(false);
+  /**
+   * 是否只保留静态封面（不播背景视频）。
+   * 除了减少动效，还尊重"省流量"偏好：1Mbps 服务器上循环播放背景视频
+   * 会持续占满带宽，开着 data saver 的访客不该被自动播视频。
+   */
+  const [stillOnly, setStillOnly] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  /** 是否允许播放背景视频；SSR 阶段一律不播，等客户端判定 reduce / saveData 后再决定。 */
+  const allowPlayRef = React.useRef(false);
   /**
    * 视频「铺满」所需的显式尺寸。
    *
@@ -35,12 +43,27 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   const [coverSize, setCoverSize] = React.useState<{ w: number; h: number } | null>(null);
 
   React.useEffect(() => {
-    setReduceMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const dataSaver = (navigator as Navigator & { connection?: { saveData?: boolean } })
+      .connection?.saveData;
+    const sync = () => {
+      setReduceMotion(motion.matches);
+      setStillOnly(motion.matches || Boolean(dataSaver));
+      allowPlayRef.current = !(motion.matches || Boolean(dataSaver));
+    };
+    sync();
+    if (typeof motion.addEventListener === "function") {
+      motion.addEventListener("change", sync);
+      return () => motion.removeEventListener("change", sync);
+    }
+    // 老 Safari 只有 addListener
+    motion.addListener(sync);
+    return () => motion.removeListener(sync);
   }, []);
 
   // 量出视频铺满封面所需的尺寸；尺寸变化（转屏 / 窗口缩放）时重算
   React.useEffect(() => {
-    if (!video) {
+    if (!video || stillOnly) {
       return;
     }
 
@@ -68,10 +91,13 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
     window.addEventListener("orientationchange", update);
     update();
 
-    // 有些浏览器会拦自动播放，显式再试一次（失败也不影响 poster 兜底）
-    const played = el.play();
-    if (played && typeof played.catch === "function") {
-      played.catch(() => undefined);
+    // 有些浏览器会拦自动播放，显式再试一次（失败也不影响 poster 兜底）；
+    // 减少动效 / 省流量时 allowPlayRef 为 false，保持 poster 静止。
+    if (allowPlayRef.current) {
+      const played = el.play();
+      if (played && typeof played.catch === "function") {
+        played.catch(() => undefined);
+      }
     }
 
     return () => {
@@ -80,7 +106,7 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
       window.removeEventListener("resize", update);
       window.removeEventListener("orientationchange", update);
     };
-  }, [video]);
+  }, [video, stillOnly]);
 
   // 提前把下一张读进缓存，切换时就不会闪空白
   React.useEffect(() => {
@@ -92,7 +118,7 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
   }, [active, images]);
 
   React.useEffect(() => {
-    if (images.length <= 1 || reduceMotion) {
+    if (images.length <= 1 || reduceMotion || stillOnly) {
       return;
     }
 
@@ -105,7 +131,31 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
     }, ROTATE_MS);
 
     return () => window.clearInterval(timer);
-  }, [images, reduceMotion]);
+  }, [images, reduceMotion, stillOnly]);
+
+  // 只保留静态封面时：有图就用第一张图 + 遮罩，没图则落到下面的渐变兜底
+  if (stillOnly) {
+    if (images.length === 0) {
+      return (
+        <div aria-hidden className="hero-fallback absolute inset-0 -z-10 overflow-hidden">
+          <span className="hero-fallback__glow hero-fallback__glow--1" />
+          <span className="hero-fallback__glow hero-fallback__glow--2" />
+          <span className="hero-fallback__glow hero-fallback__glow--3" />
+          <span className="hero-fallback__grain" />
+        </div>
+      );
+    }
+    return (
+      <>
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-20 bg-cover bg-center"
+          style={{ backgroundImage: `url("${images[0]}")` }}
+        />
+        <div aria-hidden className="hero-veil absolute inset-0 -z-10" />
+      </>
+    );
+  }
 
   if (video) {
     return (
@@ -118,11 +168,10 @@ export function HeroBackground({ images, video }: { images: string[]; video: str
             style={coverSize ? { width: `${coverSize.w}px`, height: `${coverSize.h}px` } : undefined}
             src={video}
             poster={images[0] || undefined}
-            autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="none"
           />
         </div>
         <div aria-hidden className="hero-veil absolute inset-0 -z-10" />

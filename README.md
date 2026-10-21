@@ -75,12 +75,13 @@ npm run dev             # http://localhost:3000
 | 构建 | `npm run build` |
 | 生产启动 | `npm run start` |
 | 类型检查 | `npm run typecheck` |
-| 代码检查 | `npm run lint` |
 | 生成 Prisma 客户端 | `npm run db:generate` |
 | 数据库迁移 | `npm run db:migrate -- --name xxx` |
 | 写入种子数据 | `npm run db:seed` |
 | 查看数据 | `npm run db:studio` |
 | 批量优化历史图片 | `node scripts/optimize-images.mjs` |
+
+> 仓库当前没有接入 ESLint（`npm run lint` 不存在），类型检查以 `npm run typecheck` 为准。
 
 ## 目录结构
 
@@ -113,6 +114,7 @@ messages/               中英文文案
 
 生产用 Docker 双容器（应用 + Nginx），数据与媒体都落在 `/data` 卷。
 
+- **最简命令版（推荐）**：[部署](docs/部署.md) / [更新](docs/更新.md)（Ubuntu 24.04、4C4G、1Mbps，复制命令即可）
 - 首次部署：[docs/部署手册.md](docs/部署手册.md)
 - **已经部署好，要换成 HTTPS 域名**：[docs/HTTPS部署.md](docs/HTTPS部署.md)（关掉 HTTP 与 IP 直连）
 - **原来用压缩包 + Docker Compose 部署**：[压缩包更新手册](docs/压缩包更新手册.md)（不用 Git，保留数据）
@@ -127,7 +129,9 @@ messages/               中英文文案
 |---|---|
 | [docs/SPEC.md](docs/SPEC.md) | 需求唯一来源 |
 | [docs/技术说明.md](docs/技术说明.md) | 实现细节与踩过的坑（改代码前建议先看） |
-| [docs/部署手册.md](docs/部署手册.md) | 部署三步走 |
+| [docs/部署.md](docs/部署.md) | **最简部署命令**（Ubuntu 24.04） |
+| [docs/更新.md](docs/更新.md) | **最简更新命令**（含回滚） |
+| [docs/部署手册.md](docs/部署手册.md) | 部署三步走（详细版） |
 | [docs/HTTPS部署.md](docs/HTTPS部署.md) | 域名 + 证书切 HTTPS，关闭 HTTP 与 IP 直连 |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | 部署细节与排障 |
 | [CLAUDE.md](CLAUDE.md) | 协作规则与阶段进度 |

@@ -5,6 +5,7 @@ import { AnnouncementBoard } from "@/components/site/announcement-board";
 import { PostTabs } from "@/components/site/post-tabs";
 import { ProfileIcon, iconLabel } from "@/components/site/profile-icon";
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { toAnnouncementViews } from "@/lib/announcement-view";
 import { ANNOUNCEMENT_SIDEBAR_LIMIT, listPublishedAnnouncements } from "@/lib/announcements";
 import { listFriends } from "@/lib/friends";
@@ -55,7 +56,7 @@ export async function SiteSidebar({ locale }: { locale: string }) {
         {profile.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={profile.avatar}
+            src={resizedImageUrl(profile.avatar, 256)}
             alt=""
             loading="lazy"
             className="mx-auto size-20 rounded-full border-2 border-brand/40 object-cover ring-4 ring-brand/10"
@@ -132,7 +133,7 @@ export async function SiteSidebar({ locale }: { locale: string }) {
                   {friend.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={friend.avatar}
+                      src={resizedImageUrl(friend.avatar, 128)}
                       alt=""
                       loading="lazy"
                       className="size-5 shrink-0 rounded object-cover"

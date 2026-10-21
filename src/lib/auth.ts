@@ -22,11 +22,64 @@ export type SessionPayload = {
   exp: number;
 };
 
+/**
+ * 生产环境下不可接受的 JWT 密钥特征。
+ *
+ * 这些是 `.env.example` / 部署模板里的占位值（或"以后再说"的临时值）。
+ * 它们虽然长度可能够，但内容公开 —— 用它们签名等于任何人都能伪造管理员会话。
+ */
+const JWT_SECRET_PLACEHOLDERS = [
+  "change-me",
+  "replace-with",
+  "your-secret",
+  "your_secret",
+  "changeme",
+  "placeholder",
+  "example",
+  "todo",
+];
+/** 生产环境要求的最小长度（HS256 密钥至少 32 字节的熵才有意义）。 */
+const JWT_SECRET_MIN_LENGTH = 32;
+
+/** 开发环境只提醒一次，避免每次登录/校验都刷屏。 */
+let warnedAboutWeakDevSecret = false;
+
+/**
+ * 读取并校验 JWT 签名密钥。
+ *
+ * - 生产环境（`NODE_ENV=production`）：长度 <32 或含占位特征 → 直接抛中文错误（fail-closed）。
+ *   宁可登录接口 500，也不要用一个人人都知道的密钥签发会话。
+ * - 开发环境：允许占位值，但提醒一次，方便本地直接跑起来。
+ */
 function getSecret(): string {
-  const value = process.env.JWT_SECRET;
-  if (!value || value.length < 16) {
-    throw new Error("JWT_SECRET 未配置或长度不足 16 位");
+  const value = (process.env.JWT_SECRET ?? "").trim();
+
+  if (!value) {
+    throw new Error(
+      "JWT_SECRET 未配置：请设置至少 32 位的随机字符串（可用 `openssl rand -base64 48` 生成）"
+    );
   }
+
+  const lowered = value.toLowerCase();
+  const isPlaceholder = JWT_SECRET_PLACEHOLDERS.some((item) => lowered.includes(item));
+  const isTooShort = value.length < JWT_SECRET_MIN_LENGTH;
+
+  if (process.env.NODE_ENV === "production") {
+    if (isPlaceholder || isTooShort) {
+      throw new Error(
+        "JWT_SECRET 不安全：生产环境要求至少 32 位且不能是模板占位值（change-me / replace-with / your-secret 等）。请用 `openssl rand -base64 48` 生成后写入 .env.production"
+      );
+    }
+    return value;
+  }
+
+  if ((isPlaceholder || isTooShort) && !warnedAboutWeakDevSecret) {
+    warnedAboutWeakDevSecret = true;
+    console.warn(
+      "[auth] 当前 JWT_SECRET 是占位值或长度不足 32 位，仅可用于本地开发；生产环境会直接拒绝签发/校验会话。"
+    );
+  }
+
   return value;
 }
 

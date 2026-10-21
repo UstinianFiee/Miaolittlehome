@@ -23,13 +23,15 @@ export function HeroIntro({
   scrollLabel: string;
 }) {
   const [ready, setReady] = React.useState(false);
+  // 固定引用，避免每次渲染都让 HeroTitle 的 effect 重跑（见 hero-title.tsx 注释）
+  const handleTitleDone = React.useCallback(() => setReady(true), []);
 
   return (
     <>
       <HeroTitle
         text={name}
-        className="max-w-4xl text-4xl leading-tight text-balance sm:text-6xl"
-        onDone={() => setReady(true)}
+        className="max-w-4xl text-3xl leading-tight text-balance sm:text-6xl"
+        onDone={handleTitleDone}
       />
 
       {/* 副标题：ready 前用同尺寸占位撑住布局，避免出现时把下面顶跳 */}
@@ -56,7 +58,7 @@ export function HeroIntro({
         tabIndex={ready ? undefined : -1}
         aria-hidden={!ready}
       >
-        <span className="text-[0.7rem] tracking-[0.25em] uppercase">{scrollLabel}</span>
+        <span className="text-[0.75rem] tracking-[0.25em] uppercase">{scrollLabel}</span>
         <ChevronDownIcon className="size-4 animate-bounce" />
       </a>
     </>

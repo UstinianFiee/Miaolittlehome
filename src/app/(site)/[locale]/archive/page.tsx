@@ -5,9 +5,12 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { pickLocalized } from "@/lib/localized";
 import { buildPageMetadata } from "@/lib/metadata";
-import { listArchive } from "@/lib/query";
+import { listArchive, type ArchiveGroup } from "@/lib/query";
 
 type ArchivePageProps = { params: Promise<{ locale: string }> };
+
+/** 归档统一按北京时间展示（与文章页 DualTime 的默认语义一致）。 */
+const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 export async function generateMetadata({ params }: ArchivePageProps): Promise<Metadata> {
   const { locale } = await params;
@@ -32,15 +35,34 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   const t = await getTranslations();
   const groups = await listArchive();
 
-  // 按年分包，年份标题只渲染一次
-  const years = new Map<number, typeof groups>();
+  /*
+   * listArchive() 按 UTC 分组，但站内其它地方（DualTime）显示的是北京时间：
+   * 北京时间 0:00-8:00 发布的文章按 UTC 会少一天，月初还会归到上个月。
+   * 这里按 UTC+8 重新分年月，保证与文章页显示一致。
+   */
+  const beijingMonths = new Map<string, ArchiveGroup>();
   for (const group of groups) {
+    for (const post of group.posts) {
+      const shifted = new Date(post.createdAt.getTime() + BEIJING_OFFSET_MS);
+      const year = shifted.getUTCFullYear();
+      const month = shifted.getUTCMonth() + 1;
+      const key = `${year}-${String(month).padStart(2, "0")}`;
+      const bucket: ArchiveGroup = beijingMonths.get(key) ?? { key, year, month, posts: [] };
+      bucket.posts.push(post);
+      beijingMonths.set(key, bucket);
+    }
+  }
+  const months = [...beijingMonths.values()].sort((a, b) => b.key.localeCompare(a.key));
+
+  // 按年分包，年份标题只渲染一次
+  const years = new Map<number, ArchiveGroup[]>();
+  for (const group of months) {
     const list = years.get(group.year) ?? [];
     list.push(group);
     years.set(group.year, list);
   }
 
-  const totalPosts = groups.reduce((sum, group) => sum + group.posts.length, 0);
+  const totalPosts = months.reduce((sum, group) => sum + group.posts.length, 0);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6">
@@ -55,7 +77,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         </p>
       </header>
 
-      {groups.length === 0 ? (
+      {months.length === 0 ? (
         <p className="empty-state mt-8 rounded-lg border border-dashed border-border/70 py-16 text-center text-sm text-muted-foreground">
           {t("site.archiveEmpty")}
         </p>
@@ -74,7 +96,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
                   >
                     {year}
                   </h2>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[0.8rem] leading-[1.6] text-muted-foreground">
                     {t("site.postsCount", { count: yearCount })}
                   </span>
                   <span
@@ -86,7 +108,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
                 <div className="mt-6 space-y-8">
                   {monthGroups.map((group) => (
                     <div key={group.key}>
-                      <h3 className="mb-3 inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                      <h3 className="mb-3 inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-[0.8rem] leading-[1.6] font-medium text-secondary-foreground">
                         {t("site.yearMonth", { year: group.year, month: group.month })}
                       </h3>
 
@@ -105,7 +127,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
                                 dateTime={post.createdAt.toISOString()}
                                 className="w-6 shrink-0 text-sm font-medium text-muted-foreground tabular-nums sm:w-9"
                               >
-                                {String(post.createdAt.getUTCDate()).padStart(2, "0")}
+                                {String(new Date(post.createdAt.getTime() + BEIJING_OFFSET_MS).getUTCDate()).padStart(2, "0")}
                               </time>
                               <span className="min-w-0 flex-1 break-words font-medium text-card-foreground underline-offset-4 group-hover:text-primary group-hover:underline">
                                 {pickLocalized(locale, post.title, post.titleEn)}

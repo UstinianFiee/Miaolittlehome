@@ -25,12 +25,20 @@ export default async function AdminCommentsPage({ searchParams }: { searchParams
     ? (statusParam as AdminCommentStatus)
     : "pending";
 
-  const page = Math.max(1, Number(params.page ?? "1") || 1);
+  const requestedPage = Math.max(1, Number(params.page ?? "1") || 1);
 
-  const [{ items, total }, counts] = await Promise.all([
-    listCommentsForAdmin({ status, page }),
+  const [firstPage, counts] = await Promise.all([
+    listCommentsForAdmin({ status, page: requestedPage }),
     countCommentsByStatus(),
   ]);
+
+  // 审核掉最后一页的评论、或手改 URL 后，把页码夹回有效范围，避免停在空列表
+  const totalPages = Math.max(1, Math.ceil(firstPage.total / COMMENT_ADMIN_PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const { items, total } =
+    page === requestedPage
+      ? firstPage
+      : await listCommentsForAdmin({ status, page });
 
   const listItems: AdminCommentItem[] = items.map((item) => ({
     id: item.id,
@@ -55,7 +63,7 @@ export default async function AdminCommentsPage({ searchParams }: { searchParams
       items={listItems}
       status={status}
       page={page}
-      totalPages={Math.max(1, Math.ceil(total / COMMENT_ADMIN_PAGE_SIZE))}
+      totalPages={totalPages}
       total={total}
       counts={counts}
     />

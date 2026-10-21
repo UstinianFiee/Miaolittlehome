@@ -1,6 +1,6 @@
 "use client";
 
-import { LogInIcon, MenuIcon } from "lucide-react";
+import { LogInIcon, MenuIcon, SearchIcon } from "lucide-react";
 import NextLink from "next/link";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -16,6 +16,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { adminEntry } from "@/config/site";
+import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 
 /**
  * 移动端导航抽屉：点击任一项后自动关闭。
@@ -46,11 +48,17 @@ export function MobileNav({ siteName, logo }: { siteName: string; logo?: string 
         SheetFooter 自带 mt-auto，这里用 mt-0 抵消，否则又会被推到底。
       */}
       <SheetContent side="right" className="w-72 overflow-y-auto p-0">
-        <SheetHeader className="border-b px-5 py-4">
+        <SheetHeader className="border-b px-5 py-4 pr-14">
           <SheetTitle className="font-display flex items-center gap-2 text-left text-base">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt="" className="size-6 shrink-0 rounded object-cover" />
+            <img
+              src={resizedImageUrl(logo, 128)}
+              alt=""
+              width={24}
+              height={24}
+              className="size-6 shrink-0 rounded object-cover"
+            />
           ) : null}
           {siteName}
         </SheetTitle>
@@ -61,13 +69,22 @@ export function MobileNav({ siteName, logo }: { siteName: string; logo?: string 
             className="flex-col items-stretch gap-1"
             onNavigate={() => setOpen(false)}
           />
+          {/* 手机顶栏不再保留搜索图标，搜索入口必须在这里可到达 */}
+          <Link
+            href="/search"
+            onClick={() => setOpen(false)}
+            className="press mt-2 flex items-center gap-2 rounded-md border-t border-border/60 px-2.5 pt-3 pb-2 font-display text-base text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <SearchIcon className="size-4" />
+            {t("search.title")}
+          </Link>
         </nav>
 
         <SheetFooter className="mt-0 border-t p-3">
           <NextLink
             href={adminEntry.href}
             onClick={() => setOpen(false)}
-            className="font-display press flex items-center gap-2 rounded-md px-2.5 py-2 text-base text-muted-foreground transition-colors hover:text-foreground"
+            className="font-display press flex items-center gap-2 rounded-md px-2.5 py-3 text-base text-muted-foreground transition-colors hover:text-foreground"
           >
             <LogInIcon className="size-4" />
             {t(adminEntry.labelKey)}

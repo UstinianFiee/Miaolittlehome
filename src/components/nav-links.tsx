@@ -43,7 +43,7 @@ export function NavLinks({ className, onNavigate }: NavLinksProps) {
                  * 项间不留空隙；到 2xl 空间够了再放大回接近全尺寸。
                  * 改这几个值前先用 `.verify/probe-nav-width.mjs` 量一遍余量。
                  */
-                "font-display nav-item press rounded-md px-1.5 py-1.5 text-[0.9rem] whitespace-nowrap transition-colors",
+                "font-display nav-item press rounded-md px-1.5 py-1.5 text-[0.9rem] whitespace-nowrap transition-colors max-sm:px-3 max-sm:py-3.5",
                 "2xl:px-2 2xl:text-[0.95rem]",
                 /*
                  * 不用 bg-accent：--accent 是 10% 的蓝（浅色）/ 45% 的灰（深色），

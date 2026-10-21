@@ -158,38 +158,65 @@ export function SoftwareManager({ items, images }: { items: SoftwareRow[]; image
       return;
     }
 
+    // 版本在 complete 阶段才校验；为空时先拦住，避免整包传完才失败
+    if (!version.trim()) {
+      setError(t("adminSoftware.versionRequired"));
+      return;
+    }
+
     setUploading(true);
     setProgress(0);
     setError(null);
 
+    const succeeded: string[] = [];
+    const failed: { name: string; message: string }[] = [];
+
     try {
       for (const file of Array.from(files)) {
-        const result = await uploadFileInChunks(
-          file,
-          {
-            init: "/api/admin/software/files/upload/init",
-            chunk: "/api/admin/software/files/upload/chunk",
-            complete: "/api/admin/software/files/upload/complete",
-          },
-          { softwareId: managingId, version, platform },
-          setProgress
-        );
+        setProgress(0);
+        try {
+          const result = await uploadFileInChunks(
+            file,
+            {
+              init: "/api/admin/software/files/upload/init",
+              chunk: "/api/admin/software/files/upload/chunk",
+              complete: "/api/admin/software/files/upload/complete",
+            },
+            { softwareId: managingId, version: version.trim(), platform },
+            setProgress
+          );
 
-        if (!result.ok) {
-          setError(t("adminSoftware.uploadFailed", { message: result.message }));
-          return;
+          if (!result.ok) {
+            throw new Error(result.message);
+          }
+          succeeded.push(file.name);
+        } catch (uploadError) {
+          failed.push({
+            name: file.name,
+            message: uploadError instanceof Error ? uploadError.message : "",
+          });
         }
       }
-
-      router.refresh();
-    } catch {
-      setError(t("adminSoftware.uploadFailed", { message: "" }));
     } finally {
       setUploading(false);
       setProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      // 部分成功也要刷新，已落库的安装包不能“看不见”
+      router.refresh();
+    }
+
+    if (failed.length > 0) {
+      setError(
+        t("adminSoftware.uploadPartial", {
+          success: succeeded.length,
+          failed: failed.length,
+          detail: failed
+            .map((item) => (item.message ? `${item.name}：${item.message}` : item.name))
+            .join("；"),
+        })
+      );
     }
   }
 
@@ -407,11 +434,15 @@ export function SoftwareManager({ items, images }: { items: SoftwareRow[]; image
                 value={version}
                 onChange={(event) => setVersion(event.target.value)}
                 maxLength={50}
+                aria-invalid={version.trim().length === 0}
               />
+              {version.trim().length === 0 ? (
+                <p className="text-xs text-destructive">{t("adminSoftware.versionRequired")}</p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
-              <Label>{t("adminSoftware.filePlatform")}</Label>
+              <Label htmlFor="file-platform">{t("adminSoftware.filePlatform")}</Label>
               <Select value={platform} onValueChange={setPlatform}>
                 <SelectTrigger id="file-platform">
                   <SelectValue />
@@ -436,7 +467,10 @@ export function SoftwareManager({ items, images }: { items: SoftwareRow[]; image
               />
               <Button
                 type="button"
-                disabled={uploading}
+                disabled={uploading || version.trim().length === 0}
+                title={
+                  version.trim().length === 0 ? t("adminSoftware.versionRequired") : undefined
+                }
                 onClick={() => fileInputRef.current?.click()}
               >
                 <UploadIcon className="size-4" />

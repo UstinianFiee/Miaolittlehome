@@ -73,14 +73,31 @@ export type VisitInput = {
   ipRegion?: string | null;
 };
 
+/**
+ * 访问日志字段上限。
+ *
+ * UA / Referer 完全由访客控制，不截断就等于允许任何人在日志表里塞超长字符串；
+ * 路径同理（虽然它来自 nextUrl.pathname，仍按上限兜底）。
+ */
+const VISIT_PATH_MAX = 255;
+const VISIT_UA_MAX = 512;
+const VISIT_REFERER_MAX = 512;
+
+function clipText(value: string | null | undefined, max: number): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  return value.length > max ? value.slice(0, max) : value;
+}
+
 /** 记录前台访问。日志失败不影响主流程。 */
 export async function logVisit(input: VisitInput): Promise<void> {
   try {
     await prisma.visitLog.create({
       data: {
-        path: input.path,
-        ua: input.ua ?? null,
-        referer: input.referer ?? null,
+        path: clipText(input.path, VISIT_PATH_MAX) ?? "",
+        ua: clipText(input.ua, VISIT_UA_MAX),
+        referer: clipText(input.referer, VISIT_REFERER_MAX),
         ipRegion: input.ipRegion ?? null,
       },
     });

@@ -36,15 +36,24 @@ export function MusicPlayerLazy({ tracks }: { tracks: PlaylistTrack[] }) {
     };
 
     // 优先用空闲回调；不支持时退化成一次短延时
-    const idle = (
-      window as Window & {
-        requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
-      }
-    ).requestIdleCallback;
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const idle = idleWindow.requestIdleCallback;
+    const cancelIdle = idleWindow.cancelIdleCallback;
 
-    const timer = idle
-      ? idle(activate, { timeout: 2000 })
-      : window.setTimeout(activate, 1000);
+    let cancelWait: () => void;
+    if (idle) {
+      const id = idle(activate, { timeout: 2000 });
+      // idle 的 id 不是 setTimeout id，必须用 cancelIdleCallback 取消
+      cancelWait = () => {
+        if (cancelIdle) cancelIdle(id);
+      };
+    } else {
+      const timer = window.setTimeout(activate, 1000);
+      cancelWait = () => window.clearTimeout(timer);
+    }
 
     // 用户一旦有交互就立刻加载，不用等空闲
     window.addEventListener("pointerdown", activate, { once: true });
@@ -52,7 +61,7 @@ export function MusicPlayerLazy({ tracks }: { tracks: PlaylistTrack[] }) {
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      cancelWait();
       window.removeEventListener("pointerdown", activate);
       window.removeEventListener("keydown", activate);
     };

@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { routing } from "@/i18n/routing";
 
@@ -86,6 +86,13 @@ function revalidateFront(extraPaths: string[] = []): void {
 
     // 3) sitemap 不在前台布局下，得单独刷（新增 / 删除文章后要能立刻反映）
     revalidatePath("/sitemap.xml");
+
+    /*
+     * 4) 站点配置版本号（getSiteVersion 缓存）同步失效：
+     *    布局把版本号写进 HTML，ConfigSync 轮询 /api/site-version 对比后刷新客户端路由缓存。
+     *    不做这一步的话，改完内容最多要等 60 秒缓存过期打开着的标签页才会自动刷新。
+     */
+    revalidateTag("site-version");
   });
 }
 

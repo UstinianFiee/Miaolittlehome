@@ -80,7 +80,7 @@ function Meta({ comment, className }: { comment: CommentView; className?: string
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground",
+        "flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8rem] leading-[1.6] text-muted-foreground",
         className
       )}
     >
@@ -173,7 +173,7 @@ function CommentBody({
             {isPending ? <Badge variant="outline">{t("comments.pendingBadge")}</Badge> : null}
             <DualTime
               date={comment.createdAtIso}
-              className="ml-auto text-xs text-muted-foreground max-sm:ml-0"
+              className="ml-auto text-[0.8rem] text-muted-foreground max-sm:ml-0"
             />
           </div>
 
@@ -186,7 +186,7 @@ function CommentBody({
             {onReply ? (
               <button
                 type="button"
-                className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 text-[0.8rem] text-primary underline-offset-4 hover:underline"
                 onClick={() => onReply(comment)}
               >
                 <ReplyIcon className="size-3.5" />
@@ -211,7 +211,7 @@ function CommentBody({
                         <AuthorLine comment={reply} />
                         <DualTime
                           date={reply.createdAtIso}
-                          className="ml-auto text-xs text-muted-foreground max-sm:ml-0"
+                          className="ml-auto text-[0.8rem] text-muted-foreground max-sm:ml-0"
                         />
                       </div>
                       <p className="mt-1 text-sm leading-6 break-words whitespace-pre-wrap">
@@ -392,7 +392,7 @@ export function CommentSection({
 
       {visiblePending.length > 0 ? (
         <div className="mt-4 rounded-lg border border-dashed border-border/70 bg-muted/20 p-4">
-          <p className="text-xs text-muted-foreground">{t("comments.pendingHint")}</p>
+          <p className="text-[0.8rem] leading-[1.6] text-muted-foreground">{t("comments.pendingHint")}</p>
           <ul className="mt-3 space-y-3">
             {visiblePending.map((item) => (
               <CommentBody
@@ -434,9 +434,9 @@ export function CommentSection({
           {/* formOnly 时上面的 h2 已经是「写留言」，这里就不再重复一个小标题 */}
           {formOnly ? null : <h3 className="text-sm font-medium">{t("comments.formTitle")}</h3>}
           {replyTo ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-[0.8rem] leading-[1.6] text-muted-foreground">
               <span>{t("comments.replyTo", { name: replyTo.author })}</span>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setReplyTo(null)}>
+              <Button type="button" variant="ghost" size="sm" className="max-sm:h-11" onClick={() => setReplyTo(null)}>
                 {t("comments.cancelReply")}
               </Button>
             </div>
@@ -451,7 +451,7 @@ export function CommentSection({
           <div className="space-y-2">
             <Label htmlFor="comment-email">{t("comments.email")}</Label>
             <Input id="comment-email" name="email" type="email" maxLength={100} />
-            <p className="text-xs text-muted-foreground">{t("comments.emailHint")}</p>
+            <p className="text-[0.8rem] leading-[1.6] text-muted-foreground">{t("comments.emailHint")}</p>
           </div>
         </div>
 
@@ -466,7 +466,7 @@ export function CommentSection({
             />
           </div>
           <Textarea id="comment-content" name="content" rows={5} maxLength={1000} required />
-          <p className="text-xs text-muted-foreground">{t("comments.contentHint")}</p>
+          <p className="text-[0.8rem] leading-[1.6] text-muted-foreground">{t("comments.contentHint")}</p>
         </div>
 
         {/* 蜜罐：对访客隐藏，机器人常会填写 */}
@@ -488,7 +488,7 @@ export function CommentSection({
           </p>
         ) : null}
 
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" className="max-sm:h-11" disabled={submitting}>
           {submitting ? t("comments.submitting") : t("comments.submit")}
         </Button>
       </form>

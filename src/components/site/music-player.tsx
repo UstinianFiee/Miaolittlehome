@@ -10,6 +10,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 
 import type { PlaylistTrack } from "@/lib/playlist";
+import { resizedImageUrl } from "@/lib/image-url";
 import { MusicSpectrum } from "./music-spectrum";
 import { useMusicAudio } from "./use-music-audio";
 import { usePlayerPosition } from "./use-player-position";
@@ -22,14 +23,16 @@ function formatTime(seconds: number) {
 
 function Cover({ src }: { src: string | null }) {
   const [failed, setFailed] = React.useState<string | null>(null);
+  // 展示位最大 54px（面板缩略图 44px），用 128 档即可，不必拉上传原图
+  const resolved = src ? resizedImageUrl(src, 128) : null;
   return (
     <span className={styles.artwork} aria-hidden="true">
       <span className={styles.artworkFallback}><MusicIcon /></span>
-      {src && failed !== src ? (
+      {resolved && failed !== resolved ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={src} src={src} alt="" draggable={false} decoding="async"
-          onError={() => setFailed(src)}
-          ref={(image) => { if (image?.complete && !image.naturalWidth) setFailed(src); }} />
+        <img key={resolved} src={resolved} alt="" draggable={false} decoding="async"
+          onError={() => setFailed(resolved)}
+          ref={(image) => { if (image?.complete && !image.naturalWidth) setFailed(resolved); }} />
       ) : null}
     </span>
   );

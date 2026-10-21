@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DualTime } from "@/components/site/dual-time";
 import { ProfileIcon, iconLabel } from "@/components/site/profile-icon";
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { buildPageMetadata } from "@/lib/metadata";
 import { pickLocalized } from "@/lib/localized";
 import { getPlaylist } from "@/lib/playlist";
@@ -55,7 +56,7 @@ export default async function AboutPage({ params }: Props) {
         <div aria-hidden className="about-hero__orbit" />
         <div className="relative z-10 flex flex-col gap-7 sm:flex-row sm:items-center">
           <div className="about-portrait shrink-0 self-start sm:self-center">
-            {avatar ? <img src={avatar} alt={name} className="size-24 rounded-full object-cover sm:size-32" /> : <UserIcon className="size-24 p-6 text-primary sm:size-32" />}
+            {avatar ? <img src={resizedImageUrl(avatar, 256)} alt={name} width={128} height={128} className="size-24 rounded-full object-cover sm:size-32" /> : <UserIcon className="size-24 p-6 text-primary sm:size-32" />}
           </div>
           <div className="min-w-0 flex-1">
             <p className="about-eyebrow">{t("eyebrow")}</p>
@@ -81,7 +82,7 @@ export default async function AboutPage({ params }: Props) {
         <section className="about-panel about-quote surface about-span-4">
           <QuoteIcon aria-hidden className="size-7 text-primary/60" />
           <p className="mt-4 font-display text-xl leading-relaxed whitespace-pre-wrap">{details.motto || t("motto")}</p>
-          <p className="mt-5 text-xs text-muted-foreground">{info.name}</p>
+          <p className="mt-5 text-[0.8rem] leading-[1.6] text-muted-foreground">{info.name}</p>
         </section>
 
         <section className="about-panel surface about-span-8">
@@ -103,28 +104,28 @@ export default async function AboutPage({ params }: Props) {
         <section className="about-panel surface about-span-7">
           <h2 className="section-title"><BookOpenIcon className="size-4" />{projects.length ? t("projects") : t("recentWriting")}</h2>
           <div className="mt-4 divide-y divide-border/60">
-            {projects.length ? projects.map((project, i) => <a key={i} href={project.href!} target="_blank" rel="noopener noreferrer" className="about-entry"><span className="min-w-0"><strong>{project.title}</strong>{project.description && <span className="mt-1 block text-sm leading-6 text-muted-foreground">{project.description}</span>}</span><ArrowUpRightIcon className="size-4 shrink-0 text-primary" /></a>) : overview.recent.map(post => <div key={post.slug} className="py-4"><Link href={`/posts/${post.slug}`} className="about-text-link justify-between"><span>{pickLocalized(locale, post.title, post.titleEn)}</span><ArrowUpRightIcon className="size-4 shrink-0" /></Link><DualTime date={post.createdAt} className="mt-2 text-xs text-muted-foreground" /></div>)}
+            {projects.length ? projects.map((project, i) => <a key={i} href={project.href!} target="_blank" rel="noopener noreferrer" className="about-entry"><span className="min-w-0"><strong>{project.title}</strong>{project.description && <span className="mt-1 block text-sm leading-6 text-muted-foreground">{project.description}</span>}</span><ArrowUpRightIcon className="size-4 shrink-0 text-primary" /></a>) : overview.recent.map(post => <div key={post.slug} className="py-4"><Link href={`/posts/${post.slug}`} className="about-text-link justify-between"><span>{pickLocalized(locale, post.title, post.titleEn)}</span><ArrowUpRightIcon className="size-4 shrink-0" /></Link><DualTime date={post.createdAt} className="mt-2 text-[0.8rem] leading-[1.6] text-muted-foreground" /></div>)}
             {!projects.length && !overview.recent.length && <p className="py-6 text-sm text-muted-foreground">{t("writingEmpty")}</p>}
           </div>
           <Link href="/posts" className="about-text-link mt-3 text-sm">{t("allWriting")}<ArrowUpRightIcon className="size-4" /></Link>
         </section>
         <section className="about-panel surface about-span-5">
           <h2 className="section-title"><HeartIcon className="size-4" />{interests.length ? t("interests") : t("explore")}</h2>
-          {interests.length ? <ul className="mt-5 flex flex-wrap gap-2">{interests.map((interest,i) => <li key={i} className="about-chip">{interest}</li>)}</ul> : <div className="mt-5 space-y-3">{[{href:"/albums",title:t("photoTitle"),text:t("photoHint"),icon:CameraIcon},{href:"/shuoshuo",title:t("noteTitle"),text:t("noteHint"),icon:MessageCircleIcon},{href:"/friends",title:t("friendTitle"),text:t("friendHint"),icon:SparklesIcon}].map(item => <Link key={item.href} href={item.href} className="about-explore"><item.icon className="size-5 text-primary" /><span><strong className="text-sm">{item.title}</strong><span className="block text-xs text-muted-foreground">{item.text}</span></span><ArrowUpRightIcon className="ml-auto size-4 shrink-0" /></Link>)}</div>}
+          {interests.length ? <ul className="mt-5 flex flex-wrap gap-2">{interests.map((interest,i) => <li key={i} className="about-chip">{interest}</li>)}</ul> : <div className="mt-5 space-y-3">{[{href:"/albums",title:t("photoTitle"),text:t("photoHint"),icon:CameraIcon},{href:"/shuoshuo",title:t("noteTitle"),text:t("noteHint"),icon:MessageCircleIcon},{href:"/friends",title:t("friendTitle"),text:t("friendHint"),icon:SparklesIcon}].map(item => <Link key={item.href} href={item.href} className="about-explore"><item.icon className="size-5 text-primary" /><span><strong className="text-sm">{item.title}</strong><span className="block text-[0.8rem] leading-[1.6] text-muted-foreground">{item.text}</span></span><ArrowUpRightIcon className="ml-auto size-4 shrink-0" /></Link>)}</div>}
         </section>
 
         {overview.photos.length > 0 && <section className={`about-panel surface ${playlist.length ? "about-span-7" : "about-span-12"}`}>
           <h2 className="section-title"><CameraIcon className="size-4" />{t("moments")}</h2>
-          <div className="about-photo-strip mt-5">{overview.photos.map((photo,i) => <Link key={photo.id} href={`/albums/${photo.albumId}`} className="about-photo" aria-label={t("openAlbum")}><img src={photo.thumb || photo.path} alt={photo.title || t("photoAlt",{index:i+1})} loading="lazy" decoding="async" /><span aria-hidden>{String(i+1).padStart(2,"0")}</span></Link>)}</div>
+          <div className="about-photo-strip mt-5">{overview.photos.map((photo,i) => <Link key={photo.id} href={`/albums/${photo.albumId}`} className="about-photo" aria-label={t("openAlbum")}><img src={resizedImageUrl(photo.thumb || photo.path, 640)} alt={photo.title || t("photoAlt",{index:i+1})} loading="lazy" decoding="async" /><span aria-hidden>{String(i+1).padStart(2,"0")}</span></Link>)}</div>
         </section>}
         {playlist.length > 0 && <section className={`about-panel surface ${overview.photos.length ? "about-span-5" : "about-span-12"}`}>
           <h2 className="section-title"><Music2Icon className="size-4" />{t("playlist")}</h2>
-          <p className="mt-2 text-xs text-muted-foreground">{t("playlistHint")}</p>
-          <ol className="mt-4 space-y-4">{playlist.slice(0,3).map((track,i) => <li key={track.id} className="flex min-w-0 items-center gap-3"><span className="text-xs tabular-nums text-primary">{String(i+1).padStart(2,"0")}</span>{track.cover && <img src={track.cover} alt="" loading="lazy" className="size-10 rounded-full object-cover" />}<span className="min-w-0"><strong className="block truncate text-sm font-medium">{track.title}</strong><span className="block truncate text-xs text-muted-foreground">{track.artist}</span></span></li>)}</ol>
+          <p className="mt-2 text-[0.8rem] leading-[1.6] text-muted-foreground">{t("playlistHint")}</p>
+          <ol className="mt-4 space-y-4">{playlist.slice(0,3).map((track,i) => <li key={track.id} className="flex min-w-0 items-center gap-3"><span className="text-[0.8rem] leading-[1.6] tabular-nums text-primary">{String(i+1).padStart(2,"0")}</span>{track.cover && <img src={resizedImageUrl(track.cover, 128)} alt="" loading="lazy" className="size-10 rounded-full object-cover" />}<span className="min-w-0"><strong className="block truncate text-sm font-medium">{track.title}</strong><span className="block truncate text-[0.8rem] leading-[1.6] text-muted-foreground">{track.artist}</span></span></li>)}</ol>
         </section>}
 
         {details.story && <section className="about-panel surface about-span-8"><h2 className="section-title">{t("story")}</h2><div className="mt-5 space-y-4 leading-8 text-foreground">{details.story.split(/\n\s*\n/).filter(Boolean).map((paragraph,i) => <p key={i} className="whitespace-pre-wrap break-words">{paragraph}</p>)}</div></section>}
-        {overview.latestNote && <section className={`about-panel surface ${details.story ? "about-span-4" : "about-span-12"}`}><h2 className="section-title"><MessageCircleIcon className="size-4" />{t("latestNote")}</h2><p className="mt-4 line-clamp-4 leading-8 text-foreground whitespace-pre-wrap">{pickLocalized(locale,overview.latestNote.content,overview.latestNote.contentEn)}</p><DualTime date={overview.latestNote.createdAt} className="mt-3 text-xs text-muted-foreground" /><div><Link href="/shuoshuo" className="about-text-link mt-4 text-sm">{t("readNotes")}<ArrowUpRightIcon className="size-4" /></Link></div></section>}
+        {overview.latestNote && <section className={`about-panel surface ${details.story ? "about-span-4" : "about-span-12"}`}><h2 className="section-title"><MessageCircleIcon className="size-4" />{t("latestNote")}</h2><p className="mt-4 line-clamp-4 leading-8 text-foreground whitespace-pre-wrap">{pickLocalized(locale,overview.latestNote.content,overview.latestNote.contentEn)}</p><DualTime date={overview.latestNote.createdAt} className="mt-3 text-[0.8rem] leading-[1.6] text-muted-foreground" /><div><Link href="/shuoshuo" className="about-text-link mt-4 text-sm">{t("readNotes")}<ArrowUpRightIcon className="size-4" /></Link></div></section>}
       </div>
       <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border/60 pt-6 text-sm text-muted-foreground"><p>{t("thanks")}</p><Link href="/friends" className="about-text-link">{t("visitFriends")}<ArrowUpRightIcon className="size-4" /></Link></footer>
     </div>

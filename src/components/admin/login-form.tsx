@@ -195,7 +195,6 @@ export function LoginForm({ siteName, logo }: { siteName: string; logo?: string 
                 ) : null}
                 <button
                   type="button"
-                  tabIndex={-1}
                   aria-label={reveal ? t("login.hidePassword") : t("login.showPassword")}
                   onClick={() => setReveal((current) => !current)}
                   className="press rounded p-1 text-muted-foreground transition-colors hover:text-foreground"

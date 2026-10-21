@@ -56,7 +56,7 @@ export function EmojiPicker({
         aria-label={label}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="press inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="press inline-flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:size-8"
       >
         <SmileIcon className="size-4" />
       </button>
@@ -70,7 +70,7 @@ export function EmojiPicker({
         >
           {EMOJI_GROUPS.map((group) => (
             <div key={group.key} className="mb-1.5 last:mb-0">
-              <p className="px-1 pb-1 text-[0.7rem] text-muted-foreground">
+              <p className="px-1 pb-1 text-[0.8rem] text-muted-foreground">
                 {t(`comments.emojiGroup.${group.key}`)}
               </p>
               <div className="grid grid-cols-8 gap-0.5">

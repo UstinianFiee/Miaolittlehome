@@ -29,7 +29,7 @@ import { serveStaticFile } from "@/lib/serve-file";
  * 生成的 URL 带宽度且文件名本身是内容哈希，所以可以长缓存。
  */
 
-const ALLOWED_WIDTHS = new Set([640, 1280, 1920]);
+const ALLOWED_WIDTHS = new Set([128, 256, 640, 1280, 1920]);
 /** 只对这些位图转码；gif / svg 等原样直出，避免破坏动图或矢量。 */
 const TRANSFORMABLE = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 const CACHE_ROOT = path.join(path.dirname(MEDIA_DIR), ".imgcache");

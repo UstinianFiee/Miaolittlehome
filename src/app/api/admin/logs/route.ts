@@ -12,14 +12,21 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
 
   const type = url.searchParams.get("type") === "visit" ? "visit" : "operation";
-  const page = Math.max(1, Number(url.searchParams.get("page") ?? "1") || 1);
+  const requestedPage = Math.max(1, Number(url.searchParams.get("page") ?? "1") || 1);
   const keyword = url.searchParams.get("q")?.trim() || null;
   const action = url.searchParams.get("action")?.trim() || null;
 
   const [stats, actions] = await Promise.all([logStats(), listOperationActions()]);
 
   if (type === "visit") {
-    const { total, items, pageSize } = await listVisitLogs({ page, keyword });
+    const firstPage = await listVisitLogs({ page: requestedPage, keyword });
+    // 页码越界时夹到最后一页，避免前端停在“第 99 页/共 1 页”的空列表
+    const totalPages = Math.max(1, Math.ceil(firstPage.total / firstPage.pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const { total, items, pageSize } =
+      page === requestedPage
+        ? firstPage
+        : await listVisitLogs({ page, keyword });
 
     return NextResponse.json({
       ok: true,
@@ -28,7 +35,7 @@ export async function GET(request: Request) {
         total,
         page,
         pageSize,
-        pageCount: Math.max(1, Math.ceil(total / pageSize)),
+        pageCount: totalPages,
         stats,
         actions,
         items: items.map((item) => ({
@@ -43,7 +50,13 @@ export async function GET(request: Request) {
     });
   }
 
-  const { total, items, pageSize } = await listOperationLogs({ page, keyword, action });
+  const firstPage = await listOperationLogs({ page: requestedPage, keyword, action });
+  const totalPages = Math.max(1, Math.ceil(firstPage.total / firstPage.pageSize));
+  const page = Math.min(requestedPage, totalPages);
+  const { total, items, pageSize } =
+    page === requestedPage
+      ? firstPage
+      : await listOperationLogs({ page, keyword, action });
 
   return NextResponse.json({
     ok: true,
@@ -52,7 +65,7 @@ export async function GET(request: Request) {
       total,
       page,
       pageSize,
-      pageCount: Math.max(1, Math.ceil(total / pageSize)),
+      pageCount: totalPages,
       stats,
       actions,
       items: items.map((item) => ({

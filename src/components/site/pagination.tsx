@@ -40,28 +40,28 @@ export async function SitePagination({ basePath, page, totalPages }: SitePaginat
 
       <div className="flex gap-2">
         {page > 1 ? (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="max-sm:h-11">
             <Link href={hrefFor(page - 1)} scroll={false}>
               <ChevronLeftIcon className="size-4" />
               {t("site.prevPage")}
             </Link>
           </Button>
         ) : (
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" className="max-sm:h-11" disabled>
             <ChevronLeftIcon className="size-4" />
             {t("site.prevPage")}
           </Button>
         )}
 
         {page < totalPages ? (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="max-sm:h-11">
             <Link href={hrefFor(page + 1)} scroll={false}>
               {t("site.nextPage")}
               <ChevronRightIcon className="size-4" />
             </Link>
           </Button>
         ) : (
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" className="max-sm:h-11" disabled>
             {t("site.nextPage")}
             <ChevronRightIcon className="size-4" />
           </Button>

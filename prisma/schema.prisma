@@ -46,6 +46,8 @@ model Post {
 
   @@index([published, pinned, createdAt])
   @@index([categoryId])
+  // 侧边栏「热门文章」按 views 倒序，避免首页每次 ISR 重生成都做临时排序
+  @@index([published, views])
 }
 
 model Tag {
@@ -102,6 +104,8 @@ model Comment {
 
   @@index([type, refId, approved, createdAt])
   @@index([parentId])
+  // 评论限频要按 ipHash + createdAt 找「最近一条」，没有索引会退化成全表扫描
+  @@index([ipHash, createdAt])
 }
 
 // ---------- 媒体与相册 ----------

@@ -55,14 +55,14 @@ export function ShareButton({ path }: { path: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="share-actions">
-      <Button type="button" variant="outline" size="sm" onClick={() => void copyLink()}>
+      <Button type="button" variant="outline" size="sm" className="max-sm:h-11" onClick={() => void copyLink()}>
         {copied ? <CheckIcon className="size-4 text-primary" /> : <LinkIcon className="size-4" />}
         {copied ? t("share.copied") : t("share.copy")}
       </Button>
 
       <Dialog>
         <DialogTrigger asChild>
-          <Button type="button" variant="outline" size="sm" onClick={() => void prepareQr()}>
+          <Button type="button" variant="outline" size="sm" className="max-sm:h-11" onClick={() => void prepareQr()}>
             <QrCodeIcon className="size-4" />
             {t("share.qr")}
           </Button>

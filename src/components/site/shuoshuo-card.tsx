@@ -45,9 +45,10 @@ export function ShuoshuoCard({
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={avatar}
+            src={resizedImageUrl(avatar, 128)}
             alt=""
             loading="lazy"
+            decoding="async"
             className="bubble-avatar size-9 rounded-full object-cover sm:size-10"
           />
         ) : (
@@ -95,7 +96,7 @@ export function ShuoshuoCard({
               </div>
             ) : null}
             {/* 元信息也放在气泡实色底上，避免直接压在背景图上发灰。 */}
-            <div className="bubble-meta mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3 text-xs">
+            <div className="bubble-meta mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3 text-[0.8rem] leading-[1.6]">
               <DualTime date={item.createdAt} />
               {item.location ? (
                 <span className="inline-flex min-w-0 items-center gap-1 break-words">

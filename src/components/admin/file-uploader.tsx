@@ -5,25 +5,23 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { uploadFileInChunks } from "@/lib/client-upload";
 import { MEDIA_ACCEPT } from "@/lib/media-extensions";
 import { attachVideoThumbnail } from "@/lib/video-thumb-client";
-
-type InitResponse = {
-  ok: boolean;
-  error?: string;
-  data?: { uploadId: string; chunkSize: number; totalChunks: number };
-};
 
 /**
  * 分片上传：init → chunk(可多片) → complete。
  * 单文件 ≤ 10MB 时只有 1 片；超过则按服务端返回的分片大小逐片发送。
  * 不做断点续传（docs/SPEC.md 明确本期不做）。
+ *
+ * 多文件时逐个上传：单个文件失败不会打断后面的文件，结束后统一提示并刷新列表。
  */
 export function FileUploader({
   onUploaded,
   albumId,
 }: {
   onUploaded: () => void;
+  /** 当前筛选的相册；上传成功后文件直接归入该相册 */
   albumId?: number | null;
 }) {
   const t = useTranslations();
@@ -33,66 +31,26 @@ export function FileUploader({
   const [progress, setProgress] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
 
-  async function readError(response: Response, fallback: string): Promise<string> {
-    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-    return payload?.error ?? fallback;
-  }
-
   async function uploadOne(file: File): Promise<number | undefined> {
-    const initResponse = await fetch("/api/admin/media/upload/init", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileName: file.name, size: file.size }),
-    });
+    const outcome = await uploadFileInChunks(
+      file,
+      {
+        init: "/api/admin/media/upload/init",
+        chunk: "/api/admin/media/upload/chunk",
+        complete: "/api/admin/media/upload/complete",
+      },
+      { albumId: albumId ?? null },
+      setProgress
+    );
 
-    if (!initResponse.ok) {
-      throw new Error(await readError(initResponse, "init"));
+    if (!outcome.ok) {
+      throw new Error(outcome.message);
     }
 
-    const init = (await initResponse.json()) as InitResponse;
-    const { uploadId, chunkSize, totalChunks } = init.data!;
-
-    for (let index = 0; index < totalChunks; index += 1) {
-      const start = index * chunkSize;
-      const blob = file.slice(start, Math.min(start + chunkSize, file.size));
-
-      const chunkResponse = await fetch("/api/admin/media/upload/chunk", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "x-upload-id": uploadId,
-          "x-chunk-index": String(index),
-        },
-        body: blob,
-      });
-
-      if (!chunkResponse.ok) {
-        throw new Error(await readError(chunkResponse, "chunk"));
-      }
-
-      setProgress(Math.round(((index + 1) / totalChunks) * 100));
-    }
-
-    const completeResponse = await fetch("/api/admin/media/upload/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        uploadId,
-        fileName: file.name,
-        size: file.size,
-        totalChunks,
-        albumId: albumId ?? null,
-      }),
-    });
-
-    if (!completeResponse.ok) {
-      throw new Error(await readError(completeResponse, "complete"));
-    }
-
-    const payload = (await completeResponse.json().catch(() => null)) as
-      | { data?: { id?: number } }
-      | null;
-    return payload?.data?.id;
+    const data = outcome.data as { id?: number } | null;
+    // 视频在上传完成后补一张真封面（失败不影响主文件，见 video-thumb-client.ts）
+    await attachVideoThumbnail(file, data?.id);
+    return data?.id;
   }
 
   async function handleFiles(files: FileList | null) {
@@ -103,26 +61,42 @@ export function FileUploader({
     setPending(true);
     setError(null);
 
+    const succeeded: string[] = [];
+    const failed: { name: string; message: string }[] = [];
+
     try {
       for (const file of Array.from(files)) {
         setProgress(0);
-        const mediaId = await uploadOne(file);
-        // 视频在上传完成后补一张真封面（失败不影响主文件，见 video-thumb-client.ts）
-        await attachVideoThumbnail(file, mediaId);
+        try {
+          await uploadOne(file);
+          succeeded.push(file.name);
+        } catch (uploadError) {
+          failed.push({
+            name: file.name,
+            message: uploadError instanceof Error ? uploadError.message : "",
+          });
+        }
       }
-      onUploaded();
-    } catch (uploadError) {
-      setError(
-        t("media.uploadFailed", {
-          message: uploadError instanceof Error ? uploadError.message : "",
-        })
-      );
     } finally {
       setPending(false);
       setProgress(0);
       if (inputRef.current) {
         inputRef.current.value = "";
       }
+      // 部分成功或失败后也要刷新：已落库的文件不应在列表里“消失”
+      onUploaded();
+    }
+
+    if (failed.length > 0) {
+      setError(
+        t("media.uploadPartial", {
+          success: succeeded.length,
+          failed: failed.length,
+          detail: failed
+            .map((item) => (item.message ? `${item.name}：${item.message}` : item.name))
+            .join("；"),
+        })
+      );
     }
   }
 

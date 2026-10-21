@@ -220,12 +220,43 @@ export async function validateParent(
   return { ok: true };
 }
 
+/**
+ * 已知的占位盐。
+ *
+ * 模板文件里写的就是这些值，部署时忘了改等于「盐是公开的」——
+ * 那样 ipHash 可以被字典反查回真实 IP，违背「不保存/不暴露完整 IP」的约定。
+ */
+const IP_HASH_SALT_PLACEHOLDERS = ["change-me", "replace-with"];
+
+/**
+ * 取 IP 哈希盐。
+ *
+ * 生产环境缺失或仍是占位值时直接抛错（fail-closed）；开发环境保留兜底，
+ * 避免本地没配环境变量就跑不起来。
+ */
+function resolveIpHashSalt(fallback: string): string {
+  const value = process.env.IP_HASH_SALT?.trim();
+
+  if (process.env.NODE_ENV === "production") {
+    const lowered = (value ?? "").toLowerCase();
+    const isPlaceholder = IP_HASH_SALT_PLACEHOLDERS.some((item) => lowered.includes(item));
+    if (!value || isPlaceholder) {
+      throw new Error(
+        "IP_HASH_SALT 未配置或仍为占位值，无法生成不可逆的来源 IP 哈希；请在环境变量中设置随机长字符串（参见 deploy/.env.production.example）"
+      );
+    }
+    return value;
+  }
+
+  return value || fallback;
+}
+
 /** IP 只以哈希形式保存，用于限频（docs/SPEC.md 数据模型注释）。 */
 export function hashIp(ip: string | null): string | null {
   if (!ip) {
     return null;
   }
-  const salt = process.env.IP_HASH_SALT ?? "blog-comment-rate-limit";
+  const salt = resolveIpHashSalt("blog-comment-rate-limit");
   return crypto.createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
 }
 
@@ -245,6 +276,74 @@ export async function findRecentCommentByHash(
     orderBy: { createdAt: "desc" },
     select: { id: true, createdAt: true },
   });
+}
+
+/**
+ * 进程内「同 IP 窗口期占位」。
+ *
+ * 原实现是「先查库、再插入」：两个并发请求会同时查到「没有最近评论」从而都通过。
+ * 现在先在内存里原子占位（Node 单线程，`set` 之前不会有别的请求插进来），
+ * 再查库复核（进程重启后内存为空，靠 DB 兜住），两道都通过才放行。
+ */
+const slotByIpHash = new Map<string, number>();
+/** 内存表上限，防止被大量不同 IP 撑爆 */
+const COMMENT_SLOT_MAX_ENTRIES = 5000;
+
+function pruneCommentSlots(now: number, windowMs: number): void {
+  for (const [key, at] of slotByIpHash) {
+    if (now - at >= windowMs) {
+      slotByIpHash.delete(key);
+    }
+  }
+  if (slotByIpHash.size <= COMMENT_SLOT_MAX_ENTRIES) {
+    return;
+  }
+  // Map 保持插入顺序：超量时从最早的开始丢
+  const excess = slotByIpHash.size - COMMENT_SLOT_MAX_ENTRIES;
+  let dropped = 0;
+  for (const key of slotByIpHash.keys()) {
+    slotByIpHash.delete(key);
+    dropped += 1;
+    if (dropped >= excess) {
+      break;
+    }
+  }
+}
+
+/**
+ * 尝试占用一次提交机会。
+ * @returns true 表示可以继续提交；false 表示窗口期内已经提交过
+ */
+export async function reserveCommentSlot(
+  ipHash: string | null,
+  windowSeconds = COMMENT_RATE_LIMIT_SECONDS
+): Promise<boolean> {
+  if (!ipHash || windowSeconds <= 0) {
+    return true;
+  }
+
+  const now = Date.now();
+  const windowMs = windowSeconds * 1000;
+  pruneCommentSlots(now, windowMs);
+
+  const last = slotByIpHash.get(ipHash);
+  if (last !== undefined && now - last < windowMs) {
+    return false;
+  }
+
+  // 先占位：并发请求走到这里就会被上面的判断拦住
+  slotByIpHash.set(ipHash, now);
+
+  // 再用数据库复核（覆盖「进程刚重启、内存为空」的情况）
+  const recent = await findRecentCommentByHash(ipHash, windowSeconds);
+  return recent === null;
+}
+
+/** 提交失败时释放占位，允许用户立即重试（只有真正写入成功才占用窗口期）。 */
+export function releaseCommentSlot(ipHash: string | null): void {
+  if (ipHash) {
+    slotByIpHash.delete(ipHash);
+  }
 }
 
 // ---------- 后台 ----------

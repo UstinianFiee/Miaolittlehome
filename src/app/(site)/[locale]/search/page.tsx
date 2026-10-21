@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { buildPageMetadata } from "@/lib/metadata";
 import { searchAll, type SearchResultType } from "@/lib/search";
 
@@ -59,7 +60,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
             aria-label={t("search.title")}
           />
         </div>
-        <Button type="submit">{t("search.submit")}</Button>
+        <Button type="submit" className="max-sm:h-11">{t("search.submit")}</Button>
       </form>
 
       {query.length === 0 ? (
@@ -90,7 +91,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
                       {hit.cover ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={hit.cover}
+                          src={resizedImageUrl(hit.cover, 128)}
                           alt=""
                           loading="lazy"
                           className="h-16 w-24 shrink-0 rounded border border-border/60 object-cover"
@@ -107,7 +108,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
                           </p>
                         ) : null}
                         {hit.meta ? (
-                          <p className="mt-1 text-xs text-muted-foreground">{hit.meta}</p>
+                          <p className="mt-1 text-[0.8rem] leading-[1.6] text-muted-foreground">{hit.meta}</p>
                         ) : null}
                       </div>
                     </Link>

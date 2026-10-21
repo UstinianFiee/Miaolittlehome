@@ -5,7 +5,7 @@ import { setRequestLocale } from "next-intl/server";
 import { PostsListView } from "@/components/site/posts-list-view";
 import { routing } from "@/i18n/routing";
 import { buildAlternates } from "@/lib/metadata";
-import { SITE_PAGE_SIZE, listPublishedPosts } from "@/lib/query";
+import { SITE_PAGE_SIZE, countPublishedPosts } from "@/lib/query";
 
 type PagedPostsProps = {
   params: Promise<{ locale: string; page: string }>;
@@ -20,8 +20,9 @@ function parsePage(raw: string): number {
 }
 
 export async function generateStaticParams() {
-  const { total, pageSize } = await listPublishedPosts({ page: 1, pageSize: SITE_PAGE_SIZE });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // 只需要总数，用 count 即可，不必执行一次带 findMany 的完整列表查询。
+  const total = await countPublishedPosts();
+  const totalPages = Math.max(1, Math.ceil(total / SITE_PAGE_SIZE));
   const last = Math.min(totalPages, PRERENDER_LIMIT);
 
   const params: { locale: string; page: string }[] = [];
@@ -51,12 +52,14 @@ export default async function PagedPostsPage({ params }: PagedPostsProps) {
     redirect(`/${locale}/posts`);
   }
 
-  const { total, pageSize } = await listPublishedPosts({ page: 1, pageSize: SITE_PAGE_SIZE });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // 这里只取总数判断页码是否越界，并把 total 传给列表组件显示，
+  // 避免它再为「显示总数」跑一遍列表查询（组件仍需取当页 items）。
+  const total = await countPublishedPosts();
+  const totalPages = Math.max(1, Math.ceil(total / SITE_PAGE_SIZE));
 
   if (page > totalPages) {
     notFound();
   }
 
-  return <PostsListView locale={locale} page={page} />;
+  return <PostsListView locale={locale} page={page} total={total} />;
 }

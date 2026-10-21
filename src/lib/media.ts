@@ -123,8 +123,17 @@ export function prepareMediaUpload(size: number): Promise<ChunkPlan> {
   });
 }
 
+/**
+ * 单块允许的最大字节。
+ *
+ * 分片正常是 `CHUNK_SIZE`（8MB）；但「≤ `DIRECT_UPLOAD_LIMIT`（10MB）的文件走直传」
+ * 时只有一块、大小就是文件大小 —— 只按 8MB 判会把 8–10MB 的文件全部误拒成 413。
+ * 所以取两者较大值，与 `planChunks()` 的返回值保持一致。
+ */
+const MAX_CHUNK_BYTES = Math.max(CHUNK_SIZE, DIRECT_UPLOAD_LIMIT);
+
 export function writeMediaChunk(uploadId: string, index: number, data: Buffer): Promise<void> {
-  return writeChunk(MEDIA_DIR, uploadId, index, data, CHUNK_SIZE);
+  return writeChunk(MEDIA_DIR, uploadId, index, data, MAX_CHUNK_BYTES);
 }
 
 export function discardMediaUpload(uploadId: string): Promise<void> {

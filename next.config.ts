@@ -1,9 +1,20 @@
+import path from "node:path";
+
 import createNextIntlPlugin from "next-intl/plugin";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // 生产镜像按 standalone 输出（阶段 16 Docker 部署依赖此配置）
   output: "standalone",
+
+  /*
+   * 显式指定文件追踪根目录。
+   *
+   * 不写时 Next 会向上找 lockfile 猜「工作区根」：本地把仓库当成另一个仓库的
+   * worktree（例如 `.agents/worktrees/<branch>`）用时会猜错，standalone 产物的
+   * 文件追踪范围可能偏大/偏小。这里固定成项目根，构建行为在任何路径下都一致。
+   */
+  outputFileTracingRoot: path.join(__dirname),
 
   // 不暴露 X-Powered-By
   poweredByHeader: false,

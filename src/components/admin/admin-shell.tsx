@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLinkIcon, MenuIcon } from "lucide-react";
+import { ExternalLinkIcon, MenuIcon, XIcon } from "lucide-react";
 import NextLink from "next/link";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -66,9 +67,17 @@ export function AdminShell({
                 <MenuIcon className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
+            <SheetContent side="left" className="w-72 p-0" showCloseButton={false}>
               <SheetHeader className="border-b px-5 py-4">
-                <SheetTitle className="text-left text-base">{t("admin.title")}</SheetTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <SheetTitle className="text-left text-base">{t("admin.title")}</SheetTitle>
+                  {/* 抽屉关闭按钮用中文 aria-label，替代样式组件里硬编码的英文 "Close" */}
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon-sm" aria-label={t("admin.closeNav")}>
+                      <XIcon className="size-4" />
+                    </Button>
+                  </SheetClose>
+                </div>
               </SheetHeader>
               <div className="overflow-y-auto p-3">
                 <AdminSidebar onNavigate={() => setNavOpen(false)} />

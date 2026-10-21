@@ -44,6 +44,82 @@ const HIGHLIGHT_LANGS: BuiltinLanguage[] = [
 
 const THEMES = { light: "github-light", dark: "github-dark" };
 
+/**
+ * 允许出现在链接/图片里的协议。
+ *
+ * remark-rehype 默认会丢弃原始 HTML（`<script>` 进不来），但 Markdown 的
+ * `[文案](javascript:...)` / `![图](data:...)` 会被原样转成 href/src。
+ * 这里不做整体 HTML 清洗（会把 Shiki 的 class/style 洗掉），只把**协议**收紧。
+ */
+const SAFE_URL_SCHEMES = new Set(["http:", "https:", "mailto:", "tel:"]);
+const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
+/** 控制字符：`java\nscript:` 这类绕过必须在判断协议前先拦掉 */
+const CONTROL_CHARS_PATTERN = /[\u0000-\u001f\u007f]/;
+
+/** 最小的 hast 节点形状（只覆盖本插件用到的字段，避免依赖 @types/hast）。 */
+type HastNode = {
+  type: string;
+  tagName?: string;
+  properties?: Record<string, unknown>;
+  children?: HastNode[];
+};
+
+function sanitizeUrl(raw: unknown, allowDataImage: boolean): string | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+  const value = raw.trim();
+  if (!value || CONTROL_CHARS_PATTERN.test(value)) {
+    return null;
+  }
+  // 协议相对地址（//evil.com）会跳出本站，直接拒绝
+  if (value.startsWith("//")) {
+    return null;
+  }
+  if (!URL_SCHEME_PATTERN.test(value)) {
+    // 无协议：站内相对路径、锚点
+    return value;
+  }
+
+  const scheme = value.slice(0, value.indexOf(":") + 1).toLowerCase();
+  if (SAFE_URL_SCHEMES.has(scheme)) {
+    return value;
+  }
+  // 图片额外允许内联 data:image/*
+  if (allowDataImage && scheme === "data:" && /^data:image\//i.test(value)) {
+    return value;
+  }
+  return null;
+}
+
+function sanitizeHastNode(node: HastNode): void {
+  if ((node.tagName === "a" || node.tagName === "img") && node.properties) {
+    const key = node.tagName === "a" ? "href" : "src";
+    if (node.properties[key] !== undefined) {
+      const safe = sanitizeUrl(node.properties[key], node.tagName === "img");
+      if (safe === null) {
+        // 置空而不是删掉属性：链接/图片仍然保留结构，只是不再可跳转/加载
+        node.properties[key] = "";
+      } else {
+        node.properties[key] = safe;
+      }
+    }
+  }
+
+  if (node.children) {
+    for (const child of node.children) {
+      sanitizeHastNode(child);
+    }
+  }
+}
+
+/** 只清洗 a/img 的 href/src，不做整体 HTML 清洗。 */
+function rehypeSafeUrls(): (tree: unknown) => void {
+  return (tree: unknown): void => {
+    sanitizeHastNode(tree as HastNode);
+  };
+}
+
 const processor = unified()
   .use(remarkParse)
   .use(remarkGfm)
@@ -55,6 +131,7 @@ const processor = unified()
     defaultColor: false,
     langs: HIGHLIGHT_LANGS,
   })
+  .use(rehypeSafeUrls)
   .use(rehypeStringify);
 
 function escapeHtml(input: string): string {

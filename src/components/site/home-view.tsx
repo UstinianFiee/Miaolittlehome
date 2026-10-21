@@ -24,8 +24,19 @@ export const HOME_PAGE_SIZE = 5;
  * 一旦页面读取 `searchParams`，Next.js 就没法把它预渲染成静态页，
  * 每次访问都要重新 SSR + 查库（响应头是 `no-store`）。
  * 两个入口（`/[locale]` 与 `/[locale]/page/[page]`）共用这份实现。
+ *
+ * `total` 由分页页算好后传进来（它本来就要用 count 判断页码是否越界），
+ * 这样这里只需要为「取当前页条目」跑一次信息流查询，不必为了显示总数再查一遍。
  */
-export async function HomeView({ locale, page }: { locale: string; page: number }) {
+export async function HomeView({
+  locale,
+  page,
+  total: totalProp,
+}: {
+  locale: string;
+  page: number;
+  total?: number;
+}) {
   const t = await getTranslations();
   const [site, profile] = await Promise.all([getSiteInfo(), getProfile()]);
   const { name, subtitle, description, backgrounds, backgroundVideo } = site;
@@ -41,11 +52,18 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
   const authorName = profile.name || site.author || name;
 
   /*
-   * 封面背景图走 `/img/1920/...`：上传原图常有 600KB+，1920 宽的 webp 只要几十 KB。
-   * 再显式 preload 一次 —— 背景图是 CSS `background-image`，浏览器要等 CSSOM 建好
-   * 才发现它，preload 能把它提到最前面开始下载（首屏最明显的一处延迟）。
+   * 封面背景图走 `/img/1280/...`：
+   * - 上传原图常有 600KB+，1280 宽的 webp 通常只有几十 KB；
+   * - 这是 1Mbps 小水管的站点，1920 档在手机（约 390px 宽）属于纯浪费，
+   *   桌面 1280 也足够覆盖首屏；
+   * - 再显式 preload 一次 —— 背景图是 CSS `background-image`，浏览器要等 CSSOM
+   *   建好才发现它，preload 能把它提到最前面开始下载（首屏最明显的一处延迟）。
+   *
+   * 注意：`HeroBackground` 用的是 CSS `background-image`，只能吃单个 URL，
+   * 没法像 `<img srcSet>` 那样按视口在 640/1280/1920 之间挑；要完全按屏选档
+   * 需要把 HeroBackground 改成 `<img>` + `srcSet`（本次不改那个文件）。
    */
-  const heroImages = backgrounds.map((src) => resizedImageUrl(src, 1920));
+  const heroImages = backgrounds.map((src) => resizedImageUrl(src, 1280));
   if (!backgroundVideo && heroImages[0]) {
     ReactDOM.preload(heroImages[0], { as: "image", fetchPriority: "high" });
   }
@@ -54,10 +72,12 @@ export async function HomeView({ locale, page }: { locale: string; page: number 
   const avatar = profile.avatar || site.logo;
 
   // 文章与说说按时间混在一条流里（说说渲染成气泡卡片，一眼能分清）
-  const { entries, total, pageSize } = await listPublishedFeed({
+  const { entries, total: fetchedTotal, pageSize } = await listPublishedFeed({
     page,
     pageSize: HOME_PAGE_SIZE,
   });
+  // 分页页已经算过总数时直接用，省一次全量查询（第 1 页没有传，就用本次查询的结果）
+  const total = totalProp ?? fetchedTotal;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (

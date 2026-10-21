@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { adminEntry } from "@/config/site";
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { getSiteInfo } from "@/lib/settings";
 
 /** 全站顶部导航：桌面横排 + 移动端抽屉 + 语言切换 + 主题切换 + 后台登录入口。 */
@@ -25,12 +26,18 @@ export async function SiteHeader() {
       >
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="" className="size-8 shrink-0 rounded object-cover" />
+          <img
+            src={resizedImageUrl(logo, 128)}
+            alt=""
+            width={32}
+            height={32}
+            className="size-8 shrink-0 rounded object-cover"
+          />
         ) : (
           <span aria-hidden className="size-2 rounded-full bg-brand ring-4 ring-brand/20" />
         )}
-        {/* 站点名过长时截断，避免把导航和右侧控件挤出胶囊 */}
-        <span className="max-w-[9rem] truncate sm:max-w-[15rem]">{name}</span>
+        {/* 站点名过长时截断，避免把导航和右侧控件挤出胶囊；375px 下最多约 6rem */}
+        <span className="max-w-[6rem] truncate sm:max-w-[15rem]">{name}</span>
       </Link>
 
         {/*
@@ -46,7 +53,11 @@ export async function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Button asChild variant="ghost" size="icon-sm">
+          {/*
+            搜索入口在手机顶栏放不下（站名 + 44px 触控目标后没有余量），
+            收到移动端抽屉里（见 mobile-nav.tsx），640px 起恢复图标按钮。
+          */}
+          <Button asChild variant="ghost" size="icon-sm" className="hidden sm:inline-flex">
             <Link href="/search" aria-label={t("search.title")}>
               <SearchIcon className="size-4" />
             </Link>

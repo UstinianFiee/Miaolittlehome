@@ -79,6 +79,14 @@ export async function listPublishedPosts(params: {
   return { total, items, pageSize };
 }
 
+/**
+ * 已发布文章总数。
+ * 分页页只需要用它判断页码是否越界 / 算出总页数，避免再执行一次带 `findMany` 的列表查询。
+ */
+export async function countPublishedPosts(): Promise<number> {
+  return prisma.post.count({ where: { published: true } });
+}
+
 /** 侧边栏「热点文章」：按浏览量降序。 */
 export async function listPopularPosts(limit = 5) {
   return prisma.post.findMany({
@@ -364,7 +372,24 @@ export async function listPublishedFeed(params: { page: number; pageSize: number
   return { entries, total, pageSize: params.pageSize };
 }
 
-/** 读取已发布文章的当前浏览量（供前端刷新显示）。 */export async function getPublishedPostViews(slug: string): Promise<number | null> {
+/**
+ * 首页信息流总条数（文章 + 说说）。
+ *
+ * `listPublishedFeed` 为了准确分页必须把两张表的 `(id, pinned, createdAt)` 全取回来；
+ * 而分页页只是为了判断「页码是否越界 / 一共几页」时，两条 count 就能得到同一个 total，
+ * 不必再为算总数跑一遍全量查询。
+ */
+export async function countPublishedFeed(): Promise<number> {
+  const [posts, shuoshuo] = await Promise.all([
+    prisma.post.count({ where: { published: true } }),
+    prisma.shuoshuo.count({ where: { published: true } }),
+  ]);
+
+  return posts + shuoshuo;
+}
+
+/** 读取已发布文章的当前浏览量（供前端刷新显示）。 */
+export async function getPublishedPostViews(slug: string): Promise<number | null> {
   const post = await prisma.post.findFirst({
     where: { slug, published: true },
     select: { views: true },
@@ -373,11 +398,20 @@ export async function listPublishedFeed(params: { page: number; pageSize: number
   return post ? post.views : null;
 }
 
-/** 浏览量 +1。仅用于已发布文章。 */
+/**
+ * 浏览量 +1。仅用于已发布文章。
+ *
+ * 注意 `Post.updatedAt` 是 Prisma 的 `@updatedAt`：任何 update 都会把它写成当前时间。
+ * 而「被浏览」不等于「内容被编辑」——不处理的话，每被看一眼：
+ * - sitemap 里这篇文章的 `lastModified` 就变成「刚刚更新」（`listPostsForSitemap`）；
+ * - 文章页的 `updatedAt - createdAt > 60s` 判定会把从未编辑过的文章显示成「更新于」。
+ * 所以这里把原值读出来，在同一次 update 里显式回写（Prisma 允许显式给 `@updatedAt`
+ * 字段赋值），让「更新时间」只跟随内容编辑。
+ */
 export async function incrementPostViews(slug: string): Promise<number | null> {
   const post = await prisma.post.findFirst({
     where: { slug, published: true },
-    select: { id: true },
+    select: { id: true, updatedAt: true },
   });
 
   if (!post) {
@@ -386,7 +420,7 @@ export async function incrementPostViews(slug: string): Promise<number | null> {
 
   const updated = await prisma.post.update({
     where: { id: post.id },
-    data: { views: { increment: 1 } },
+    data: { views: { increment: 1 }, updatedAt: post.updatedAt },
     select: { views: true },
   });
 

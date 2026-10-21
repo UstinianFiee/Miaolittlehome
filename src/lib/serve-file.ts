@@ -104,14 +104,22 @@ export async function serveStaticFile(
     return notFound();
   }
 
-  const contentType =
-    COMMON_MIME_TYPES[path.extname(absolute).toLowerCase()] ?? "application/octet-stream";
+  const extension = path.extname(absolute).toLowerCase();
+  const contentType = COMMON_MIME_TYPES[extension] ?? "application/octet-stream";
 
   const headers: Record<string, string> = {
     "Content-Type": contentType,
     "Accept-Ranges": "bytes",
     "Cache-Control": `public, max-age=${options.cacheSeconds ?? 3600}`,
   };
+
+  // SVG 是「同源可执行文档」：直接访问时里面的脚本会以本站源运行（存储型 XSS）。
+  // 用 CSP sandbox 把它降级为无脚本、无同源权限的沙箱文档，并禁止 MIME 嗅探。
+  // 只影响 .svg，其它类型（图片/音频/视频/安装包）行为不变。
+  if (extension === ".svg") {
+    headers["Content-Security-Policy"] = "sandbox";
+    headers["X-Content-Type-Options"] = "nosniff";
+  }
 
   if (options.downloadName) {
     headers["Content-Disposition"] = `attachment; filename*=UTF-8''${encodeURIComponent(options.downloadName)}`;

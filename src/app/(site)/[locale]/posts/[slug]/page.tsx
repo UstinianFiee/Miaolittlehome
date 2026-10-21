@@ -116,10 +116,14 @@ export default async function PostPage({ params }: PostPageProps) {
     <div className="isolate">
       {site.postBackground ? (
         <>
+          {/*
+            背景图统一走 `/img/1280/...`：这里之前直接用 upload 原图（600KB+），
+            和其它背景（站点布局的内容区背景）不一致，也是 1Mbps 下首屏最大的一笔开销。
+          */}
           <div
             aria-hidden
             className="fixed inset-0 -z-20 bg-cover bg-center"
-            style={{ backgroundImage: `url("${site.postBackground}")` }}
+            style={{ backgroundImage: `url("${resizedImageUrl(site.postBackground, 1280)}")` }}
           />
           <div aria-hidden className="page-background-scrim fixed inset-0 -z-10" />
         </>

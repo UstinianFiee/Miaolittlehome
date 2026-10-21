@@ -108,6 +108,7 @@ function MediaTitle({
         autoFocus
         value={value}
         disabled={disabled}
+        aria-label={t("media.setTitle")}
         onChange={(event) => setValue(event.target.value)}
         onBlur={() => void commit()}
         onKeyDown={(event) => {
@@ -342,7 +343,8 @@ export function MediaManager({
       setCopiedId(item.id);
       window.setTimeout(() => setCopiedId(null), 1500);
     } catch {
-      setError(t("media.deleteFailed", { message: "clipboard" }));
+      // HTTP 环境下 Clipboard API 不可用，给中性提示而不是「删除失败」
+      setError(t("admin.copyFailed"));
     }
   }
 
@@ -350,7 +352,10 @@ export function MediaManager({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold tracking-tight">{t("media.title")}</h1>
-        <FileUploader onUploaded={() => void reloadItems()} />
+        <FileUploader
+          albumId={albumFilter === "all" ? null : Number(albumFilter)}
+          onUploaded={() => void reloadItems()}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

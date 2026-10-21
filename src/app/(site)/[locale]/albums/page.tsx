@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { pickLocalized } from "@/lib/localized";
 import { buildPageMetadata } from "@/lib/metadata";
 import { listAlbumsForSite } from "@/lib/query";
@@ -43,7 +44,7 @@ export default async function AlbumsPage({ params }: AlbumsPageProps) {
                     {album.cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={album.cover}
+                        src={resizedImageUrl(album.cover, 640)}
                         alt=""
                         loading="lazy"
                         decoding="async"

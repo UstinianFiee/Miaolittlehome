@@ -6,8 +6,9 @@ import {
   COMMENT_RATE_LIMIT_SECONDS,
   createComment,
   findPostSlugById,
-  findRecentCommentByHash,
   hashIp,
+  releaseCommentSlot,
+  reserveCommentSlot,
   validateParent,
   validateTarget,
   type CommentTarget,
@@ -16,13 +17,29 @@ import { clientIpFromHeaders, resolveIpRegion } from "@/lib/ip-region";
 import { revalidateComments } from "@/lib/revalidate";
 import { getSession } from "@/lib/session";
 import { parseUserAgent } from "@/lib/user-agent";
-import { errorResponse, optionalInt, optionalString, requireString } from "@/lib/validation";
+import {
+  assertBodyWithinLimit,
+  errorResponse,
+  optionalInt,
+  optionalString,
+  requireString,
+} from "@/lib/validation";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/**
+ * 评论请求体上限。
+ *
+ * 正文 1000 + 昵称 30 + 邮箱 100 + UA 等，正常远小于 64KB；
+ * 不设上限的话任何人（含未登录）都能让服务端把超大 body 读进内存。
+ */
+const COMMENT_BODY_MAX_BYTES = 64 * 1024;
 
 /** 公开接口：提交评论或留言。访客一律待审；站长本人提交直接通过。 */
 export async function POST(request: Request) {
+  let reservedIpHash: string | null = null;
+
   try {
+    assertBodyWithinLimit(request, COMMENT_BODY_MAX_BYTES);
     const body = (await request.json()) as Record<string, unknown>;
 
     // 蜜罐：正常访客看不到该字段，被填写即视为机器人。
@@ -67,15 +84,17 @@ export async function POST(request: Request) {
     const ip = clientIpFromHeaders(request.headers) || null;
     const ipHash = hashIp(ip);
 
-    // 频率限制：同 IP 在窗口期内只允许一条（站长不受限）
+    // 频率限制：同 IP 在窗口期内只允许一条（站长不受限）。
+    // 先用进程内 Map 原子占位（挡住并发请求同时通过），再查库复核（防进程重启后漏判）。
     if (!isAdmin) {
-      const recent = await findRecentCommentByHash(ipHash);
-      if (recent) {
+      const allowed = await reserveCommentSlot(ipHash);
+      if (!allowed) {
         return NextResponse.json(
           { ok: false, error: `提交过于频繁，请 ${COMMENT_RATE_LIMIT_SECONDS} 秒后再试` },
           { status: 429 }
         );
       }
+      reservedIpHash = ipHash;
     }
 
     const agent = parseUserAgent(request.headers.get("user-agent"));
@@ -124,6 +143,8 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    // 没写进库就不该占用窗口期：释放占位，允许用户（和正常人）立即重试
+    releaseCommentSlot(reservedIpHash);
     const { message, status } = errorResponse(error);
     return NextResponse.json({ ok: false, error: message }, { status });
   }

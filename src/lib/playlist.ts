@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -109,14 +111,20 @@ export function validatePlaylist(input: unknown): PlaylistTrack[] {
   });
 }
 
-export async function getPlaylist(): Promise<PlaylistTrack[]> {
+/*
+ * 播放列表在「站点布局 + 关于页」等同一请求里会被多次读取（播放器挂在布局上），
+ * 用 React 的 `cache` 做单请求去重，和 `getSiteInfo` 的写法一致。
+ * 注意它只在单次请求内缓存：后台保存播放列表后，下个请求仍会读到新值。
+ * 在 Route Handler 等没有 React 渲染上下文的地方调用时，`cache` 会直接透传执行，不会报错。
+ */
+export const getPlaylist = cache(async (): Promise<PlaylistTrack[]> => {
   const row = await prisma.setting.findUnique({
     where: { key: PLAYLIST_KEY },
     select: { value: true },
   });
 
   return parsePlaylist(row?.value);
-}
+});
 
 export async function savePlaylist(tracks: PlaylistTrack[]): Promise<void> {
   const value = JSON.stringify(tracks);

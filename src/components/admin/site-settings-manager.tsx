@@ -66,6 +66,13 @@ export function SiteSettingsManager({
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  // 任一媒体字段上传中时不允许保存，避免把旧路径写进设置
+  const [uploadingCount, setUploadingCount] = React.useState(0);
+  const uploadingBusy = uploadingCount > 0;
+
+  const handleMediaBusy = React.useCallback((busy: boolean) => {
+    setUploadingCount((count) => (busy ? count + 1 : Math.max(0, count - 1)));
+  }, []);
 
   function updateBackground(index: number, next: string) {
     setBackgrounds((prev) => prev.map((item, i) => (i === index ? next : item)));
@@ -92,6 +99,10 @@ export function SiteSettingsManager({
   }
 
   async function save() {
+    if (uploadingBusy) {
+      return;
+    }
+
     setPending(true);
     setMessage(null);
     setError(null);
@@ -147,7 +158,7 @@ export function SiteSettingsManager({
           data-testid="site-save"
           className="press ripple"
           onClick={() => void save()}
-          disabled={pending}
+          disabled={pending || uploadingBusy}
           aria-busy={pending}
         >
           {pending ? (
@@ -218,6 +229,7 @@ export function SiteSettingsManager({
           value={logo}
           onChange={setLogo}
           options={images}
+          onBusyChange={handleMediaBusy}
         />
 
         <MediaField
@@ -227,6 +239,7 @@ export function SiteSettingsManager({
           value={favicon}
           onChange={setFavicon}
           options={images}
+          onBusyChange={handleMediaBusy}
         />
       </div>
 
@@ -290,6 +303,7 @@ export function SiteSettingsManager({
                   value={value}
                   onChange={(next) => updateBackground(index, next)}
                   options={images}
+                  onBusyChange={handleMediaBusy}
                 />
               </li>
             ))}
@@ -319,6 +333,7 @@ export function SiteSettingsManager({
             options={videos}
             accept="video/*"
             preview="video"
+            onBusyChange={handleMediaBusy}
           />
         </div>
       </div>
@@ -332,6 +347,7 @@ export function SiteSettingsManager({
           value={pageBackground}
           onChange={setPageBackground}
           options={images}
+          onBusyChange={handleMediaBusy}
         />
 
         <MediaField
@@ -341,6 +357,7 @@ export function SiteSettingsManager({
           value={postBackground}
           onChange={setPostBackground}
           options={images}
+          onBusyChange={handleMediaBusy}
         />
       </div>
 

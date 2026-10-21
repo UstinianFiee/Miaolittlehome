@@ -4,28 +4,41 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 import "vditor/dist/index.css";
 
+import { Button } from "@/components/ui/button";
+
 import type Vditor from "vditor";
 
 let vditorPromise: Promise<typeof import("vditor")> | null = null;
 
 function loadVditor() {
-  vditorPromise ??= import("vditor");
+  // 失败时清空缓存，否则后续重试会一直拿到 rejected promise
+  vditorPromise ??= import("vditor").catch((error: unknown) => {
+    vditorPromise = null;
+    throw error;
+  });
   return vditorPromise;
 }
 
 // This module is only used by the post editor. Start fetching Vditor as soon as
 // the browser evaluates the route chunk instead of waiting for React effects.
 if (typeof window !== "undefined") {
-  void loadVditor();
+  void loadVditor().catch(() => {
+    // 预热失败交给编辑器里的重试逻辑处理，这里只避免 unhandled rejection
+  });
 }
 
 type MarkdownEditorProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
-  /** 初始高度 */
-  height?: number;
+  /** 初始高度，支持 CSS 值（默认随视口在 360~560px 之间自适应） */
+  height?: number | string;
+  /** 供外部 Label 关联（aria-labelledby） */
+  ariaLabelledBy?: string;
 };
+
+/** 编辑器高度：窄屏不占满整屏，宽屏保持原来的阅读高度。 */
+const EDITOR_HEIGHT = "clamp(360px, 55vh, 560px)";
 
 /**
  * Vditor 封装。
@@ -37,13 +50,16 @@ export function MarkdownEditor({
   value,
   onChange,
   placeholder,
-  height = 560,
+  height = EDITOR_HEIGHT,
+  ariaLabelledBy,
 }: MarkdownEditorProps) {
   const t = useTranslations();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const instanceRef = React.useRef<Vditor | null>(null);
   const [ready, setReady] = React.useState(false);
   const [loadFailed, setLoadFailed] = React.useState(false);
+  /** 加载失败后点「重试」时自增，让初始化 effect 重新跑一次 */
+  const [retryKey, setRetryKey] = React.useState(0);
   const onChangeRef = React.useRef(onChange);
   const lastEmittedRef = React.useRef<string | null>(null);
   const initialValueRef = React.useRef(value);
@@ -117,9 +133,9 @@ export function MarkdownEditor({
       instanceRef.current?.destroy();
       instanceRef.current = null;
     };
-    // 仅初始化一次；外部值变化由下面的 effect 同步
+    // 仅初始化一次（重试时通过 retryKey 重跑）；外部值变化由下面的 effect 同步
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [retryKey]);
 
   // 外部（例如切换文章、重置表单）改变内容时同步进编辑器，避免光标跳动
   React.useEffect(() => {
@@ -136,12 +152,16 @@ export function MarkdownEditor({
   }, [value]);
 
   return (
-    <div className="relative min-h-[560px]">
+    <div
+      className="relative min-h-[clamp(360px,55vh,560px)]"
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+    >
       <div ref={containerRef} className="vditor-host" />
       {!ready && !loadFailed ? (
         <div
           role="status"
-          className="absolute inset-0 z-10 flex min-h-[560px] items-center justify-center rounded-md border border-dashed border-border/70 bg-background/90 text-sm text-muted-foreground"
+          className="absolute inset-0 z-10 flex min-h-[clamp(360px,55vh,560px)] items-center justify-center rounded-md border border-dashed border-border/70 bg-background/90 text-sm text-muted-foreground"
         >
           {t("posts.editorLoading")}
         </div>
@@ -149,9 +169,21 @@ export function MarkdownEditor({
       {loadFailed ? (
         <div
           role="alert"
-          className="absolute inset-0 z-10 flex min-h-[560px] items-center justify-center rounded-md border border-destructive/40 bg-background/95 p-6 text-center text-sm text-destructive"
+          className="absolute inset-0 z-10 flex min-h-[clamp(360px,55vh,560px)] flex-col items-center justify-center gap-3 rounded-md border border-destructive/40 bg-background/95 p-6 text-center text-sm text-destructive"
         >
-          {t("posts.editorLoadFailed")}
+          <p>{t("posts.editorLoadFailed")}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setReady(false);
+              setLoadFailed(false);
+              setRetryKey((key) => key + 1);
+            }}
+          >
+            {t("posts.editorRetry")}
+          </Button>
         </div>
       ) : null}
     </div>

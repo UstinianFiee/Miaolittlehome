@@ -24,6 +24,8 @@
  */
 const MIN_VISIBLE_MS = 520;
 const FAILSAFE_MS = 1200;
+/** 同一标签页会话只播一次品牌开屏；之后整页加载直接跳过（语言切换也走整页导航）。 */
+const PRELOADER_SEEN_KEY = "site-preloader-seen";
 
 export function SitePreloader({
   image,
@@ -37,14 +39,26 @@ export function SitePreloader({
 
   return (
     <>
+      {/*
+        只在首次访问时播放：sessionStorage 里有标记就直接跳过（避免语言切换/重复打开
+        每次都被遮 0.5s）；用 DOMContentLoaded 而不是 load 收尾，避免被背景图拖住。
+        JS 被禁用或执行失败时由下面的 noscript 直接隐藏遮罩，不能让整站一直看不见。
+      */}
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){var d=document.documentElement,start=Date.now();
-function finish(){var wait=Math.max(0,${MIN_VISIBLE_MS}-(Date.now()-start));setTimeout(function(){if(!d.classList.contains("is-loaded")){d.classList.add("is-loaded");}},wait);}
-if(document.readyState==="complete"){finish();}
-else{window.addEventListener("load",finish,{once:true});setTimeout(finish,${FAILSAFE_MS});}})();`,
+          __html: `(function(){var d=document.documentElement,start=Date.now(),key="${PRELOADER_SEEN_KEY}";
+function markSeen(){try{sessionStorage.setItem(key,"1");}catch(e){}}
+function hide(){if(!d.classList.contains("is-loaded")){d.classList.add("is-loaded");}markSeen();}
+try{if(sessionStorage.getItem(key)){d.classList.add("is-loaded");return;}}catch(e){}
+function finish(){var wait=Math.max(0,${MIN_VISIBLE_MS}-(Date.now()-start));setTimeout(hide,wait);}
+if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",finish,{once:true});}
+else{finish();}
+setTimeout(finish,${FAILSAFE_MS});})();`,
         }}
       />
+      <noscript>
+        <style>{`html:not(.is-loaded) .site-preloader{display:none!important}`}</style>
+      </noscript>
       <div
         aria-hidden
         data-testid="site-preloader"

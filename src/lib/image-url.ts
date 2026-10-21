@@ -6,8 +6,11 @@
  * （见 `src/app/img/[w]/[...path]/route.ts`）。
  *
  * 非 `/media/` 开头的地址（外链、data URI、绝对 URL）原样返回，不做处理。
+ *
+ * 宽度档位：128/256 给 Logo、头像、播放器封面这类小图用（上传原图可能 2560 宽，
+ * 直接塞进几十 px 的展示位是纯粹的流量浪费）；640/1280/1920 给封面与背景。
  */
-export type ImageWidth = 640 | 1280 | 1920;
+export type ImageWidth = 128 | 256 | 640 | 1280 | 1920;
 
 export function resizedImageUrl(src: string | null | undefined, width: ImageWidth): string {
   if (!src) {

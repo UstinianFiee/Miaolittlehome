@@ -114,8 +114,16 @@ export function preparePackageUpload(size: number): Promise<ChunkPlan> {
   });
 }
 
+/**
+ * 单块允许的最大字节。
+ *
+ * 与媒体库同理：≤ `PACKAGE_DIRECT_LIMIT`（10MB）的安装包走单块直传，
+ * 块大小等于文件大小，若只按 8MB 判会把 8–10MB 的包误拒成 413。
+ */
+const MAX_CHUNK_BYTES = Math.max(PACKAGE_CHUNK_SIZE, PACKAGE_DIRECT_LIMIT);
+
 export function writePackageChunk(uploadId: string, index: number, data: Buffer): Promise<void> {
-  return writeChunk(SOFTWARE_DIR, uploadId, index, data, PACKAGE_CHUNK_SIZE);
+  return writeChunk(SOFTWARE_DIR, uploadId, index, data, MAX_CHUNK_BYTES);
 }
 
 export function discardPackageUpload(uploadId: string): Promise<void> {

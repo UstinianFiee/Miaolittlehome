@@ -52,7 +52,7 @@ export function Greeting({ locale }: { locale: string }) {
   return (
     <div>
       <p className="font-display text-xl leading-snug sm:text-2xl">{greeting}</p>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1 text-[0.8rem] leading-[1.6] text-muted-foreground">
         {t("greeting.beijingTime")} {time}
       </p>
     </div>

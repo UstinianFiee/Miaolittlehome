@@ -58,10 +58,17 @@ export function PostForm({ categories, knownTagNames, coverImages, initial }: Po
   const [pinned, setPinned] = React.useState(initial?.pinned ?? false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // 封面正在上传时不允许提交，否则会保存旧路径
+  const [uploadingCount, setUploadingCount] = React.useState(0);
+  const uploadingBusy = uploadingCount > 0;
+
+  const handleMediaBusy = React.useCallback((busy: boolean) => {
+    setUploadingCount((count) => (busy ? count + 1 : Math.max(0, count - 1)));
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending) {
+    if (pending || uploadingBusy) {
       return;
     }
 
@@ -131,11 +138,12 @@ export function PostForm({ categories, knownTagNames, coverImages, initial }: Po
           </div>
 
           <div className="space-y-2">
-            <Label>{t("posts.fieldContent")}</Label>
+            <Label id="post-content-label">{t("posts.fieldContent")}</Label>
             <MarkdownEditor
               value={content}
               onChange={setContent}
               placeholder={t("posts.editorPlaceholder")}
+              ariaLabelledBy="post-content-label"
             />
           </div>
         </div>
@@ -154,9 +162,9 @@ export function PostForm({ categories, knownTagNames, coverImages, initial }: Po
           </div>
 
           <div className="space-y-2">
-            <Label>{t("posts.fieldCategory")}</Label>
+            <Label htmlFor="post-category">{t("posts.fieldCategory")}</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
+              <SelectTrigger id="post-category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -192,6 +200,7 @@ export function PostForm({ categories, knownTagNames, coverImages, initial }: Po
             value={cover}
             onChange={setCover}
             options={coverImages}
+            onBusyChange={handleMediaBusy}
           />
 
           <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
@@ -215,7 +224,7 @@ export function PostForm({ categories, knownTagNames, coverImages, initial }: Po
           ) : null}
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || uploadingBusy}>
               {pending ? t("posts.saving") : t("posts.save")}
             </Button>
             <Button

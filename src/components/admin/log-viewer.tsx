@@ -75,8 +75,12 @@ export function LogViewer() {
   const [loading, setLoading] = React.useState(true);
   const [message, setMessage] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  /** 请求序号：快速切页/切 tab 时只接受最后一次请求的结果 */
+  const requestSeq = React.useRef(0);
 
   const load = React.useCallback(async () => {
+    const seq = requestSeq.current + 1;
+    requestSeq.current = seq;
     setLoading(true);
     setError(null);
 
@@ -94,16 +98,25 @@ export function LogViewer() {
         | { ok: boolean; data?: LogData; error?: string }
         | null;
 
+      // 期间又发起了更新的一次查询，丢弃这次结果
+      if (seq !== requestSeq.current) {
+        return;
+      }
+
       if (!response.ok || !payload?.ok || !payload.data) {
-        setError(payload?.error ?? "");
+        setError(t("adminLogs.loadFailed", { message: payload?.error ?? "" }));
         return;
       }
 
       setData(payload.data);
     } catch {
-      setError("");
+      if (seq === requestSeq.current) {
+        setError(t("adminLogs.loadFailed", { message: "" }));
+      }
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) {
+        setLoading(false);
+      }
     }
   }, [type, page, keyword, action]);
 
@@ -140,7 +153,10 @@ export function LogViewer() {
         })
       );
       setPage(1);
-      await load();
+      // page 变为 1 会触发上面的 effect 重新拉取；已经在第 1 页时页码不变，主动刷新一次
+      if (page === 1) {
+        await load();
+      }
     } catch {
       setError(t("adminLogs.cleanupFailed", { message: "" }));
     }
@@ -296,9 +312,9 @@ export function LogViewer() {
         <SuccessNote>{message}</SuccessNote>
       ) : null}
 
-      {error !== null ? (
+      {error ? (
         <p role="alert" className="text-sm text-destructive">
-          {t("adminLogs.cleanupFailed", { message: error })}
+          {error}
         </p>
       ) : null}
 

@@ -13,7 +13,7 @@ import {
   sweepStaging,
   writeSafetySnapshot,
 } from "@/lib/backup";
-import { ChunkError, discardUpload, mergeChunks } from "@/lib/chunked-upload";
+import { ChunkError, discardUpload, isValidUploadId, mergeChunks } from "@/lib/chunked-upload";
 import { logOperation } from "@/lib/logs";
 import { revalidateAll } from "@/lib/revalidate";
 import { errorResponse, requireString } from "@/lib/validation";
@@ -32,15 +32,22 @@ import { extractZipEntry, readZipEntries, readZipEntryBuffer, ZipError } from "@
  * 无论成功失败，临时分片和暂存的 zip 都会在 finally 里清掉。
  */
 
-const CHUNK_SIZE = 8 * 1024 * 1024;
-
 export async function POST(request: Request) {
   let uploadId: string | null = null;
   let staged: string | null = null;
+  const warnings: string[] = [];
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
-    uploadId = requireString(body.uploadId, "上传标识", { max: 64 });
+
+    // uploadId 会拼进文件路径、也会用于 finally 里的删除，必须先按分片内核
+    // 的同一套规则校验，否则 `../xxx` 能删到 BACKUP_DIR 之外的 .zip（包括导入前快照）。
+    const rawUploadId = requireString(body.uploadId, "上传标识", { max: 64 });
+    if (!isValidUploadId(rawUploadId)) {
+      throw new BackupError("非法的上传标识");
+    }
+    uploadId = rawUploadId;
+
     const fileName = requireString(body.fileName, "文件名", { max: 255 });
     const size = Number(body.size);
     const totalChunks = Number(body.totalChunks);
@@ -88,11 +95,14 @@ export async function POST(request: Request) {
     // 2) 还原文件（媒体 / 安装包）
     let filesWritten = 0;
     for (const entry of entries) {
-      const target = resolveBackupTarget(entry.name);
-      if (!target) {
+      const resolved = resolveBackupTarget(entry.name);
+      if (resolved.warning) {
+        warnings.push(resolved.warning);
+      }
+      if (!resolved.target) {
         continue;
       }
-      await extractZipEntry(staged, entry, target);
+      await extractZipEntry(staged, entry, resolved.target);
       filesWritten += 1;
     }
 
@@ -112,9 +122,10 @@ export async function POST(request: Request) {
       ok: true,
       data: {
         counts,
-        files: { written: filesWritten },
+        files: { written: filesWritten, skipped: warnings.length },
         snapshot,
         source: { siteName: parsed.siteName, exportedAt: parsed.exportedAt },
+        warnings,
       },
     });
   } catch (error) {

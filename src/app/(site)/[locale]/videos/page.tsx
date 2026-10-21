@@ -6,6 +6,7 @@ import { DualTime } from "@/components/site/dual-time";
 import { VideoThumb } from "@/components/video-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
+import { resizedImageUrl } from "@/lib/image-url";
 import { pickLocalized } from "@/lib/localized";
 import { buildPageMetadata } from "@/lib/metadata";
 import { listPublishedVideos } from "@/lib/videos";
@@ -49,7 +50,7 @@ export default async function VideosPage({ params }: Props) {
                     {video.cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={video.cover}
+                        src={resizedImageUrl(video.cover, 640)}
                         alt=""
                         loading="lazy"
                         decoding="async"
@@ -100,7 +101,7 @@ export default async function VideosPage({ params }: Props) {
                   ) : null}
                 </div>
               </Link>
-              <DualTime date={video.createdAt} className="mt-1 ml-1 text-xs text-muted-foreground" />
+              <DualTime date={video.createdAt} className="mt-1 ml-1 text-[0.8rem] leading-[1.6] text-muted-foreground" />
             </li>
           ))}
         </ul>

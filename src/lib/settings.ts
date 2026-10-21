@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import { siteConfig } from "@/config/site";
@@ -147,7 +148,11 @@ function legacyLinks(settings: Record<string, string>): ProfileLink[] {
  * `profile.links` **存在**（哪怕是 `[]`）就以它为准；只有该键完全不存在时，
  * 才回退到旧版 `social.*`，这样用户在后台清空链接后不会被历史数据「复活」。
  */
-export async function getProfile(): Promise<ProfileSettings> {
+export const getProfile = cache(async (): Promise<ProfileSettings> => {
+  /*
+   * 与 getSiteInfo 一致：同一请求里布局、首页、侧边栏、关于页可能各调一次，
+   * 用 React cache 按请求去重，少查几次 Setting 表（后台保存后下个请求仍读到新值）。
+   */
   const settings = await getAllSettings();
   const rawLinks = settings[PROFILE_LINKS_KEY];
 
@@ -158,7 +163,7 @@ export async function getProfile(): Promise<ProfileSettings> {
     links: rawLinks === undefined ? legacyLinks(settings) : parseLinks(rawLinks),
     about: parseAbout(settings["profile.about"]),
   };
-}
+});
 
 /**
  * 站点基本信息；未配置时回退到 config/site.ts 的默认值。
@@ -245,7 +250,7 @@ export const getSiteInfo = cache(async (): Promise<SiteInfo> => {
 });
 
 /**
- * 站点配置版本号：把所有 `site.*` 设置按 key 排序后取哈希。
+ * 站点配置版本号：把所有 `site.*` 设置与公开内容按 key 排序后取哈希。
  *
  * 为什么需要它：后台改了站点设置（比如内容区背景图）后，服务端的 `revalidatePath`
  * 能把 ISR 缓存刷掉，但**刷不掉浏览器里的客户端路由缓存**——用户点导航切过去，
@@ -255,8 +260,14 @@ export const getSiteInfo = cache(async (): Promise<SiteInfo> => {
  * 前端布局把这个版本号渲染进 HTML，`ConfigSync` 再向 `/api/site-version` 问一次当前值，
  * 对不上就 `router.refresh()` 拉一份新的。配置没变时**只有一次极小的请求**，
  * 不会造成多余的重渲染。
+ *
+ * 注意：这里要读全库内容做摘要，成本不低，**必须走 `unstable_cache` 缓存 60 秒**；
+ * 后台写操作会通过 `src/lib/revalidate.ts` 里的 `revalidateTag("site-version")` 主动失效，
+ * 所以改动仍能立刻被轮询发现，而不是等到缓存过期。
+ * 另外 ConfigSync 的轮询间隔也已放宽到 60 秒，且页面不可见时不轮询。
  */
-export async function getSiteVersion(): Promise<string> {
+export const getSiteVersion = unstable_cache(
+  async (): Promise<string> => {
   /*
    * This version is used by ConfigSync in every foreground route, not only the
    * settings page. Include the public-facing database content as well as site
@@ -346,7 +357,11 @@ export async function getSiteVersion(): Promise<string> {
   };
 
   return createHash("sha1").update(JSON.stringify(data)).digest("hex").slice(0, 12);
-}
+  },
+  // 以固定 key 缓存读全库摘要的结果；后台写操作会 revalidateTag 主动失效
+  ["site-version"],
+  { revalidate: 60, tags: ["site-version"] }
+);
 
 export function siteToSettings(input: Partial<SiteInfo>): Record<string, string> {  const entries: Record<string, string> = {};
 

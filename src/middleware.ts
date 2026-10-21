@@ -91,7 +91,10 @@ export default async function middleware(request: NextRequest) {
       ua: request.headers.get("user-agent"),
       referer: request.headers.get("referer"),
       ipRegion: ip ? resolveIpRegion(ip) : null,
-    }).catch(() => {});
+    }).catch((error) => {
+      // 统计失败绝不能影响页面响应，但也不能静默吞掉：留在容器日志里可排查
+      console.error("[访问日志] 写入失败", error);
+    });
   }
 
   return intlMiddleware(request);

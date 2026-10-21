@@ -51,8 +51,8 @@ function AnnouncementRow({
         <span className="block text-sm leading-6 whitespace-pre-wrap">{item.content}</span>
       )}
 
-      <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-        <DualTime date={item.createdAtIso} className="text-xs" />
+      <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8rem] leading-[1.6] text-muted-foreground">
+        <DualTime date={item.createdAtIso} className="text-[0.8rem]" />
         {item.pinned ? (
           <span className="inline-flex items-center gap-0.5 font-medium text-primary">
             <PinIcon className="size-3" />

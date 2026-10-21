@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { saveVideoThumbnail } from "@/lib/media";
 import { revalidateAlbums } from "@/lib/revalidate";
+import { assertBodyWithinLimit, PayloadTooLargeError } from "@/lib/validation";
 
 /**
  * 接收浏览器抽好的视频封面帧（二进制），压成 640 宽的 webp 落盘并挂到媒体记录上。
@@ -13,6 +14,8 @@ import { revalidateAlbums } from "@/lib/revalidate";
  * 鉴权由 middleware 统一处理（`/api/admin/:path*` 已在 matcher 里）。
  */
 const MAX_THUMB_BYTES = 4 * 1024 * 1024;
+/** HTTP 层上限（比业务上限宽一点，先挡住超大 body 进内存，再由下面的检查精确判）。 */
+const MAX_THUMB_BODY_BYTES = 16 * 1024 * 1024;
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,8 +27,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   let buffer: Buffer;
   try {
+    assertBodyWithinLimit(request, MAX_THUMB_BODY_BYTES);
     buffer = Buffer.from(await request.arrayBuffer());
-  } catch {
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 413 });
+    }
     return NextResponse.json({ ok: false, error: "无法读取封面数据" }, { status: 400 });
   }
 

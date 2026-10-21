@@ -87,8 +87,18 @@ export async function sweepStaleUploads(baseDir: string, force = false): Promise
   return removed;
 }
 
+/**
+ * 上传标识是否合法。
+ *
+ * 分片是无状态的，`uploadId` 完全由客户端回传，任何要把它拼进文件路径的地方
+ * 都必须先过这一关（防目录穿越，也防用 `../xxx` 删到目标目录之外的文件）。
+ */
+export function isValidUploadId(uploadId: string): boolean {
+  return /^[a-z0-9-]{8,64}$/i.test(uploadId);
+}
+
 export function tempDirFor(baseDir: string, uploadId: string): string {
-  if (!/^[a-z0-9-]{8,64}$/i.test(uploadId)) {
+  if (!isValidUploadId(uploadId)) {
     throw new ChunkError("非法的上传标识", 400);
   }
   return path.join(tempRoot(baseDir), uploadId);

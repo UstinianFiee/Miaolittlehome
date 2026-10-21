@@ -3,7 +3,7 @@ import fsp from "node:fs/promises";
 import path from "node:path";
 import zlib from "node:zlib";
 import { pipeline } from "node:stream/promises";
-import type { Writable } from "node:stream";
+import { Transform, type Writable } from "node:stream";
 
 /**
  * 极简 ZIP 读写（零依赖）。
@@ -309,6 +309,20 @@ const EOCD_MIN_LENGTH = 22;
 /** EOCD 后面最多可能跟 64KB 的注释，所以从文件尾部往前找签名 */
 const EOCD_SEARCH_LENGTH = EOCD_MIN_LENGTH + 0xffff;
 
+/**
+ * 解压防炸弹上限。
+ *
+ * 备份包可能来自不可信来源（例如别人给的"迁移包"），而 ZIP 头部里的
+ * `compressedSize` / `size` / 中央目录大小都是**文件自己声明的**。
+ * 不在读取前设硬上限，一个几百字节的包就能让服务端分配几个 GB 内存或写满磁盘。
+ */
+const MAX_CENTRAL_DIR_SIZE = 16 * 1024 * 1024;
+const MAX_ENTRY_COUNT = 20_000;
+/** backup.json 解压后的上限（正常内容远小于这个值） */
+const MAX_MANIFEST_BYTES = 128 * 1024 * 1024;
+/** backup.json 压缩后的上限（防止按伪造的 compressedSize 分配内存） */
+const MAX_MANIFEST_COMPRESSED_BYTES = 256 * 1024 * 1024;
+
 /** 解析中央目录。只读头部，不解压数据。 */
 export async function readZipEntries(filePath: string): Promise<ZipEntry[]> {
   const handle = await fsp.open(filePath, "r");
@@ -342,6 +356,17 @@ export async function readZipEntries(filePath: string): Promise<ZipEntry[]> {
     }
     if (centralSize === 0) {
       return [];
+    }
+    if (centralSize > MAX_CENTRAL_DIR_SIZE) {
+      throw new ZipError(
+        `ZIP 中央目录过大（${centralSize} 字节），超过 ${MAX_CENTRAL_DIR_SIZE} 字节上限，拒绝解析`
+      );
+    }
+    if (count > MAX_ENTRY_COUNT) {
+      throw new ZipError(`ZIP 条目数过多（${count} 条），超过 ${MAX_ENTRY_COUNT} 条上限，拒绝解析`);
+    }
+    if (centralOffset + centralSize > stat.size) {
+      throw new ZipError("ZIP 中央目录越界，文件可能已损坏");
     }
 
     const central = Buffer.alloc(centralSize);
@@ -416,15 +441,47 @@ export function safeEntryRelative(name: string): string {
 
 /** 把单个条目解压到内存（只用于 backup.json 这种小文件）。 */
 export async function readZipEntryBuffer(filePath: string, entry: ZipEntry): Promise<Buffer> {
+  // 只用于 backup.json。压缩前/解压后都设硬上限：两个尺寸字段都是包自己声明的，
+  // 不加限制的话，一个伪造 `size` 的条目就能让 inflate 把内存吃光。
+  if (entry.size > MAX_MANIFEST_BYTES) {
+    throw new ZipError(
+      `备份包条目声明大小超过 ${Math.round(MAX_MANIFEST_BYTES / 1024 / 1024)}MB 上限：${entry.name}`
+    );
+  }
+  if (entry.compressedSize > MAX_MANIFEST_COMPRESSED_BYTES) {
+    throw new ZipError(`备份包条目压缩后过大，拒绝读取：${entry.name}`);
+  }
+
   const handle = await fsp.open(filePath, "r");
   try {
+    const stat = await handle.stat();
+    if (entry.dataOffset + entry.compressedSize > stat.size) {
+      throw new ZipError(`ZIP 条目越界，文件可能已损坏：${entry.name}`);
+    }
+
     const raw = Buffer.alloc(entry.compressedSize);
     if (entry.compressedSize > 0) {
       await handle.read(raw, 0, entry.compressedSize, entry.dataOffset);
     }
 
-    const data =
-      entry.method === METHOD_DEFLATE ? zlib.inflateRawSync(raw) : raw;
+    let data: Buffer;
+    if (entry.method === METHOD_DEFLATE) {
+      try {
+        // maxOutputLength：解压结果超过上限时 zlib 直接抛错，不会先分配完再检查
+        data = zlib.inflateRawSync(raw, { maxOutputLength: MAX_MANIFEST_BYTES });
+      } catch (error) {
+        const code = (error as { code?: unknown }).code;
+        throw new ZipError(
+          code === "ERR_BUFFER_TOO_LARGE"
+            ? `备份包条目解压后超过 ${Math.round(MAX_MANIFEST_BYTES / 1024 / 1024)}MB 上限：${entry.name}`
+            : `备份包条目解压失败：${entry.name}`
+        );
+      }
+    } else if (entry.method === METHOD_STORE) {
+      data = raw;
+    } else {
+      throw new ZipError(`不支持的解压方式（method=${entry.method}）：${entry.name}`);
+    }
 
     if (data.byteLength !== entry.size) {
       throw new ZipError(`条目大小不符：${entry.name}`);
@@ -458,17 +515,41 @@ export async function extractZipEntry(
   const source = fs.createReadStream(filePath, { start: entry.dataOffset, end });
   const target = fs.createWriteStream(targetPath);
 
-  if (entry.method === METHOD_DEFLATE) {
-    await pipeline(source, zlib.createInflateRaw(), target);
-  } else if (entry.method === METHOD_STORE) {
-    await pipeline(source, target);
-  } else {
-    throw new ZipError(`不支持的解压方式（method=${entry.method}）：${entry.name}`);
-  }
+  // 解压炸弹防线：边解压边计数，输出字节一旦超过中央目录声明的大小就立刻中止，
+  // 而不是等整条写完再 stat 比对（那时磁盘可能已经写满了）。
+  let written = 0;
+  const guard = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      written += chunk.byteLength;
+      if (written > entry.size) {
+        callback(new ZipError(`解压后大小超过声明值，已中止：${entry.name}`));
+        return;
+      }
+      callback(null, chunk);
+    },
+  });
 
-  const stat = await fsp.stat(targetPath);
-  if (stat.size !== entry.size) {
-    await fsp.rm(targetPath, { force: true });
-    throw new ZipError(`解压后大小不符：${entry.name}`);
+  try {
+    if (entry.method === METHOD_DEFLATE) {
+      await pipeline(source, zlib.createInflateRaw(), guard, target);
+    } else if (entry.method === METHOD_STORE) {
+      await pipeline(source, guard, target);
+    } else {
+      throw new ZipError(`不支持的解压方式（method=${entry.method}）：${entry.name}`);
+    }
+
+    const stat = await fsp.stat(targetPath);
+    if (stat.size !== entry.size) {
+      throw new ZipError(`解压后大小不符：${entry.name}`);
+    }
+  } catch (error) {
+    // 半截文件不能留：否则下一次导入会把它当成完整文件
+    await fsp.rm(targetPath, { force: true }).catch(() => undefined);
+    if (error instanceof ZipError) {
+      throw error;
+    }
+    throw new ZipError(
+      `解压备份包条目失败（${entry.name}）：${error instanceof Error ? error.message : "未知错误"}`
+    );
   }
 }
