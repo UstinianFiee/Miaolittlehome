@@ -20,12 +20,12 @@ import sharp from "sharp";
 const SOURCE = process.argv[2] ?? "uploads/2026/10/mv22072e-9e2fe201.png";
 const TARGET = "public/cursor-cat.png";
 
-/** 光标画布边长（32 是各平台都稳的上限） */
-const SIZE = 32;
-/** 小猫主体边长与偏移：向右下错开，和尖头留出约 1px 的空隙（再大就显得脱节） */
+/** 光标画布边长（36 够放下更大的尖头，同时保住猫身尺寸；Chromium 支持到 128） */
+const SIZE = 36;
+/** 小猫主体边长与偏移：向右下错开，和尖头留约 1px 空隙 */
 const CAT = 24;
-const CAT_LEFT = 8;
-const CAT_TOP = 6;
+const CAT_LEFT = 12;
+const CAT_TOP = 10;
 
 if (!fs.existsSync(SOURCE)) {
   throw new Error(
@@ -42,10 +42,11 @@ const cat = await sharp(SOURCE)
   .toBuffer();
 
 // 尖头：白填充 + 深描边，深浅背景下都能看清；尖端在 (1.4,1.4)，贴近热点 (2,2)
+// 尺寸比最初版本放大到约 10px（太小的尖头看起来不像鼠标指针）
 const tip = Buffer.from(
   `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}">
-     <path d="M1.4 1.4 L6.8 3.2 L3.2 6.8 Z"
-           fill="#ffffff" stroke="#141414" stroke-width="1.3" stroke-linejoin="round" />
+     <path d="M1.4 1.4 L10.8 4.9 L4.9 10.8 Z"
+           fill="#ffffff" stroke="#141414" stroke-width="1.5" stroke-linejoin="round" />
    </svg>`
 );
 
