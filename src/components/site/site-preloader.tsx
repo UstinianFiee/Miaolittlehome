@@ -24,8 +24,6 @@
  */
 const MIN_VISIBLE_MS = 520;
 const FAILSAFE_MS = 1200;
-/** 同一标签页会话只播一次品牌开屏；之后整页加载直接跳过（语言切换也走整页导航）。 */
-const PRELOADER_SEEN_KEY = "site-preloader-seen";
 
 export function SitePreloader({
   image,
@@ -40,16 +38,20 @@ export function SitePreloader({
   return (
     <>
       {/*
-        只在首次访问时播放：sessionStorage 里有标记就直接跳过（避免语言切换/重复打开
-        每次都被遮 0.5s）；用 DOMContentLoaded 而不是 load 收尾，避免被背景图拖住。
-        JS 被禁用或执行失败时由下面的 noscript 直接隐藏遮罩，不能让整站一直看不见。
+        每次整页加载都播放（刷新、直接打开、语言切换这种整页导航都会走这里）。
+        组件挂在 layout 里，站内客户端路由切换不会重新挂载，所以不会每次点导航都闪一下。
+
+        为什么不用 sessionStorage 只播一次：试过，结果是「同一标签页刷新后动画再也不出现」，
+        用户会以为加载动画坏了。这里恢复成每次整页加载都播。
+
+        收尾时机用 DOMContentLoaded 而不是 load：避免被背景图/视频拖住；
+        另有 1.2s 硬上限兜底。JS 被禁用时由下面的 noscript 直接隐藏遮罩，
+        不能让整站一直看不见。
       */}
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){var d=document.documentElement,start=Date.now(),key="${PRELOADER_SEEN_KEY}";
-function markSeen(){try{sessionStorage.setItem(key,"1");}catch(e){}}
-function hide(){if(!d.classList.contains("is-loaded")){d.classList.add("is-loaded");}markSeen();}
-try{if(sessionStorage.getItem(key)){d.classList.add("is-loaded");return;}}catch(e){}
+          __html: `(function(){var d=document.documentElement,start=Date.now();
+function hide(){if(!d.classList.contains("is-loaded")){d.classList.add("is-loaded");}}
 function finish(){var wait=Math.max(0,${MIN_VISIBLE_MS}-(Date.now()-start));setTimeout(hide,wait);}
 if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",finish,{once:true});}
 else{finish();}
