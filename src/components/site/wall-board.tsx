@@ -25,7 +25,9 @@ import type { CommentView } from "@/lib/comment-view";
  * - **点一下翻面**：正面是内容，背面是发言人（昵称 / 归属地 / 浏览器 / 系统 / 时间）。
  * - **「详情」弹窗**：完整内容 + 全部回复，并且可以直接从这里发起回复。
  *
- * 布局用 CSS columns 做瀑布流（比 grid 更适合长短不一的纸条），
+ * 布局用响应式 grid（不用 CSS columns 瀑布流）：
+ * columns 会把「绝对定位的子元素（胶带）」在多列里重复投影，
+ * 实测第二/三张纸条的胶带会跑到隔壁纸条上/下面；grid 没有这个问题。
  * 每张纸条带一个固定的轻微倾角 —— 手贴便利贴不可能完全对齐，倾角是"对"的一部分。
  */
 
@@ -122,7 +124,7 @@ function Note({
 
   return (
     <div
-      className={cn("flip-card mb-5 break-inside-avoid", flipped && "flipped")}
+      className={cn("flip-card", flipped && "flipped")}
       style={{ rotate: `${noteRotation(comment.id, index)}deg` }}
       onClick={() => setFlipped((value) => !value)}
       role="button"
@@ -140,17 +142,23 @@ function Note({
         }
       }}
     >
+      {/*
+        胶带必须放在 .flip-inner（preserve-3d 翻转容器）**外面**：
+        preserve-3d 会把带 transform 的子元素做 3D 投影，实测第二张纸条的
+        胶带会被投影到隔壁纸条下方（看起来像"贴到别的纸条下面"）。
+        放在 .flip-card 里只做 2D 定位就不会跑。
+      */}
+      <span aria-hidden className="sticky-tape" />
       <div className="flip-inner">
         {/* 正面：内容 */}
         {/*
-          min-h 不是随便定的：背面（发言人信息 + 详情按钮）是 absolute 撑满正面的高度，
-          正面太矮的话背面会溢出。按「头像行 + 3 行信息 + 按钮」实测取 11.5rem。
+          正面保留 min-h 让短内容也有"纸条感"；高度由 flip-inner 的 grid 取
+          正/背面较高的一侧，背面内容再长也不会被裁掉（之前背面被 overflow-hidden 裁过）。
         */}
         <div
           className="sticky-note flip-face flex min-h-[11.5rem] flex-col rounded-md p-4 pt-5"
           style={{ "--note-mix": NOTE_MIXES[index % NOTE_MIXES.length] } as React.CSSProperties}
         >
-          <span aria-hidden className="sticky-tape" />
           <p className="font-display text-sm leading-7 break-words whitespace-pre-wrap">
             {preview.text}
             {preview.truncated ? (
@@ -178,10 +186,10 @@ function Note({
           </p>
         </div>
 
-        {/* 背面：发言人信息 + 详情 */}
-        <div className="flip-back">
+        {/* 背面：发言人信息 + 详情（grid 叠在同一格，高度取较高的一面） */}
+        <div className="flip-back" aria-hidden={!flipped}>
           <div
-            className="sticky-note flip-face flex h-full flex-col overflow-hidden rounded-md p-4"
+            className="sticky-note flip-face flex h-full flex-col rounded-md p-4"
             style={{ "--note-mix": NOTE_MIXES[index % NOTE_MIXES.length] } as React.CSSProperties}
           >
             <Speaker comment={comment} />
@@ -190,6 +198,8 @@ function Note({
               variant="outline"
               size="sm"
               className="mt-3 w-full max-sm:h-11"
+              // 未翻面时背面不可见，别让键盘 Tab 进到看不见的按钮
+              tabIndex={flipped ? undefined : -1}
               // 别再让外层那张卡的点击把牌翻回去
               onClick={(event) => {
                 event.stopPropagation();
@@ -220,7 +230,7 @@ export function WallBoard({
   return (
     <>
       <div className="board mt-6 p-4 sm:p-5">
-        <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+        <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {comments.map((comment, index) => (
             <Note
               key={comment.id}

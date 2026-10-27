@@ -50,7 +50,13 @@ export async function SiteSidebar({ locale }: { locale: string }) {
   const displayName = profile.name || info.name;
 
   return (
-    <aside className="sidebar-stagger space-y-6">
+    /*
+     * 桌面端让侧栏跟着滚动（sticky）：
+     * 列表页左边信息流比侧栏长，侧栏滚出视口后右边会留一大片空白，看起来像"下面没内容了"。
+     * 侧栏本身可能比视口高（首页约 900px+），所以给 max-height + 内部滚动，
+     * 避免 sticky 后底部的卡片永远看不到；手机端不启用（仍在正文下方）。
+     */
+    <aside className="sidebar-stagger space-y-6 lg:sticky lg:top-[6.5rem] lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
       {/* 个人资料 */}
       <div className="surface p-5 text-center">
         {profile.avatar ? (

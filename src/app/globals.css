@@ -2663,6 +2663,7 @@ button:hover .trash-wiggle {
   position: absolute;
   top: -0.5rem;
   left: 50%;
+  z-index: 2;
   width: 3.25rem;
   height: 1.05rem;
   transform: translateX(-50%) rotate(-2.5deg);
@@ -2675,25 +2676,45 @@ button:hover .trash-wiggle {
   border-right: 1px dashed color-mix(in oklab, var(--note-tone, var(--tone-mint)) 18%, transparent);
   opacity: 0.85;
   pointer-events: none;
-  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 260ms ease;
 }
 
-.sticky-note:hover .sticky-tape {
+/* 胶带现在直接挂在 .flip-card 下（不在 preserve-3d 容器里），悬停用卡片的 hover */
+.flip-card:hover > .sticky-tape,
+.flip-card:focus-visible > .sticky-tape {
   transform: translateX(-50%) rotate(-4deg) scaleX(1.06);
+}
+
+/* 翻面后胶带淡出：此时看的是背面信息，不该还压着一张胶带 */
+.flip-card.flipped > .sticky-tape {
+  opacity: 0;
 }
 
 /*
  * 翻牌：正面便利贴、背面发言人信息。
  *
- * 注意 backface-visibility 必须放在**真正被 transform 的那个元素**上 ——
- * 它不继承。这里被旋转的是 .flip-back 本身（内置 rotateY(180deg)），
- * 所以 .flip-back 与 .flip-face 都要藏背面；只写在 .flip-back 里层那张
- * .sticky-note 上是不起作用的（它自己没有 transform）。
+ * 两张面用 grid 叠在同一格（都是正常流），卡片高度取较高的一面 ——
+ * 这样背面信息再长也不会被裁（旧版背面 absolute + 正面固定 min-h，
+ * 内容一多「详情」按钮就被 overflow-hidden 切掉）。
+ *
+ * backface-visibility 必须放在真正被旋转的元素上（.flip-back 以及
+ * .flip-face 的背面），它不继承。
  */
 .flip-card {
   --note-tone: var(--tone-mint);
+  position: relative;
+  z-index: 0;
   perspective: 1200px;
   cursor: pointer;
+}
+
+/* 悬停 / 键盘聚焦 / 已翻面的纸条要压在其他纸条上面，否则 3D 翻转时会被后来的纸条盖住 */
+.flip-card:hover,
+.flip-card:focus-visible,
+.flip-card.flipped {
+  z-index: 3;
 }
 
 .flip-card:nth-child(5n + 2) { --note-tone: var(--tone-apricot); }
@@ -2703,6 +2724,7 @@ button:hover .trash-wiggle {
 
 .flip-inner {
   position: relative;
+  display: grid;
   transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
   transform-style: preserve-3d;
 }
@@ -2713,13 +2735,13 @@ button:hover .trash-wiggle {
 
 .flip-face,
 .flip-back {
+  grid-area: 1 / 1;
+  min-width: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
 .flip-back {
-  position: absolute;
-  inset: 0;
   transform: rotateY(180deg);
 }
 
