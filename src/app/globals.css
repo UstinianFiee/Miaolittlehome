@@ -847,7 +847,7 @@
     180deg,
     color-mix(in oklab, var(--brand) 72%, #ffffff),
     var(--brand) 58%,
-    var(--accent-cyan)
+    color-mix(in oklab, var(--brand) 55%, var(--primary-foreground, #0d4b47))
   );
   box-shadow: 0 0 10px color-mix(in oklab, var(--brand) 45%, transparent);
 }
@@ -1908,14 +1908,20 @@ html[lang="en"] .nav-item {
  * 光晕只动 transform / opacity，走合成层，滚动和降频时不会掉帧。
  */
 .hero-fallback {
-  background-color: #07272a;
+  background-color: color-mix(in oklab, var(--brand) 10%, #06181a);
   background-image:
     radial-gradient(900px 540px at 16% 6%, color-mix(in oklab, var(--brand) 40%, transparent), transparent 62%),
-    radial-gradient(720px 460px at 84% 16%, rgb(24 124 120 / 0.46), transparent 66%),
+    radial-gradient(720px 460px at 84% 16%, color-mix(in oklab, var(--brand) 42%, #07272a), transparent 66%),
     radial-gradient(760px 460px at 92% 82%, rgb(96 214 220 / 0.24), transparent 68%),
     radial-gradient(520px 340px at 64% 4%, rgb(255 158 201 / 0.14), transparent 70%),
     radial-gradient(980px 560px at 50% 118%, color-mix(in oklab, var(--brand) 20%, transparent), transparent 64%),
-    linear-gradient(155deg, #061f22 0%, #0a3336 40%, #0d4b47 72%, #0a2b2d 100%);
+    linear-gradient(
+      155deg,
+      color-mix(in oklab, var(--brand) 8%, #06181a) 0%,
+      color-mix(in oklab, var(--brand) 14%, #0a2a2d) 40%,
+      color-mix(in oklab, var(--brand) 20%, #0d2a2d) 72%,
+      #0a2b2d 100%
+    );
 }
 
 /* 两团缓慢漂移的极光：不同速度、不同方向，避免看出循环节奏 */
@@ -2919,12 +2925,17 @@ button:hover .trash-wiggle {
   /* 纯视觉过渡：出现期间不应该把点击全部吞掉（见 site-preloader.tsx 注释）。 */
   pointer-events: none;
   /* 深色品牌开屏：和封面同一套苍绿/极光语言，浅色主题下也有仪式感 */
-  background-color: #062a2d;
+  background-color: color-mix(in oklab, var(--loading-accent) 6%, #06181a);
   background-image:
     radial-gradient(760px 440px at 50% 36%, color-mix(in oklab, var(--loading-accent) 26%, transparent), transparent 70%),
     radial-gradient(520px 320px at 12% 86%, rgb(95 219 228 / 0.14), transparent 72%),
     radial-gradient(460px 300px at 88% 12%, rgb(255 158 199 / 0.1), transparent 72%),
-    linear-gradient(160deg, #061f22 0%, #0a3336 55%, color-mix(in oklab, var(--loading-accent) 18%, #0d2f32) 100%);
+    linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--loading-accent) 5%, #06151a) 0%,
+      color-mix(in oklab, var(--loading-accent) 10%, #0a2427) 55%,
+      color-mix(in oklab, var(--loading-accent) 18%, #0d2f32) 100%
+    );
   transition:
     opacity 360ms ease,
     visibility 360ms ease,
@@ -3093,7 +3104,7 @@ html.is-loaded .site-preloader {
   height: 100%;
   border-radius: 1.55rem;
   object-fit: cover;
-  background-color: #0a2b2e;
+  background-color: color-mix(in oklab, var(--loading-accent) 8%, #071c1e);
 }
 
 .preloader-glyph {
@@ -3104,7 +3115,7 @@ html.is-loaded .site-preloader {
   border-radius: 1.55rem;
   background:
     radial-gradient(circle at 32% 26%, color-mix(in oklab, var(--loading-accent) 30%, #0d3a3d), transparent 62%),
-    #0a2b2e;
+    color-mix(in oklab, var(--loading-accent) 8%, #071c1e);
   font-family: var(--font-display);
   font-size: 2.4rem;
   line-height: 1;
@@ -3118,7 +3129,7 @@ html.is-loaded .site-preloader {
   font-size: 1rem;
   letter-spacing: 0.28em;
   text-indent: 0.28em;
-  color: #e8fbf8;
+  color: color-mix(in oklab, var(--loading-accent) 8%, #e8fbf8);
   animation: preloader-fade-up 700ms var(--ease-out-soft) 140ms both;
 }
 
