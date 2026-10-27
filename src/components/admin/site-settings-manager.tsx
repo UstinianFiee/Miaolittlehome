@@ -6,11 +6,13 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 
 import { MediaField, type MediaOption } from "@/components/admin/media-field";
+import { ColorField } from "@/components/admin/color-field";
 import { SuccessNote } from "@/components/admin/success-note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DEFAULT_THEME_COLOR } from "@/lib/theme-color";
 
 export type SiteInfoRow = {
   name: string;
@@ -19,6 +21,10 @@ export type SiteInfoRow = {
   subtitle: string;
   /** 英文副标题：/en 下使用，留空回退中文副标题 */
   subtitleEn: string;
+  /** 主题主色（#rrggbb）；空 = 内置默认色 */
+  themeColor: string;
+  /** 加载动画主色（#rrggbb）；空 = 跟随主题色 */
+  preloaderColor: string;
   logo: string;
   background: string;
   backgrounds: string[];
@@ -55,6 +61,8 @@ export function SiteSettingsManager({
   const [name, setName] = React.useState(initial.name);
   const [subtitle, setSubtitle] = React.useState(initial.subtitle);
   const [subtitleEn, setSubtitleEn] = React.useState(initial.subtitleEn);
+  const [themeColor, setThemeColor] = React.useState(initial.themeColor);
+  const [preloaderColor, setPreloaderColor] = React.useState(initial.preloaderColor);
   const [author, setAuthor] = React.useState(initial.author);
   const [description, setDescription] = React.useState(initial.description);
   const [logo, setLogo] = React.useState(initial.logo);
@@ -121,6 +129,8 @@ export function SiteSettingsManager({
           name,
           subtitle,
           subtitleEn,
+        themeColor,
+        preloaderColor,
           author,
           description,
           logo,
@@ -260,6 +270,29 @@ export function SiteSettingsManager({
           onChange={setFavicon}
           options={images}
           onBusyChange={handleMediaBusy}
+        />
+      </div>
+
+      {/* 主题色 / 加载动画色 */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <ColorField
+          id="site-theme-color"
+          label={t("adminSite.themeColor")}
+          hint={t("adminSite.themeColorHint")}
+          value={themeColor}
+          fallback={DEFAULT_THEME_COLOR}
+          resetLabel={t("adminSite.resetColor")}
+          onChange={setThemeColor}
+        />
+
+        <ColorField
+          id="site-preloader-color"
+          label={t("adminSite.preloaderColor")}
+          hint={t("adminSite.preloaderColorHint")}
+          value={preloaderColor}
+          fallback={themeColor || DEFAULT_THEME_COLOR}
+          resetLabel={t("adminSite.resetColor")}
+          onChange={setPreloaderColor}
         />
       </div>
 

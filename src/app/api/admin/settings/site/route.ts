@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { logOperation } from "@/lib/logs";
 import { revalidateSiteSettings } from "@/lib/revalidate";
 import { getSiteInfo, setSettings, siteToSettings, type SiteInfo } from "@/lib/settings";
+import { normalizeHexColor } from "@/lib/theme-color";
 import { errorResponse, requireString } from "@/lib/validation";
 
 /** 读取站点基本信息。 */
@@ -22,6 +23,13 @@ export async function PUT(request: Request) {
       subtitle: typeof body.subtitle === "string" ? body.subtitle.slice(0, 120) : undefined,
       subtitleEn:
         typeof body.subtitleEn === "string" ? body.subtitleEn.slice(0, 120) : undefined,
+      // 颜色只接受 #rrggbb；空字符串表示恢复默认/跟随主题色
+      themeColor:
+        typeof body.themeColor === "string" ? (normalizeHexColor(body.themeColor) ?? "") : undefined,
+      preloaderColor:
+        typeof body.preloaderColor === "string"
+          ? (normalizeHexColor(body.preloaderColor) ?? "")
+          : undefined,
       // logo / background 存的是站内媒体路径或外链，长度设上限即可
       logo: typeof body.logo === "string" ? body.logo.slice(0, 500) : undefined,
       background: typeof body.background === "string" ? body.background.slice(0, 500) : undefined,

@@ -24,6 +24,10 @@ export const SITE_BACKGROUND_VIDEO_KEY = "site.backgroundVideo";
 export const SITE_SUBTITLE_KEY = "site.subtitle";
 /** 英文副标题：/en 下优先使用；留空回退 SITE_SUBTITLE_KEY（与文章 titleEn 的回退规则一致）。 */
 export const SITE_SUBTITLE_EN_KEY = "site.subtitleEn";
+/** 站点主题色（#rrggbb）；留空或默认色时不注入覆盖，沿用内置青碧色。 */
+export const SITE_THEME_COLOR_KEY = "site.themeColor";
+/** 进场加载动画主色（#rrggbb）；留空跟随主题色。 */
+export const SITE_PRELOADER_COLOR_KEY = "site.preloaderColor";
 /** 内容区背景：首页封面下方与各内页 */
 export const SITE_PAGE_BACKGROUND_KEY = "site.pageBackground";
 /** 文章详情页背景（留空则沿用内容区背景） */
@@ -180,6 +184,10 @@ export type SiteInfo = {
   subtitle: string;
   /** 英文副标题（仅 /en 使用；为空回退 subtitle） */
   subtitleEn: string;
+  /** 主题主色（#rrggbb）；空 = 内置默认色 */
+  themeColor: string;
+  /** 加载动画主色（#rrggbb）；空 = 跟随主题色 */
+  preloaderColor: string;
   logo: string;
   /** 单张首页背景图（= backgrounds[0]，保留给旧调用点）。 */
   background: string;
@@ -243,6 +251,8 @@ export const getSiteInfo = cache(async (): Promise<SiteInfo> => {
     description: settings[SITE_DESCRIPTION_KEY]?.trim() || "",
     subtitle: settings[SITE_SUBTITLE_KEY]?.trim() || "",
     subtitleEn: settings[SITE_SUBTITLE_EN_KEY]?.trim() || "",
+    themeColor: settings[SITE_THEME_COLOR_KEY]?.trim() || "",
+    preloaderColor: settings[SITE_PRELOADER_COLOR_KEY]?.trim() || "",
     logo,
     background: backgrounds[0] ?? "",
     backgrounds,
@@ -390,6 +400,12 @@ export function siteToSettings(input: Partial<SiteInfo>): Record<string, string>
   }
   if (typeof input.subtitleEn === "string") {
     entries[SITE_SUBTITLE_EN_KEY] = input.subtitleEn.trim();
+  }
+  if (typeof input.themeColor === "string") {
+    entries[SITE_THEME_COLOR_KEY] = input.themeColor.trim();
+  }
+  if (typeof input.preloaderColor === "string") {
+    entries[SITE_PRELOADER_COLOR_KEY] = input.preloaderColor.trim();
   }
   if (typeof input.logo === "string") {
     entries[SITE_LOGO_KEY] = input.logo.trim();

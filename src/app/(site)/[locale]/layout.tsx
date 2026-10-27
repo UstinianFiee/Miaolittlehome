@@ -16,6 +16,7 @@ import { SitePreloader } from "@/components/site/site-preloader";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/config/site";
 import { getProfile, getSiteInfo, getSiteVersion } from "@/lib/settings";
+import { buildThemeCss } from "@/lib/theme-color";
 import { resizedImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 import { routing } from "@/i18n/routing";
@@ -109,6 +110,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   ]);
 
   const { name, logo } = site;
+  /*
+   * 后台可改的主题色 / 加载动画色。
+   * 只有用户改过颜色才输出这段 CSS（默认色不注入，保持原主题零改动）；
+   * 放在 body 开头，随首屏 HTML 一起到达，避免颜色闪一下。
+   */
+  const themeCss = buildThemeCss(site.themeColor, site.preloaderColor);
   // 品牌开屏优先站点 Logo，没配 Logo 就用个人头像；都没有时用站点首字。
   // 开屏徽章只有 96px 大小，用 256 档足够 2x 屏，没必要把上传原图（最长边 2560）整张拉下来。
   const brandImage = resizedImageUrl(logo || profile.avatar, 256);
@@ -116,6 +123,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
+        {themeCss ? (
+          <style id="site-theme" dangerouslySetInnerHTML={{ __html: themeCss }} />
+        ) : null}
         <NextIntlClientProvider>
           <ThemeProvider
             attribute="class"
