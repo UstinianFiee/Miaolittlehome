@@ -1706,6 +1706,20 @@ html[lang="en"] .nav-item {
   transition: opacity 200ms ease;
 }
 
+/* 公安备案图标（图片形式）：和文字同一行居中对齐，暗色主题下保持原色 */
+.footer-filing__badge {
+  flex: 0 0 auto;
+  width: auto;
+  height: 1rem;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 200ms ease;
+}
+
+.footer-filing:hover .footer-filing__badge {
+  opacity: 1;
+}
+
 .footer-filing:hover {
   color: var(--primary);
 }

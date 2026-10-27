@@ -30,6 +30,8 @@ export type SiteInfoRow = {
   icpLink: string;
   police: string;
   policeLink: string;
+  /** 公安备案图标：留空使用内置图标 */
+  policeIcon: string;
 };
 
 export type { MediaOption };
@@ -65,6 +67,7 @@ export function SiteSettingsManager({
   const [icpLink, setIcpLink] = React.useState(initial.icpLink);
   const [police, setPolice] = React.useState(initial.police);
   const [policeLink, setPoliceLink] = React.useState(initial.policeLink);
+  const [policeIcon, setPoliceIcon] = React.useState(initial.policeIcon);
 
   const [pending, setPending] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -131,6 +134,7 @@ export function SiteSettingsManager({
           icpLink,
           police,
           policeLink,
+          policeIcon,
         }),
       });
 
@@ -428,6 +432,19 @@ export function SiteSettingsManager({
             placeholder="https://beian.mps.gov.cn/"
           />
           <p className="text-xs text-muted-foreground">{t("adminSite.policeLinkHint")}</p>
+        </div>
+
+        <div className="lg:col-span-2">
+          {/* 公安备案图标：留空使用内置 public/police-badge.png，可上传或从媒体库替换 */}
+          <MediaField
+            id="site-police-icon"
+            label={t("adminSite.policeIcon")}
+            hint={t("adminSite.policeIconHint")}
+            value={policeIcon}
+            onChange={setPoliceIcon}
+            options={images}
+            onBusyChange={handleMediaBusy}
+          />
         </div>
       </div>
 

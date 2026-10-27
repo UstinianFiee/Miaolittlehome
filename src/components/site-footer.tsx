@@ -1,10 +1,13 @@
-import { BadgeCheckIcon, ShieldCheckIcon } from "lucide-react";
+import { BadgeCheckIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { FooterThemeSwitch } from "@/components/site/footer-theme-switch";
 import { Link } from "@/i18n/navigation";
 import { resizedImageUrl } from "@/lib/image-url";
 import { getSiteInfo } from "@/lib/settings";
+
+/** 内置的公安备案图标（后台未配置 policeIcon 时使用，可在站点设置里替换） */
+const DEFAULT_POLICE_ICON = "/police-badge.png";
 
 /**
  * 全站页脚（2026-10-18 精简版）。
@@ -19,7 +22,9 @@ import { getSiteInfo } from "@/lib/settings";
 export async function SiteFooter() {
   const t = await getTranslations();
   const year = new Date().getFullYear();
-  const { name, author, logo, icp, icpLink, police, policeLink } = await getSiteInfo();
+  const { name, author, logo, icp, icpLink, police, policeLink, policeIcon } = await getSiteInfo();
+  // 公安备案图标：后台留空时用内置的警徽图标；换成媒体库图片时走 /img 按需缩放
+  const policeBadge = resizedImageUrl(policeIcon || DEFAULT_POLICE_ICON, 128);
 
   return (
     <footer className="site-footer mt-10 border-t border-border/60">
@@ -93,12 +98,28 @@ export async function SiteFooter() {
                     aria-label={`${t("footer.policeLabel")}：${police}`}
                     title={t("footer.policeLabel")}
                   >
-                    <ShieldCheckIcon aria-hidden />
+                    <img
+                      src={policeBadge}
+                      alt=""
+                      width={18}
+                      height={20}
+                      loading="lazy"
+                      aria-hidden
+                      className="footer-filing__badge"
+                    />
                     <span>{police}</span>
                   </a>
                 ) : (
                   <span className="footer-filing" title={t("footer.policeLabel")}>
-                    <ShieldCheckIcon aria-hidden />
+                    <img
+                      src={policeBadge}
+                      alt=""
+                      width={18}
+                      height={20}
+                      loading="lazy"
+                      aria-hidden
+                      className="footer-filing__badge"
+                    />
                     <span>{police}</span>
                   </span>
                 )

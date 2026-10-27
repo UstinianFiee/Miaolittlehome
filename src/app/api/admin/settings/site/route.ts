@@ -41,6 +41,7 @@ export async function PUT(request: Request) {
       icpLink: typeof body.icpLink === "string" ? body.icpLink.slice(0, 500) : undefined,
       police: typeof body.police === "string" ? body.police.slice(0, 100) : undefined,
       policeLink: typeof body.policeLink === "string" ? body.policeLink.slice(0, 500) : undefined,
+      policeIcon: typeof body.policeIcon === "string" ? body.policeIcon.slice(0, 500) : undefined,
     });
 
     await setSettings(entries);

@@ -37,6 +37,8 @@ export const SITE_ICP_LINK_KEY = "site.icpLink";
 /** 公安网备（与 ICP 分开配置：两者可以只有一个，也可以都有） */
 export const SITE_POLICE_KEY = "site.police";
 export const SITE_POLICE_LINK_KEY = "site.policeLink";
+/** 公安备案图标：显示在备案号前；留空使用内置图标 public/police-badge.png */
+export const SITE_POLICE_ICON_KEY = "site.policeIcon";
 
 export const PROFILE_NAME_KEY = "profile.name";
 export const PROFILE_AVATAR_KEY = "profile.avatar";
@@ -195,6 +197,8 @@ export type SiteInfo = {
   icpLink: string;
   police: string;
   policeLink: string;
+  /** 公安备案图标（留空回退内置 /police-badge.png） */
+  policeIcon: string;
 };
 
 /** 解析背景图列表；兼容旧的单图字段。 */
@@ -251,6 +255,7 @@ export const getSiteInfo = cache(async (): Promise<SiteInfo> => {
     icpLink: settings[SITE_ICP_LINK_KEY]?.trim() || "",
     police: settings[SITE_POLICE_KEY]?.trim() || "",
     policeLink: settings[SITE_POLICE_LINK_KEY]?.trim() || "",
+    policeIcon: settings[SITE_POLICE_ICON_KEY]?.trim() || "",
   };
 });
 
@@ -426,6 +431,9 @@ export function siteToSettings(input: Partial<SiteInfo>): Record<string, string>
   }
   if (typeof input.policeLink === "string") {
     entries[SITE_POLICE_LINK_KEY] = input.policeLink.trim();
+  }
+  if (typeof input.policeIcon === "string") {
+    entries[SITE_POLICE_ICON_KEY] = input.policeIcon.trim();
   }
 
   return entries;

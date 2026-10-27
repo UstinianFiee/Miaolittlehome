@@ -845,7 +845,9 @@
     "police": "Public security filing",
     "policeHint": "Leave empty to hide it in the footer. Independent from the ICP filing above.",
     "policeLink": "Public security filing link",
-    "policeLinkHint": "Usually https://beian.mps.gov.cn/"
+    "policeLinkHint": "Usually https://beian.mps.gov.cn/",
+    "policeIcon": "Public security filing icon",
+    "policeIconHint": "Shown before the filing number. Leave empty to use the built-in badge; you can upload or pick one from the media library."
   },
   "notFound": {
     "title": "Page not found",
