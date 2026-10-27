@@ -139,7 +139,13 @@ export default async function PostPage({ params }: PostPageProps) {
           更通透的 `.article-panel`（半透明 + 大模糊），在有内容区背景图时
           能透出背景，接近参考站点的"封面 + 玻璃面板"观感。
         */}
-        <div id="article-body" className="surface-glass article-panel overflow-hidden p-0">
+        {/*
+          注意这里用 `overflow-clip` 而不是 `overflow-hidden`：
+          `overflow-hidden` 会创建滚动容器，把右侧目录的 `position: sticky` 废掉
+          （目录滚出视口后右栏整块空白）；`overflow-clip` 只裁切、不创建滚动容器，
+          封面圆角照样被裁，目录可以正常吸顶。
+        */}
+        <div id="article-body" className="surface-glass article-panel overflow-clip p-0">
           {post.cover ? (
             <figure className="article-cover">
               {/* 封面是装饰性主图，标题已在下方；alt 留空避免读屏重复 */}
@@ -233,7 +239,12 @@ export default async function PostPage({ params }: PostPageProps) {
 
               {headings.length > 0 ? (
                 <aside className="hidden self-stretch lg:block">
-                  <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto">
+                  {/*
+                    top 要落在「固定头部 + 文章导航条」下方：
+                    头部约 4.75rem、导航条 top 4.75rem + 高 2.75rem ≈ 7.5rem，
+                    取 8.5rem 留一点呼吸；max-height 同步扣掉这部分，避免目录底部被截。
+                  */}
+                  <div className="sticky top-[8.5rem] max-h-[calc(100dvh-9.5rem)] overflow-y-auto">
                     <ArticleToc headings={headings} title={t("site.articleContents")} />
                   </div>
                 </aside>
