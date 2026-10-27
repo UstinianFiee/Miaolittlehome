@@ -397,6 +397,33 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * 侧栏内部滚动条：只有视口很矮、三张卡片放不下时才出现。
+ * 用很细的中性色细条，别再出现一条醒目的品牌色粗滚动条。
+ */
+.sidebar-stagger {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 28%, transparent) transparent;
+}
+
+.sidebar-stagger::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.sidebar-stagger::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-stagger::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--muted-foreground) 26%, transparent);
+}
+
+.sidebar-stagger::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--primary) 50%, transparent);
+}
+
 /* 页面级容器里的英文长词不顶破版心 */
 .page-heading,
 .page-heading h1 {

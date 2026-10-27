@@ -1,19 +1,15 @@
-import { LinkIcon, UserIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { UserIcon } from "lucide-react";
 
 import { AnnouncementBoard } from "@/components/site/announcement-board";
 import { PostTabs } from "@/components/site/post-tabs";
 import { ProfileIcon, iconLabel } from "@/components/site/profile-icon";
-import { Link } from "@/i18n/navigation";
 import { resizedImageUrl } from "@/lib/image-url";
 import { toAnnouncementViews } from "@/lib/announcement-view";
 import { ANNOUNCEMENT_SIDEBAR_LIMIT, listPublishedAnnouncements } from "@/lib/announcements";
-import { listFriends } from "@/lib/friends";
-import { listPopularPosts, listRecentPosts, listTagsWithCount } from "@/lib/query";
+import { listPopularPosts, listRecentPosts } from "@/lib/query";
 import { getProfile, getSiteInfo, type ProfileLink } from "@/lib/settings";
 
 const SIDEBAR_POST_LIMIT = 5;
-const SIDEBAR_TAG_LIMIT = 18;
 
 /** 邮箱图标允许只填地址，这里补上 mailto:；其余按原样使用。 */
 function linkHref(link: ProfileLink): string {
@@ -25,18 +21,17 @@ function linkHref(link: ProfileLink): string {
 }
 
 /**
- * 列表页右侧栏：个人资料 + 最新/热点文章 + 标签聚合 + 友情链接。
+ * 列表页右侧栏：个人资料 + 公告 + 最新/热点文章。
  * 所有数据在服务端读取；仅「最新/热点」切换是客户端交互。
+ *
+ * 2026-10-27：去掉「标签聚合」和「友情链接」两张卡片 —— 首页侧栏固定三张卡片，
+ * 高度正好落在视口内，不再出现侧栏内部滚动条；标签/友链本身仍可从导航进入。
  */
 export async function SiteSidebar({ locale }: { locale: string }) {
-  const t = await getTranslations();
-
-  const [profile, info, friends, tags, recent, popular, announcements, allAnnouncements] =
+  const [profile, info, recent, popular, announcements, allAnnouncements] =
     await Promise.all([
       getProfile(),
       getSiteInfo(),
-      listFriends(),
-      listTagsWithCount(),
       listRecentPosts(SIDEBAR_POST_LIMIT),
       listPopularPosts(SIDEBAR_POST_LIMIT),
       listPublishedAnnouncements(ANNOUNCEMENT_SIDEBAR_LIMIT),
@@ -44,7 +39,6 @@ export async function SiteSidebar({ locale }: { locale: string }) {
     ]);
 
   const socials = profile.links;
-  const visibleTags = tags.filter((tag) => tag._count.posts > 0).slice(0, SIDEBAR_TAG_LIMIT);
 
   // 个人显示名优先，未填则回退站点名
   const displayName = profile.name || info.name;
@@ -107,53 +101,6 @@ export async function SiteSidebar({ locale }: { locale: string }) {
 
       {/* 最新 / 热点文章 */}
       <PostTabs recent={recent} popular={popular} locale={locale} />
-
-      {/* 标签聚合 */}
-      {visibleTags.length > 0 ? (
-        <div className="surface p-5">
-          <h2 className="section-title font-display">{t("sidebar.tags")}</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {visibleTags.map((tag) => (
-              <Link key={tag.id} href={`/tags/${tag.slug}`} className="tag-pill">
-                {tag.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* 友情链接 */}
-      {friends.length > 0 ? (
-        <div className="surface p-5">
-          <h2 className="section-title font-display">{t("sidebar.friends")}</h2>
-          <ul className="mt-4 space-y-2.5">
-            {friends.map((friend) => (
-              <li key={friend.id}>
-                <a
-                  href={friend.url}
-                  target="_blank"
-                  rel="nofollow noopener noreferrer"
-                  title={friend.description ?? friend.name}
-                  className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  {friend.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resizedImageUrl(friend.avatar, 128)}
-                      alt=""
-                      loading="lazy"
-                      className="size-5 shrink-0 rounded object-cover"
-                    />
-                  ) : (
-                    <LinkIcon className="size-4 shrink-0" />
-                  )}
-                  <span className="truncate">{friend.name}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </aside>
   );
 }
